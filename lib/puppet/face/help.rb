@@ -147,7 +147,7 @@ Puppet::Face.define(:help, '0.0.1') do
   # Return a list of applications that are not simply just stubs for Faces.
   def legacy_applications
     Puppet::Application.available_application_names.reject do |appname|
-      (is_face_app?(appname)) or (exclude_from_docs?(appname))
+      is_face_app?(appname) or exclude_from_docs?(appname)
     end.sort
   end
 

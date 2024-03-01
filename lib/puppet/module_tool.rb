@@ -102,7 +102,7 @@ module Puppet
         mod[:text] = "#{mod[:name]} (#{colorize(:cyan, version_string)})"
         mod[:text] += " [#{mod[:path]}]" unless mod[:path].to_s == dir.to_s
 
-        deps = (mod[:dependencies] || [])
+        deps = mod[:dependencies] || []
         deps.sort_by! { |a| a[:name] }
         build_tree(deps, dir)
       end

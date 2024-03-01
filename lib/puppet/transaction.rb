@@ -312,7 +312,7 @@ class Puppet::Transaction
         @failed_class_dependencies_already_notified.merge(class_dependencies_to_be_notified)
       else
         unless @merge_dependency_warnings || is_puppet_class
-          s.failed_dependencies.find_all { |d| !(@failed_dependencies_already_notified.include?(d.ref)) }.each do |dep|
+          s.failed_dependencies.find_all { |d| !@failed_dependencies_already_notified.include?(d.ref) }.each do |dep|
             resource.notice _("Dependency %{dep} has failures: %{status}") % { dep: dep, status: resource_status(dep).failed }
             @failed_dependencies_already_notified.add(dep.ref)
           end
@@ -414,7 +414,7 @@ class Puppet::Transaction
       unless resource.instance_of?(Puppet::Type.type(:whit))
         if @merge_dependency_warnings && resource.parent && failed_dependencies?(resource.parent)
           ps = resource_status(resource.parent)
-          ps.failed_dependencies.find_all { |d| !(@failed_class_dependencies_already_warned.include?(d.ref)) }.each do |dep|
+          ps.failed_dependencies.find_all { |d| !@failed_class_dependencies_already_warned.include?(d.ref) }.each do |dep|
             resource.parent.warning _("Skipping resources in class because of failed class dependencies")
             @failed_class_dependencies_already_warned.add(dep.ref)
           end

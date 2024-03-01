@@ -205,7 +205,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     @arguments << options
 
     # If we don't have a rendering format, set one early.
-    self.render_as ||= (@action.render_as || :console)
+    self.render_as ||= @action.render_as || :console
   end
 
   def main

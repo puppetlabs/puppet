@@ -469,7 +469,7 @@ module Lookup
     end
 
     def push(qualifier_type, qualifier)
-      node = case (qualifier_type)
+      node = case qualifier_type
              when :global
                ExplainGlobal.new(@current, qualifier)
              when :location

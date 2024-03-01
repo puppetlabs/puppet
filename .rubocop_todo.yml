@@ -669,10 +669,6 @@ Style/RedundantInterpolation:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantParentheses:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantPercentQ:
   Exclude:
     - 'lib/puppet/defaults.rb'

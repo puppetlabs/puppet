@@ -61,10 +61,10 @@ ENDHEREDOC
   end
 
   raise ArgumentError, (_("create_resources(): wrong number of arguments (%{count}; must be 2 or 3)") % { count: args.length }) if args.length > 3
-  raise ArgumentError, (_('create_resources(): second argument must be a hash')) unless args[1].is_a?(Hash)
+  raise ArgumentError, _('create_resources(): second argument must be a hash') unless args[1].is_a?(Hash)
 
   if args.length == 3
-    raise ArgumentError, (_('create_resources(): third argument, if provided, must be a hash')) unless args[2].is_a?(Hash)
+    raise ArgumentError, _('create_resources(): third argument, if provided, must be a hash') unless args[2].is_a?(Hash)
   end
 
   type, instances, defaults = args

@@ -98,7 +98,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     private
 
     def op(property)
-      @ops[property.name] || ("-#{property.name}")
+      @ops[property.name] || "-#{property.name}"
     end
   end
 

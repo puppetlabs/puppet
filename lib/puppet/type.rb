@@ -1772,7 +1772,7 @@ class Type
   def self.validprovider?(name)
     name = name.intern
 
-    (provider_hash.has_key?(name) && provider_hash[name].suitable?)
+    provider_hash.has_key?(name) && provider_hash[name].suitable?
   end
 
   # Creates a new provider of a type.

@@ -38,7 +38,7 @@ module Puppet::Util::Package::Version
     def self.parse(version)
       raise ValidationFailure, version.to_s unless version.is_a? String
 
-      matched = version.match(Regexp.new(("^\\s*") + VERSION_PATTERN + ("\\s*$"), Regexp::EXTENDED | Regexp::MULTILINE | Regexp::IGNORECASE))
+      matched = version.match(Regexp.new("^\\s*" + VERSION_PATTERN + "\\s*$", Regexp::EXTENDED | Regexp::MULTILINE | Regexp::IGNORECASE))
       raise ValidationFailure, version unless matched
 
       new(matched)

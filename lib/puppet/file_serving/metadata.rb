@@ -47,7 +47,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
     def initialize(stat, source_permissions)
       @stat = stat
-      @source_permissions_ignore = (!source_permissions || source_permissions == :ignore)
+      @source_permissions_ignore = !source_permissions || source_permissions == :ignore
     end
 
     def owner
@@ -111,16 +111,16 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
     case stat.ftype
     when "file"
-      @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s
+      @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", real_path).to_s
     when "directory" # Always just timestamp the directory.
       @checksum_type = "ctime"
-      @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", path).to_s
+      @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", path).to_s
     when "link"
       @destination = Puppet::FileSystem.readlink(real_path)
-      @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s rescue nil
+      @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", real_path).to_s rescue nil
     when "fifo", "socket"
       @checksum_type = "none"
-      @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s
+      @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", real_path).to_s
     else
       raise ArgumentError, _("Cannot manage files of type %{file_type}") % { file_type: stat.ftype }
     end
