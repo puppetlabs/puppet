@@ -38,6 +38,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
       })
     end
 
+    it "should correctly parse URL format" do
+      expect(described_class.parse("real_package @ git+https://github.com/example/test.git@6b4e203b66c1de7345984882e2b13bf87c700095")).to eq({
+        :ensure   => "6b4e203b66c1de7345984882e2b13bf87c700095",
+        :name     => "real_package",
+        :provider => :pip,
+      })
+    end
+
     it "should return nil on invalid input" do
       expect(described_class.parse("foo")).to eq(nil)
     end

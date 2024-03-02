@@ -101,8 +101,11 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   # Parse lines of output from `pip freeze`, which are structured as:
   # _package_==_version_ or _package_===_version_
+  # or _package_ @ someURL@_version_
   def self.parse(line)
     if line.chomp =~ /^([^=]+)===?([^=]+)$/
+      { :ensure => Regexp.last_match(2), :name => Regexp.last_match(1), :provider => name }
+    elsif line.chomp =~ /^([^@]+) @ [^@]+@(.+)$/
       { :ensure => Regexp.last_match(2), :name => Regexp.last_match(1), :provider => name }
     end
   end
