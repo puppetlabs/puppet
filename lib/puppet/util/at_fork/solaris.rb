@@ -47,8 +47,8 @@ class Puppet::Util::AtFork::Solaris
   end
 
   CTFS_PR_ROOT = File.join('', %w[system contract process])
-  CTFS_PR_TEMPLATE = File.join(CTFS_PR_ROOT, %q(template))
-  CTFS_PR_LATEST = File.join(CTFS_PR_ROOT, %q(latest))
+  CTFS_PR_TEMPLATE = File.join(CTFS_PR_ROOT, 'template')
+  CTFS_PR_LATEST = File.join(CTFS_PR_ROOT, 'latest')
 
   CT_PR_PGRPONLY = 0x4
   CT_PR_EV_HWERR = 0x20
@@ -129,7 +129,7 @@ class Puppet::Util::AtFork::Solaris
     return if ctid.nil?
 
     begin
-      ctl = File.new(File.join(CTFS_PR_ROOT, ctid.to_s, %q(ctl)), File::WRONLY)
+      ctl = File.new(File.join(CTFS_PR_ROOT, ctid.to_s, 'ctl'), File::WRONLY)
 
       begin
         raise_if_error { ct_ctl_abandon(ctl.fileno) }

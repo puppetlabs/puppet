@@ -77,7 +77,7 @@ module Puppet
   #   see the docs for Settings.define_settings
   ############################################################################################
 
-  AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
+  AS_DURATION = 'This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).'
 
   # @api public
   # @param args [Puppet::Settings] the settings object to define default settings for

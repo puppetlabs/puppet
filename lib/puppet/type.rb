@@ -1375,7 +1375,7 @@ class Type
   end
 
   newmetaparam(:alias) do
-    desc %q{Creates an alias for the resource.  Puppet uses this internally when you
+    desc "Creates an alias for the resource.  Puppet uses this internally when you
       provide a symbolic title and an explicit namevar value:
 
           file { 'sshdconfig':
@@ -1411,7 +1411,7 @@ class Type
       There's no way here for the Puppet parser to know that these two stanzas
       should be affecting the same file.
 
-      }
+      "
 
     munge do |aliases|
       aliases = [aliases] unless aliases.is_a?(Array)

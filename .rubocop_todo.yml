@@ -669,19 +669,6 @@ Style/RedundantInterpolation:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantPercentQ:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/indirector/catalog/store_configs.rb'
-    - 'lib/puppet/indirector/facts/store_configs.rb'
-    - 'lib/puppet/indirector/node/store_configs.rb'
-    - 'lib/puppet/indirector/resource/store_configs.rb'
-    - 'lib/puppet/provider/package/dpkg.rb'
-    - 'lib/puppet/provider/package/rpm.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/at_fork/solaris.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantRegexpCharacterClass:
   Exclude:
     - 'lib/puppet/application/apply.rb'
