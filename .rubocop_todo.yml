@@ -658,7 +658,7 @@ Style/RedundantException:
     - 'lib/puppet/module_tool/tar.rb'
     - 'lib/puppet/pops/types/class_loader.rb'
 
-# This cop supports safe auto-correction (--auto-correct).
+# This cop supports unsafe auto-correction (--auto-correct-all).
 Style/RedundantInterpolation:
   Enabled: false
 
@@ -672,6 +672,9 @@ Style/RedundantSelf:
   Enabled: false
 
 # This cop supports unsafe auto-correction (--auto-correct-all).
+# Enabling this cop causes a plethora of failed rspec tests, mostly
+# Errno::ENAMETOOLONG and Puppet::Context::UndefinedBindingError: Unable to
+# lookup 'environments' errors
 Style/RedundantSelfAssignment:
   Exclude:
     - 'lib/puppet/context.rb'
