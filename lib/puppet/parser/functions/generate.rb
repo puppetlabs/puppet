@@ -17,9 +17,9 @@ Puppet::Parser::Functions.newfunction(:generate, :arity => -2, :type => :rvalue,
   raise Puppet::ParseError, _("Generators must be fully qualified") unless Puppet::Util.absolute_path?(args[0])
 
   if Puppet::Util::Platform.windows?
-    valid = args[0] =~ /^[a-z]:(?:[\/\\][-.~\w]+)+$/i
+    valid = args[0] =~ %r{^[a-z]:(?:[/\\][-.~\w]+)+$}i
   else
-    valid = args[0] =~ /^[-\/\w.+]+$/
+    valid = args[0] =~ %r{^[-/\w.+]+$}
   end
 
   unless valid

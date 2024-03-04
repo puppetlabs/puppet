@@ -13,7 +13,7 @@ module Puppet
 
     # Directory and names that should not be checksummed.
     ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage', 'checksums.json', 'REVISION']
-    FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
+    FULL_MODULE_NAME_PATTERN = %r{\A([^-/|.]+)[-|/](.+)\z}
     REPOSITORY_URL = Puppet.settings[:module_repository]
 
     # Is this a directory that shouldn't be checksummed?

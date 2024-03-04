@@ -113,12 +113,12 @@ module Puppet::Interface::FaceCollection
     require path
     true
   rescue LoadError => e
-    raise unless e.message =~ %r{-- #{path}$}
+    raise unless e.message =~ /-- #{path}$/
 
     # ...guess we didn't find the file; return a much better problem.
     nil
   rescue SyntaxError => e
-    raise unless e.message =~ %r{#{path}\.rb:\d+: }
+    raise unless e.message =~ /#{path}\.rb:\d+: /
 
     Puppet.err _("Failed to load face %{name}:\n%{detail}") % { name: name, detail: e }
     # ...but we just carry on after complaining.

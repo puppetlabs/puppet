@@ -680,12 +680,6 @@ Style/RedundantSelfAssignment:
     - 'lib/puppet/context.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, AllowInnerSlashes.
-# SupportedStyles: slashes, percent_r, mixed
-Style/RegexpLiteral:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RescueModifier:
   Exclude:
     - 'lib/puppet/file_serving/metadata.rb'

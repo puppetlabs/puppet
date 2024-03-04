@@ -248,7 +248,7 @@ module Util
   # Escape once for the string literal, and once for the regex.
   slash = '[\\\\/]'
   label = '[^\\\\/]+'
-  AbsolutePathWindows = %r{^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))}io
+  AbsolutePathWindows = /^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))/io
   AbsolutePathPosix   = %r{^/}
   def absolute_path?(path, platform = nil)
     unless path.is_a?(String)
@@ -286,11 +286,11 @@ module Util
     if Puppet::Util::Platform.windows?
       path = path.tr('\\', '/')
 
-      unc = /^\/\/([^\/]+)(\/.+)/.match(path)
+      unc = %r{^//([^/]+)(/.+)}.match(path)
       if unc
         params[:host] = unc[1]
         path = unc[2]
-      elsif path =~ /^[a-z]:\//i
+      elsif path =~ %r{^[a-z]:/}i
         path = '/' + path
       end
     end
@@ -322,7 +322,7 @@ module Util
       if uri.host && !uri.host.empty?
         path = "//#{uri.host}" + path # UNC
       else
-        path.sub!(/^\//, '')
+        path.sub!(%r{^/}, '')
       end
     end
 
@@ -330,7 +330,7 @@ module Util
   end
   module_function :uri_to_path
 
-  RFC_3986_URI_REGEX = /^(?<scheme>(?:[^:\/?#]+):)?(?<authority>\/\/(?:[^\/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/
+  RFC_3986_URI_REGEX = %r{^(?<scheme>(?:[^:/?#]+):)?(?<authority>//(?:[^/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$}
 
   # Percent-encodes a URI query parameter per RFC3986 - https://tools.ietf.org/html/rfc3986
   #

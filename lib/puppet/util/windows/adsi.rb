@@ -157,7 +157,7 @@ module Puppet::Util::Windows::ADSI
       end
 
       def parse_name(name)
-        if name =~ /\//
+        if name =~ %r{/}
           raise Puppet::Error, _("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class }
         end
 

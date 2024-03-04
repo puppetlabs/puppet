@@ -80,7 +80,7 @@ class Puppet::Indirector::Request
       # info out in the REST class, but it seemed bad design for the REST
       # class to rewrite the key.
 
-      if key.to_s =~ /^\w+:\// and !Puppet::Util.absolute_path?(key.to_s) # it's a URI
+      if key.to_s =~ %r{^\w+:/} and !Puppet::Util.absolute_path?(key.to_s) # it's a URI
         set_uri_key(key)
       else
         @key = key
@@ -192,6 +192,6 @@ class Puppet::Indirector::Request
       @protocol = uri.scheme
     end
 
-    @key = Puppet::Util.uri_unescape(uri.path.sub(/^\//, ''))
+    @key = Puppet::Util.uri_unescape(uri.path.sub(%r{^/}, ''))
   end
 end

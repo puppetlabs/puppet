@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # eventually become this Puppet::Type::Package::ProviderRpm class.
   # The query format by which we identify installed packages
   self::NEVRA_FORMAT = '%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n'
-  self::NEVRA_REGEX  = %r{^'?(\S+) (\S+) (\S+) (\S+) (\S+)$}
+  self::NEVRA_REGEX  = /^'?(\S+) (\S+) (\S+) (\S+) (\S+)$/
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
   self::MULTIVERSION_SEPARATOR = "; "
 

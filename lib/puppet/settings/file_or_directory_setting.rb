@@ -12,7 +12,7 @@ class Puppet::Settings::FileOrDirectorySetting < Puppet::Settings::FileSetting
   # Overrides munge to be able to read the un-munged value (the FileSetting.munch removes trailing slash)
   #
   def munge(value)
-    if value.is_a?(String) && value =~ /[\\\/]$/
+    if value.is_a?(String) && value =~ %r{[\\/]$}
       @path_ends_with_slash = true
     end
     super

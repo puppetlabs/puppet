@@ -202,7 +202,7 @@ module Puppet::FileBucketFile
     end
 
     def request_to_checksum_and_path(request)
-      checksum_type, checksum, path = request.key.split(/\//, 3)
+      checksum_type, checksum, path = request.key.split(%r{/}, 3)
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
       end

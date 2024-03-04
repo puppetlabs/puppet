@@ -53,9 +53,9 @@ Puppet::Functions.create_function(:abs) do
     # version of this function.
     #
     case x
-    when %r{^-?(?:\d+)(?:\.\d+){1}$}
+    when /^-?(?:\d+)(?:\.\d+){1}$/
       x.to_f.abs
-    when %r{^-?\d+$}
+    when /^-?\d+$/
       x.to_i.abs
     else
       raise(ArgumentError, 'abs(): Requires float or integer to work with - was given non decimal string')

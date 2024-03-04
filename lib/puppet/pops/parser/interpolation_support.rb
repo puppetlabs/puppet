@@ -7,7 +7,7 @@
 # of passing parameters and evaluating conditional logic has a negative impact on performance.
 #
 module Puppet::Pops::Parser::InterpolationSupport
-  PATTERN_VARIABLE = %r{(::)?(\w+::)*\w+}
+  PATTERN_VARIABLE = /(::)?(\w+::)*\w+/
 
   # This is the starting point for a double quoted string with possible interpolation
   # The structure mimics that of the grammar.

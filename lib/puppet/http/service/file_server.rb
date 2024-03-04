@@ -11,7 +11,7 @@ class Puppet::HTTP::Service::FileServer < Puppet::HTTP::Service
   API = '/puppet/v3'
 
   # @return [RegEx] RegEx used to determine if a path contains a leading slash
-  PATH_REGEX = /^\//
+  PATH_REGEX = %r{^/}
 
   # Use `Puppet::HTTP::Session.route_to(:fileserver)` to create or get an instance of this class.
   #

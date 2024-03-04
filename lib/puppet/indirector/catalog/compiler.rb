@@ -185,8 +185,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     location = Puppet::Module::FILETYPES['files']
 
-    !!(source_as_uri.path =~ /^\/modules\// &&
-       metadata.full_path =~ /#{environment_path}\/[^\/]+\/[^\/]+\/#{location}\/.+/)
+    !!(source_as_uri.path =~ %r{^/modules/} &&
+       metadata.full_path =~ %r{#{environment_path}/[^/]+/[^/]+/#{location}/.+})
   end
 
   # Helper method to log file resources that could not be inlined because they

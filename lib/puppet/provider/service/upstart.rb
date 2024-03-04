@@ -185,7 +185,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     end
 
     output = status_exec(@resource[:name].split)
-    if output =~ /start\//
+    if output =~ %r{start/}
       return :running
     else
       return :stopped
@@ -195,7 +195,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   private
 
   def is_upstart?(script = initscript)
-    Puppet::FileSystem.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
+    Puppet::FileSystem.exist?(script) && script.match(%r{/etc/init/\S+\.conf})
   end
 
   def version_is_pre_0_6_7

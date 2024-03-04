@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     packages = {}
     execpipe([command(:pacman), "-Q"]) do |pipe|
       # pacman -Q output is 'packagename version-rel'
-      regex = %r{^(\S+)\s(\S+)}
+      regex = /^(\S+)\s(\S+)/
       pipe.each_line do |line|
         match = regex.match(line)
         if match

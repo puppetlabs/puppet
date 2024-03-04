@@ -97,6 +97,6 @@ module Puppet::Util::Colors
 
   def html_color(color, str)
     span = '<span style="%s">' % Colormap[color][:html]
-    "#{span}%s</span>" % str.gsub(/<span .*?<\/span>/, "</span>\\0#{span}")
+    "#{span}%s</span>" % str.gsub(%r{<span .*?</span>}, "</span>\\0#{span}")
   end
 end

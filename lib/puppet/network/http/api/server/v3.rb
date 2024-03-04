@@ -28,7 +28,7 @@ module Puppet
                            .get(wrap { Environments.new(Puppet.lookup(:environments)) })
 
             def self.routes
-              Puppet::Network::HTTP::Route.path(%r{v3})
+              Puppet::Network::HTTP::Route.path(/v3/)
                                           .any
                                           .chain(ENVIRONMENTS, INDIRECTED)
             end
