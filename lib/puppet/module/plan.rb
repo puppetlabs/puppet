@@ -89,7 +89,7 @@ class Puppet::Module
       implementations = plan_files.select { |impl| File.basename(impl, '.*') == basename }
 
       # Select .pp before .yaml, since .pp comes before .yaml alphabetically.
-      chosen = implementations.sort.first
+      chosen = implementations.min
 
       [{ "name" => File.basename(chosen), "path" => chosen }]
     end

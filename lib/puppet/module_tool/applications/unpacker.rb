@@ -64,7 +64,7 @@ module Puppet::ModuleTool
         return @root_dir if @root_dir
 
         # Grab the first directory containing a metadata.json file
-        metadata_file = Dir["#{tmpdir}/**/metadata.json"].sort_by(&:length)[0]
+        metadata_file = Dir["#{tmpdir}/**/metadata.json"].min_by(&:length)
 
         if metadata_file
           @root_dir = Pathname.new(metadata_file).dirname

@@ -217,7 +217,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         Puppet.debug("Cannot parse #{version} as a RPM version")
       end
 
-      version = versions.sort.last if versions.any?
+      version = versions.max if versions.any?
 
       if version
         version = version.to_s.sub(/^\d+:/, '')

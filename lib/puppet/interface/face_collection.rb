@@ -55,7 +55,7 @@ module Puppet::Interface::FaceCollection
   end
 
   def self.find_matching(range, versions)
-    versions.select { |v| range === v }.sort.last
+    versions.select { |v| range === v }.max
   end
 
   # try to load the face, and return it.
@@ -95,7 +95,7 @@ module Puppet::Interface::FaceCollection
         # versions here and return the last item in that set.
         #
         # --daniel 2011-04-06
-        latest_ver = @faces[name].keys.sort.last
+        latest_ver = @faces[name].keys.max
         @faces[name][:current] = @faces[name][latest_ver]
       end
     end
