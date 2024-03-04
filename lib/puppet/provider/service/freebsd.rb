@@ -75,7 +75,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
       next unless Puppet::FileSystem.exist?(filename)
 
       s = File.read(filename)
-      next unless s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+      next unless s.gsub!(/^(#{rcvar}(_enable)?)="?(YES|NO)"?/, "\\1=\"#{yesno}\"")
 
       Puppet::FileSystem.replace_file(filename) { |f| f << s }
       self.debug("Replaced in #{filename}")

@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
     # rug can only get a list of *all* available packages?
     output = rug "list-updates"
 
-    if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s\|]+)/
+    if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s|]+)/
       return Regexp.last_match(1)
     else
       # rug didn't find updates, pretend the current

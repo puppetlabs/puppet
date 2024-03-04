@@ -48,7 +48,7 @@ module Interpolation
   def interpolate_string(subject, context, allow_methods)
     lookup_invocation = context.is_a?(Invocation) ? context : context.invocation
     lookup_invocation.with(:interpolate, subject) do
-      subject.gsub(/%\{([^\}]*)\}/) do |match|
+      subject.gsub(/%\{([^}]*)\}/) do |match|
         expr = ::Regexp.last_match(1)
         # Leading and trailing spaces inside an interpolation expression are insignificant
         expr.strip!

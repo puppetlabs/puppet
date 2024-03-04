@@ -167,7 +167,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
     # There is no method exclude default gems from the local gem list,
     # for example: psych (default: 2.2.2)
     # but default gems should not be managed by this (or any) provider.
-    gem_list = gem_out.lines.reject { |gem| gem =~ / \(default\: / }
+    gem_list = gem_out.lines.reject { |gem| gem =~ / \(default: / }
     gem_list.join("\n")
   end
 end

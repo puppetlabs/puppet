@@ -57,7 +57,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     cached_source = source
     tmpdir = Dir.mktmpdir
     begin
-      if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
+      if %r{\A[A-Za-z][A-Za-z0-9+\-.]*://} =~ cached_source
         cached_source = File.join(tmpdir, name)
         begin
           curl "-o", cached_source, "-C", "-", "-L", "-s", "--url", source

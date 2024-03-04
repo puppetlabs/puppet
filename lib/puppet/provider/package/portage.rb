@@ -147,7 +147,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def qatom_result_format
-    /^\"\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\](.*)\"$/
+    /^"\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\]\s+\[(\S*)\](.*)"$/
   end
 
   def qatom_result_fields

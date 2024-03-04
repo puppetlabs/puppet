@@ -15,7 +15,7 @@ class Puppet::Pops::Loader::RubyDataTypeInstantiator
   # @return [Puppet::Pops::Types::PAnyType] - an instantiated data type associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, ruby_code_string)
-    unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet\:\:DataTypes\.create_type/
+    unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet::DataTypes\.create_type/
       raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 5x API data type - no create_type call.") % { source_ref: source_ref }
     end
 

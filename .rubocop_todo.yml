@@ -669,10 +669,6 @@ Style/RedundantInterpolation:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantRegexpEscape:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowMultipleReturnValues.
 Style/RedundantReturn:
   Enabled: false
