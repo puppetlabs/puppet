@@ -33,7 +33,7 @@ class CommandLine
   class VersionNeeded < StandardError; end
 
   ## Regex for floating point numbers
-  FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?[\d]+)?$/
+  FLOAT_RE = /^-?((\d+(\.\d+)?)|(\.\d+))([eE][-+]?\d+)?$/
 
   ## Regex for parameters
   PARAM_RE = /^-(-|\.$|[^\d\.])/

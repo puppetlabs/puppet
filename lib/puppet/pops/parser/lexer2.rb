@@ -170,10 +170,10 @@ class Lexer2
   # The NAME and CLASSREF in 4x are strict. Each segment must start with
   # a letter a-z and may not contain dashes (\w includes letters, digits and _).
   #
-  PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
-  PATTERN_NAME           = %r{^((::)?[a-z][\w]*)(::[a-z][\w]*)*$}
+  PATTERN_CLASSREF       = %r{((::){0,1}[A-Z]\w*)+}
+  PATTERN_NAME           = %r{^((::)?[a-z]\w*)(::[a-z]\w*)*$}
 
-  PATTERN_BARE_WORD      = %r{((?:::){0,1}(?:[a-z_](?:[\w-]*[\w])?))+}
+  PATTERN_BARE_WORD      = %r{((?:::){0,1}(?:[a-z_](?:[\w-]*\w)?))+}
 
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
   PATTERN_NUMBER         = %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b}

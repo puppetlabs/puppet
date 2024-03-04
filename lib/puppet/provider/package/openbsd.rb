@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     begin
       execpipe(listcmd) do |process|
         # our regex for matching pkg_info output
-        regex = /^(.*)-(\d[^-]*)[-]?([\w-]*)(.*)$/
+        regex = /^(.*)-(\d[^-]*)-?([\w-]*)(.*)$/
         fields = [:name, :ensure, :flavor]
         hash = {}
 
@@ -89,15 +89,15 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       return version
     else
       # Remove all fuzzy matches first.
-      output = output.split.select { |p| p =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*)/ }.join
+      output = output.split.select { |p| p =~ /^#{resource[:name]}-(\d[^-]*)-?(\w*)/ }.join
       debug "pkg_info -Q for #{resource[:name]}: #{output}"
     end
 
-    if output =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*) \(installed\)$/
+    if output =~ /^#{resource[:name]}-(\d[^-]*)-?(\w*) \(installed\)$/
       debug "Package is already the latest available"
       return version
     else
-      match = /^(.*)-(\d[^-]*)[-]?(\w*)$/.match(output)
+      match = /^(.*)-(\d[^-]*)-?(\w*)$/.match(output)
       debug "Latest available for #{resource[:name]}: #{match[2]}"
 
       if version.to_sym == :absent || version.to_sym == :purged
@@ -201,7 +201,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def get_version
     execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
       # our regex for matching pkg_info output
-      regex = /^(.*)-(\d[^-]*)[-]?(\w*)(.*)$/
+      regex = /^(.*)-(\d[^-]*)-?(\w*)(.*)$/
       master_version = 0
       version = -1
 

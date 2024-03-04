@@ -29,20 +29,20 @@ module Puppet::Pops::Patterns
   # CLASSREF_EXT matches a class reference the same way as the lexer - i.e. the external source form
   # where each part must start with a capital letter A-Z.
   #
-  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][\w]*)+\z}
+  CLASSREF_EXT = %r{\A((::){0,1}[A-Z]\w*)+\z}
 
   # Same as CLASSREF_EXT but cannot start with '::'
   #
-  CLASSREF_EXT_DECL = %r{\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z}
+  CLASSREF_EXT_DECL = %r{\A[A-Z]\w*(?:::[A-Z]\w*)*\z}
 
   # CLASSREF matches a class reference the way it is represented internally in the
   # model (i.e. in lower case).
   #
-  CLASSREF = %r{\A((::){0,1}[a-z][\w]*)+\z}
+  CLASSREF = %r{\A((::){0,1}[a-z]\w*)+\z}
 
   # Same as CLASSREF but cannot start with '::'
   #
-  CLASSREF_DECL = %r{\A[a-z][\w]*(?:::[a-z][\w]*)*\z}
+  CLASSREF_DECL = %r{\A[a-z]\w*(?:::[a-z]\w*)*\z}
 
   # DOLLAR_VAR matches a variable name including the initial $ character
   DOLLAR_VAR = %r{\$(::)?(\w+::)*\w+}

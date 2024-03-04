@@ -669,21 +669,6 @@ Style/RedundantInterpolation:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantRegexpCharacterClass:
-  Exclude:
-    - 'lib/puppet/application/apply.rb'
-    - 'lib/puppet/module.rb'
-    - 'lib/puppet/pops/lookup/interpolation.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/pops/parser/slurp_support.rb'
-    - 'lib/puppet/pops/patterns.rb'
-    - 'lib/puppet/pops/pcore.rb'
-    - 'lib/puppet/provider/package/openbsd.rb'
-    - 'lib/puppet/settings/config_file.rb'
-    - 'lib/puppet/type/exec.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantRegexpEscape:
   Enabled: false
 

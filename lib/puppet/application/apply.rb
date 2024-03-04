@@ -224,7 +224,7 @@ class Puppet::Application::Apply < Puppet::Application
             $stderr.puts _("%{file} is not readable") % { file: file }
             exit(63)
           end
-          node.classes = Puppet::FileSystem.read(file, :encoding => 'utf-8').split(/[\s]+/)
+          node.classes = Puppet::FileSystem.read(file, :encoding => 'utf-8').split(/\s+/)
         end
       end
 

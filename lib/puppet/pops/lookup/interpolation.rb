@@ -144,7 +144,7 @@ module Interpolation
   end
 
   def get_method_and_data(data, allow_methods)
-    match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
+    match = data.match(/^(\w+)\((?:"([^"]+)"|'([^']+)')\)$/)
     if match
       fail(Issues::HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED) unless allow_methods
 
