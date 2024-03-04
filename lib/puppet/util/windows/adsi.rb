@@ -328,7 +328,11 @@ module Puppet::Util::Windows::ADSI
     end
 
     def add_flag(flag_name, value)
-      flag = native_object.Get(flag_name) rescue 0
+      flag = begin
+        native_object.Get(flag_name)
+      rescue
+        0
+      end
 
       native_object.Put(flag_name, flag | value)
 
@@ -350,7 +354,11 @@ module Puppet::Util::Windows::ADSI
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
       # Setting WIN32OLE.codepage ensures values are returned as UTF-8
-      native_object.Groups.each { |g| groups << g.Name } rescue nil
+      begin
+        native_object.Groups.each { |g| groups << g.Name }
+      rescue
+        nil
+      end
       groups
     end
 

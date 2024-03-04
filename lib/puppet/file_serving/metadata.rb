@@ -117,7 +117,11 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", path).to_s
     when "link"
       @destination = Puppet::FileSystem.readlink(real_path)
-      @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", real_path).to_s rescue nil
+      @checksum = begin
+        "{#{@checksum_type}}" + send("#{@checksum_type}_file", real_path).to_s
+      rescue
+        nil
+      end
     when "fifo", "socket"
       @checksum_type = "none"
       @checksum = "{#{@checksum_type}}" + send("#{@checksum_type}_file", real_path).to_s

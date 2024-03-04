@@ -680,23 +680,6 @@ Style/RedundantSelfAssignment:
     - 'lib/puppet/context.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RescueModifier:
-  Exclude:
-    - 'lib/puppet/file_serving/metadata.rb'
-    - 'lib/puppet/file_system/uniquefile.rb'
-    - 'lib/puppet/file_system/windows.rb'
-    - 'lib/puppet/module_tool/applications/application.rb'
-    - 'lib/puppet/module_tool/applications/installer.rb'
-    - 'lib/puppet/module_tool/applications/upgrader.rb'
-    - 'lib/puppet/module_tool/metadata.rb'
-    - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/provider/file/posix.rb'
-    - 'lib/puppet/util.rb'
-    - 'lib/puppet/util/execution.rb'
-    - 'lib/puppet/util/reference.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: implicit, explicit
 Style/RescueStandardError:

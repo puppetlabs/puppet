@@ -38,7 +38,11 @@ module Puppet::ModuleTool::Shared
       mod_name, releases = pair
       mod_name = mod_name.tr('/', '-')
       releases.each do |rel|
-        semver = SemanticPuppet::Version.parse(rel['version']) rescue SemanticPuppet::Version::MIN
+        semver = begin
+          SemanticPuppet::Version.parse(rel['version'])
+        rescue
+          SemanticPuppet::Version::MIN
+        end
         @versions[mod_name] << { :vstring => rel['version'], :semver => semver }
         @versions[mod_name].sort_by! { |a| a[:semver] }
         @urls["#{mod_name}@#{rel['version']}"] = rel['file']
@@ -79,10 +83,16 @@ module Puppet::ModuleTool::Shared
       }
 
       if forced?
-        range = Puppet::Module.parse_range(@version) rescue Puppet::Module.parse_range('>= 0.0.0')
+        range = begin
+          Puppet::Module.parse_range(@version)
+        rescue
+          Puppet::Module.parse_range('>= 0.0.0')
+        end
       else
         range = (@conditions[mod]).map do |r|
-          Puppet::Module.parse_range(r[:dependency]) rescue Puppet::Module.parse_range('>= 0.0.0')
+          Puppet::Module.parse_range(r[:dependency])
+        rescue
+          Puppet::Module.parse_range('>= 0.0.0')
         end.inject(&:&)
       end
 

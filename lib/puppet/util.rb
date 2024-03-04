@@ -480,11 +480,21 @@ module Util
       begin
         Dir.foreach('/proc/self/fd') do |f|
           if f != '.' && f != '..' && f.to_i >= 3
-            IO.new(f.to_i).close rescue nil
+            begin
+              IO.new(f.to_i).close
+            rescue
+              nil
+            end
           end
         end
       rescue Errno::ENOENT, Errno::ENOTDIR # /proc/self/fd not found, /proc/self not a dir
-        3.upto(256) { |fd| IO.new(fd).close rescue nil }
+        3.upto(256) { |fd|
+          begin
+            IO.new(fd).close
+          rescue
+            nil
+          end
+        }
       end
 
       block.call if block
@@ -540,7 +550,11 @@ module Util
   def self.resolve_stackframe(frame)
     _, path, rest = /^(.*):(\d+.*)$/.match(frame).to_a
     if path
-      path = Pathname(path).realpath rescue path
+      path = begin
+        Pathname(path).realpath
+      rescue
+        path
+      end
       "#{path}:#{rest}"
     else
       frame

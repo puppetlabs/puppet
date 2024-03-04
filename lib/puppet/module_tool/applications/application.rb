@@ -28,7 +28,11 @@ module Puppet::ModuleTool
         when Net::HTTPOK, Net::HTTPCreated
           Puppet.notice success
         else
-          errors = Puppet::Util::Json.load(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
+          errors = begin
+            Puppet::Util::Json.load(response.body)['error']
+          rescue
+            "HTTP #{response.code}, #{response.body}"
+          end
           Puppet.warning "#{failure} (#{errors})"
         end
       end
