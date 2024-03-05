@@ -128,6 +128,12 @@ Lint/RedundantDirGlobSort: # new in 1.8
 Lint/RedundantRegexpQuantifiers: # new in 1.53
   Enabled: false
 
+# Unsure how the changes in portage.rb from Lint/RedundantSplatExpansion impact
+# the code
+Lint/RedundantSplatExpansion:
+  Exclude:
+    - 'lib/puppet/provider/package/portage.rb'
+
 Lint/RefinementImportMethods: # new in 1.27
   Enabled: false
 

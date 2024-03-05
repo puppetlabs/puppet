@@ -121,7 +121,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       else
         search = '=' + @resource[:name] + '-' + "#{should}"
       end
-      search_output = qatom_bin(search, '--format', output_format)
+      search_output = qatom_bin(*[search, '--format', output_format])
       # verify if the search found anything
       match = result_format.match(search_output)
       if match
@@ -155,7 +155,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def self.get_sets
-    @sets ||= @sets = emerge('--list-sets')
+    @sets ||= @sets = emerge(*['--list-sets'])
   end
 
   def query
