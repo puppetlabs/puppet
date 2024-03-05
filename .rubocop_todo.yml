@@ -646,18 +646,6 @@ Style/OptionalBooleanParameter:
 Style/PreferredHashMethods:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-# Enabling this cop will remove raising RuntimeErrors and cause spec test
-# failures
-Style/RedundantException:
-  Exclude:
-    - 'lib/puppet/file_bucket/dipper.rb'
-    - 'lib/puppet/forge.rb'
-    - 'lib/puppet/module_tool/applications/unpacker.rb'
-    - 'lib/puppet/module_tool/local_tarball.rb'
-    - 'lib/puppet/module_tool/tar.rb'
-    - 'lib/puppet/pops/types/class_loader.rb'
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
 Style/RedundantInterpolation:
   Enabled: false
@@ -670,14 +658,6 @@ Style/RedundantReturn:
 # This cop supports safe auto-correction (--auto-correct).
 Style/RedundantSelf:
   Enabled: false
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-# Enabling this cop causes a plethora of failed rspec tests, mostly
-# Errno::ENAMETOOLONG and Puppet::Context::UndefinedBindingError: Unable to
-# lookup 'environments' errors
-Style/RedundantSelfAssignment:
-  Exclude:
-    - 'lib/puppet/context.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
