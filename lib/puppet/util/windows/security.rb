@@ -167,7 +167,7 @@ module Puppet::Util::Windows::Security
     supported = false
     root = Pathname.new(path).enum_for(:ascend).to_a.last.to_s
     # 'A trailing backslash is required'
-    root = "#{root}\\" unless root =~ /[\/\\]$/
+    root = "#{root}\\" unless root =~ %r{[/\\]$}
 
     FFI::MemoryPointer.new(:pointer, 1) do |flags_ptr|
       if GetVolumeInformationW(wide_string(root), FFI::Pointer::NULL, 0,

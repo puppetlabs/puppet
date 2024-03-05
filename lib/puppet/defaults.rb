@@ -77,7 +77,7 @@ module Puppet
   #   see the docs for Settings.define_settings
   ############################################################################################
 
-  AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
+  AS_DURATION = 'This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).'
 
   # @api public
   # @param args [Puppet::Settings] the settings object to define default settings for
@@ -489,7 +489,7 @@ module Puppet
     },
     :daemonize => {
         :type     => :boolean,
-        :default  => (!Puppet::Util::Platform.windows?),
+        :default  => !Puppet::Util::Platform.windows?,
         :desc     => "Whether to send the process into the background.  This defaults
           to true on POSIX systems, and to false on Windows (where Puppet
           currently cannot daemonize).",
@@ -650,7 +650,7 @@ module Puppet
     :http_proxy_password =>{
       :default    => "none",
       :hook       => proc do |value|
-        if value =~ /[@!# \/]/
+        if value =~ %r{[@!# /]}
           raise "Passwords set in the http_proxy_password setting must be valid as part of a URL, and any reserved characters must be URL-encoded. We received: #{value}"
         end
       end,

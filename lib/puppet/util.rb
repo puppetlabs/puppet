@@ -248,7 +248,7 @@ module Util
   # Escape once for the string literal, and once for the regex.
   slash = '[\\\\/]'
   label = '[^\\\\/]+'
-  AbsolutePathWindows = %r{^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))}io
+  AbsolutePathWindows = /^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))/io
   AbsolutePathPosix   = %r{^/}
   def absolute_path?(path, platform = nil)
     unless path.is_a?(String)
@@ -286,11 +286,11 @@ module Util
     if Puppet::Util::Platform.windows?
       path = path.tr('\\', '/')
 
-      unc = /^\/\/([^\/]+)(\/.+)/.match(path)
+      unc = %r{^//([^/]+)(/.+)}.match(path)
       if unc
         params[:host] = unc[1]
         path = unc[2]
-      elsif path =~ /^[a-z]:\//i
+      elsif path =~ %r{^[a-z]:/}i
         path = '/' + path
       end
     end
@@ -322,7 +322,7 @@ module Util
       if uri.host && !uri.host.empty?
         path = "//#{uri.host}" + path # UNC
       else
-        path.sub!(/^\//, '')
+        path.sub!(%r{^/}, '')
       end
     end
 
@@ -330,7 +330,7 @@ module Util
   end
   module_function :uri_to_path
 
-  RFC_3986_URI_REGEX = /^(?<scheme>(?:[^:\/?#]+):)?(?<authority>\/\/(?:[^\/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/
+  RFC_3986_URI_REGEX = %r{^(?<scheme>(?:[^:/?#]+):)?(?<authority>//(?:[^/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$}
 
   # Percent-encodes a URI query parameter per RFC3986 - https://tools.ietf.org/html/rfc3986
   #
@@ -480,11 +480,21 @@ module Util
       begin
         Dir.foreach('/proc/self/fd') do |f|
           if f != '.' && f != '..' && f.to_i >= 3
-            IO.new(f.to_i).close rescue nil
+            begin
+              IO.new(f.to_i).close
+            rescue
+              nil
+            end
           end
         end
       rescue Errno::ENOENT, Errno::ENOTDIR # /proc/self/fd not found, /proc/self not a dir
-        3.upto(256) { |fd| IO.new(fd).close rescue nil }
+        3.upto(256) { |fd|
+          begin
+            IO.new(fd).close
+          rescue
+            nil
+          end
+        }
       end
 
       block.call if block
@@ -540,7 +550,11 @@ module Util
   def self.resolve_stackframe(frame)
     _, path, rest = /^(.*):(\d+.*)$/.match(frame).to_a
     if path
-      path = Pathname(path).realpath rescue path
+      path = begin
+        Pathname(path).realpath
+      rescue
+        path
+      end
       "#{path}:#{rest}"
     else
       frame

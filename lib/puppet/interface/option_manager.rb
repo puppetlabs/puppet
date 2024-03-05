@@ -28,7 +28,7 @@ module Puppet::Interface::OptionManager
 
   # @api private
   def walk_inheritance_tree(start, sym)
-    result = (start || [])
+    result = start || []
     if self.is_a?(Class) and superclass.respond_to?(sym)
       result = superclass.send(sym) + result
     elsif self.class.respond_to?(sym)

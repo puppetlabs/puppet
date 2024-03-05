@@ -77,11 +77,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         # network-interface (lo) start/running
         # network-interface (eth0) start/running
         # network-interface-security start/running
-        matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
+        matcher = line.match(/^(network-interface)\s\(([^)]+)\)/)
         name = if matcher
                  "#{matcher[1]} INTERFACE=#{matcher[2]}"
                else
-                 matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
+                 matcher = line.match(/^(network-interface-security)\s\(([^)]+)\)/)
                  if matcher
                    "#{matcher[1]} JOB=#{matcher[2]}"
                  else
@@ -99,7 +99,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def upstart_version
-    @upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
+    @upstart_version ||= initctl("--version").match(/initctl \(upstart ([^)]*)\)/)[1]
   end
 
   # Where is our override script?
@@ -185,7 +185,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     end
 
     output = status_exec(@resource[:name].split)
-    if output =~ /start\//
+    if output =~ %r{start/}
       return :running
     else
       return :stopped
@@ -195,7 +195,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   private
 
   def is_upstart?(script = initscript)
-    Puppet::FileSystem.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
+    Puppet::FileSystem.exist?(script) && script.match(%r{/etc/init/\S+\.conf})
   end
 
   def version_is_pre_0_6_7

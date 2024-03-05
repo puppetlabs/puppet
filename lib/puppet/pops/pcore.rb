@@ -10,7 +10,7 @@ module Pcore
   TYPE_URI = Types::TypeFactory.pattern(TYPE_URI_RX)
   TYPE_URI_ALIAS = Types::PTypeAliasType.new('Pcore::URI', nil, TYPE_URI)
   TYPE_SIMPLE_TYPE_NAME = Types::TypeFactory.pattern(/\A[A-Z]\w*\z/)
-  TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z][\w]*(?:::[A-Z][\w]*)*\z/)
+  TYPE_QUALIFIED_REFERENCE = Types::TypeFactory.pattern(/\A[A-Z]\w*(?:::[A-Z]\w*)*\z/)
   TYPE_MEMBER_NAME = Types::PPatternType.new([Types::PRegexpType.new(Patterns::PARAM_NAME)])
 
   KEY_PCORE_URI = 'pcore_uri'

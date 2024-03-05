@@ -16,7 +16,7 @@ require_relative 'parser/relationship'
 require_relative '../puppet/resource/type'
 require 'monitor'
 
-require_relative 'parser/compiler/catalog_validator/relationship_validator.rb'
+require_relative 'parser/compiler/catalog_validator/relationship_validator'
 
 # PUP-3274 This should probably go someplace else
 class Puppet::LexError < RuntimeError; end

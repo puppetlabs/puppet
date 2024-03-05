@@ -78,11 +78,19 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
 
     file_names.each do |file_name|
       file_name = file_name.to_s # handle PathName
-      stat = Puppet::Util::Windows::File.stat(file_name) rescue nil
+      stat = begin
+        Puppet::Util::Windows::File.stat(file_name)
+      rescue
+        nil
+      end
 
       # sigh, Ruby + Windows :(
       if !stat
-        ::File.unlink(file_name) rescue Dir.rmdir(file_name)
+        begin
+          ::File.unlink(file_name)
+        rescue
+          Dir.rmdir(file_name)
+        end
       elsif stat.ftype == 'directory'
         if Puppet::Util::Windows::File.symlink?(file_name)
           Dir.rmdir(file_name)

@@ -235,11 +235,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # because by default duplicates are allowed.  This check is
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
-    if (!@resource.allowdupe?) && @resource.forcelocal?
+    if !@resource.allowdupe? && @resource.forcelocal?
       if @resource.should(:uid) && finduser(:uid, @resource.should(:uid).to_s)
         raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
       end
-    elsif @resource.allowdupe? && (!@resource.forcelocal?)
+    elsif @resource.allowdupe? && !@resource.forcelocal?
       return ["-o"]
     end
     []
@@ -324,7 +324,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:add)]
     end
-    if (!@resource.should(:gid)) && Puppet::Util.gid(@resource[:name])
+    if !@resource.should(:gid) && Puppet::Util.gid(@resource[:name])
       cmd += ["-g", @resource[:name]]
     end
     cmd += add_properties

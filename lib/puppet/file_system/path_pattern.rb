@@ -8,7 +8,7 @@ module Puppet::FileSystem
     class InvalidPattern < Puppet::Error; end
 
     DOTDOT = '..'
-    ABSOLUTE_UNIX = /^\//
+    ABSOLUTE_UNIX = %r{^/}
     ABSOLUTE_WINDOWS = /^[a-z]:/i
     CURRENT_DRIVE_RELATIVE_WINDOWS = /^\\/
 

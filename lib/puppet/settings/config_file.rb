@@ -125,7 +125,7 @@ class Puppet::Settings::ConfigFile
     value = string.sub(/\{\s*([^}]+)\s*\}/) do
       params = ::Regexp.last_match(1)
       params.split(/\s*,\s*/).each do |str|
-        if str =~ /^\s*(\w+)\s*=\s*([\w]+)\s*$/
+        if str =~ /^\s*(\w+)\s*=\s*(\w+)\s*$/
           param = ::Regexp.last_match(1).intern
           value = ::Regexp.last_match(2)
           result[param] = value

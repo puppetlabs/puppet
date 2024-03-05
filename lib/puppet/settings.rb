@@ -517,7 +517,7 @@ class Puppet::Settings
   def print_config_options
     if Puppet::Util::Log.sendlevel?(:info)
       Puppet::Util::Log.newdestination(:console)
-      message = (_("Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."))
+      message = _("Using --configprint is deprecated. Use 'puppet config <subcommand>' instead.")
       Puppet.deprecation_warning(message)
     end
 

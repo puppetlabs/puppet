@@ -35,7 +35,9 @@ Puppet::Type.type(:file).provide :posix do
 
   # Determine if the user is valid, and if so, return the UID
   def name2uid(value)
-    Integer(value) rescue uid(value) || false
+    Integer(value)
+  rescue
+    uid(value) || false
   end
 
   def gid2name(id)
@@ -56,7 +58,9 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def name2gid(value)
-    Integer(value) rescue gid(value) || false
+    Integer(value)
+  rescue
+    gid(value) || false
   end
 
   def owner

@@ -278,7 +278,7 @@ module Puppet::Pops
                   references => { Ref => { name => 'cars', version_range => '1.x' } }
                 OBJECT
                 expect { parse_type_set('MySet', ts) }.to raise_error(TypeAssertionError,
-                  /entry 'references' entry 'Ref' entry 'name' expects a match for Pattern\[\/\\A\[A-Z\]\[\\w\]\*\(\?:::\[A-Z\]\[\\w\]\*\)\*\\z\/\], got 'cars'/)
+                  /entry 'references' entry 'Ref' entry 'name' expects a match for Pattern\[\/\\A\[A-Z\]\\w\*\(\?:::\[A-Z\]\\w\*\)\*\\z\/\], got 'cars'/)
               end
 
               it 'has a version_range that is not a valid SemVer range' do

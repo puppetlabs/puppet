@@ -134,7 +134,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     path = File.expand_path(path)
 
     return nil unless type == :directory || Puppet::FileSystem.exist?(path)
-    return nil if path =~ /^\/dev/ || path =~ /^[A-Z]:\/dev/i
+    return nil if path =~ %r{^/dev} || path =~ %r{^[A-Z]:/dev}i
 
     resource = Puppet::Resource.new(:file, path)
 

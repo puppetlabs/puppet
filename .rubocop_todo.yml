@@ -128,6 +128,12 @@ Lint/RedundantDirGlobSort: # new in 1.8
 Lint/RedundantRegexpQuantifiers: # new in 1.53
   Enabled: false
 
+# Unsure how the changes in portage.rb from Lint/RedundantSplatExpansion impact
+# the code
+Lint/RedundantSplatExpansion:
+  Exclude:
+    - 'lib/puppet/provider/package/portage.rb'
+
 Lint/RefinementImportMethods: # new in 1.27
   Enabled: false
 
@@ -646,74 +652,8 @@ Style/OptionalBooleanParameter:
 Style/PreferredHashMethods:
   Enabled: false
 
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantConditional:
-  Exclude:
-    - 'lib/puppet/type/exec.rb'
-    - 'lib/puppet/type/file.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantException:
-  Exclude:
-    - 'lib/puppet/file_bucket/dipper.rb'
-    - 'lib/puppet/forge.rb'
-    - 'lib/puppet/module_tool/applications/unpacker.rb'
-    - 'lib/puppet/module_tool/local_tarball.rb'
-    - 'lib/puppet/module_tool/tar.rb'
-    - 'lib/puppet/pops/types/class_loader.rb'
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
-# Configuration parameters: SafeForConstants.
-Style/RedundantFetchBlock:
-  Exclude:
-    - 'lib/puppet/pops/types/p_sem_ver_range_type.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantFileExtensionInRequire:
-  Exclude:
-    - 'lib/puppet/parser.rb'
-    - 'lib/puppet/type/file/content.rb'
-    - 'lib/puppet/util/rdoc/parser.rb'
-    - 'lib/puppet/util/rdoc/parser/puppet_parser_rdoc2.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/RedundantInterpolation:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantParentheses:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantPercentQ:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/indirector/catalog/store_configs.rb'
-    - 'lib/puppet/indirector/facts/store_configs.rb'
-    - 'lib/puppet/indirector/node/store_configs.rb'
-    - 'lib/puppet/indirector/resource/store_configs.rb'
-    - 'lib/puppet/provider/package/dpkg.rb'
-    - 'lib/puppet/provider/package/rpm.rb'
-    - 'lib/puppet/type.rb'
-    - 'lib/puppet/util/at_fork/solaris.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantRegexpCharacterClass:
-  Exclude:
-    - 'lib/puppet/application/apply.rb'
-    - 'lib/puppet/module.rb'
-    - 'lib/puppet/pops/lookup/interpolation.rb'
-    - 'lib/puppet/pops/parser/lexer2.rb'
-    - 'lib/puppet/pops/parser/slurp_support.rb'
-    - 'lib/puppet/pops/patterns.rb'
-    - 'lib/puppet/pops/pcore.rb'
-    - 'lib/puppet/provider/package/openbsd.rb'
-    - 'lib/puppet/settings/config_file.rb'
-    - 'lib/puppet/type/exec.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RedundantRegexpEscape:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
@@ -724,44 +664,6 @@ Style/RedundantReturn:
 # This cop supports safe auto-correction (--auto-correct).
 Style/RedundantSelf:
   Enabled: false
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/RedundantSelfAssignment:
-  Exclude:
-    - 'lib/puppet/context.rb'
-
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/RedundantSort:
-  Exclude:
-    - 'lib/puppet/interface/face_collection.rb'
-    - 'lib/puppet/module/plan.rb'
-    - 'lib/puppet/module_tool/applications/unpacker.rb'
-    - 'lib/puppet/provider/package/apt.rb'
-    - 'lib/puppet/provider/package/yum.rb'
-    - 'lib/puppet/provider/package/zypper.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, AllowInnerSlashes.
-# SupportedStyles: slashes, percent_r, mixed
-Style/RegexpLiteral:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
-Style/RescueModifier:
-  Exclude:
-    - 'lib/puppet/file_serving/metadata.rb'
-    - 'lib/puppet/file_system/uniquefile.rb'
-    - 'lib/puppet/file_system/windows.rb'
-    - 'lib/puppet/module_tool/applications/application.rb'
-    - 'lib/puppet/module_tool/applications/installer.rb'
-    - 'lib/puppet/module_tool/applications/upgrader.rb'
-    - 'lib/puppet/module_tool/metadata.rb'
-    - 'lib/puppet/module_tool/shared_behaviors.rb'
-    - 'lib/puppet/provider/file/posix.rb'
-    - 'lib/puppet/util.rb'
-    - 'lib/puppet/util/execution.rb'
-    - 'lib/puppet/util/reference.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.

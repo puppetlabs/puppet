@@ -13,7 +13,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
   def self.instances
     packages = []
     execpipe("#{command(:opkg)} list-installed") do |process|
-      regex = %r{^(\S+) - (\S+)}
+      regex = /^(\S+) - (\S+)/
       fields = [:name, :ensure]
       hash = {}
 

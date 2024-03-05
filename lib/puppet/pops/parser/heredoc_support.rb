@@ -8,7 +8,7 @@ module HeredocSupport
   # Pattern for heredoc `@(endtag[:syntax][/escapes])
   # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
   #
-  PATTERN_HEREDOC = %r{@\(([^:/\r\n\)]+)(?::[[:blank:]]*([a-z][a-zA-Z0-9_+]+)[[:blank:]]*)?(?:/((?:\w|[$])*)[[:blank:]]*)?\)}
+  PATTERN_HEREDOC = %r{@\(([^:/\r\n)]+)(?::[[:blank:]]*([a-z][a-zA-Z0-9_+]+)[[:blank:]]*)?(?:/((?:\w|[$])*)[[:blank:]]*)?\)}
 
   def heredoc
     scn = @scanner
@@ -81,7 +81,7 @@ module HeredocSupport
     # that terminates the heredoc is found.
 
     # (Endline in EBNF form): WS* ('|' WS*)? ('-' WS*)? endtag WS* \r? (\n|$)
-    endline_pattern = /([[:blank:]]*)(?:([|])[[:blank:]]*)?(?:(\-)[[:blank:]]*)?#{Regexp.escape(endtag)}[[:blank:]]*\r?(?:\n|\z)/
+    endline_pattern = /([[:blank:]]*)(?:([|])[[:blank:]]*)?(?:(-)[[:blank:]]*)?#{Regexp.escape(endtag)}[[:blank:]]*\r?(?:\n|\z)/
     lines = []
     until scn.eos? do
       one_line = scn.scan_until(/(?:\n|\z)/)

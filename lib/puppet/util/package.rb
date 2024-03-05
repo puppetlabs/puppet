@@ -35,7 +35,7 @@ module Puppet::Util::Package
 
   def self.normalize(version)
     version = version.split('-')
-    version.first.sub!(/([\.0]+)$/, '')
+    version.first.sub!(/([.0]+)$/, '')
 
     version.join('-')
   end

@@ -100,6 +100,6 @@ class Puppet::Parser::TemplateWrapper
   end
 
   def to_s
-    "template[#{(@__file__ || "inline")}]"
+    "template[#{@__file__ || "inline"}]"
   end
 end

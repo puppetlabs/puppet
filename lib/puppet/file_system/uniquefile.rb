@@ -151,10 +151,14 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
     tmp = '.'
     [ENV.fetch('TMPDIR', nil), ENV.fetch('TMP', nil), ENV.fetch('TEMP', nil), @@systmpdir, '/tmp'].each do |dir|
       stat = File.stat(dir) if dir
-      if stat && stat.directory? && stat.writable?
-        tmp = dir
-        break
-      end rescue nil
+      begin
+        if stat && stat.directory? && stat.writable?
+          tmp = dir
+          break
+        end
+      rescue
+        nil
+      end
     end
     File.expand_path(tmp)
   end

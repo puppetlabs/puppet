@@ -18,7 +18,7 @@ class Puppet::FileServing::Mount
 
   # Create our object.  It must have a name.
   def initialize(name)
-    unless name =~ %r{^[-\w]+$}
+    unless name =~ /^[-\w]+$/
       raise ArgumentError, _("Invalid mount name format '%{name}'") % { name: name }
     end
 

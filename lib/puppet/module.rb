@@ -58,7 +58,7 @@ class Puppet::Module
 
   def self.is_module_namespaced_name?(name)
     # it must match the full module name according to forge validator
-    return true if name =~ /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/
+    return true if name =~ /^[a-zA-Z0-9]+-[a-z][a-z0-9_]*$/
 
     return false
   end

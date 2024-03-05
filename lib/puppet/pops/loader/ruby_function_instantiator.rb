@@ -15,7 +15,7 @@ class Puppet::Pops::Loader::RubyFunctionInstantiator
   # @return [Puppet::Pops::Functions.Function] - an instantiated function with global scope closure associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, ruby_code_string)
-    unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet\:\:Functions\.create_function/
+    unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet::Functions\.create_function/
       raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 4x API function - no create_function call.") % { source_ref: source_ref }
     end
 

@@ -158,7 +158,7 @@ class PSemVerRangeType < PAnyType
       end
 
       def from_hash(hash)
-        from_versions(hash['min'], hash.fetch('max') { :default }, hash.fetch('exclude_max') { false })
+        from_versions(hash['min'], hash.fetch('max', :default), hash.fetch('exclude_max', false))
       end
     end
   end

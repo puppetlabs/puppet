@@ -117,7 +117,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     return :false if output == 'indirect'
     return :true if code == 0
 
-    if (output.empty?) && (code > 0) && (Puppet.runtime[:facter].value('os.family').casecmp('debian').zero?)
+    if output.empty? && (code > 0) && Puppet.runtime[:facter].value('os.family').casecmp('debian').zero?
       ret = debian_enabled?
       return ret if ret
     end

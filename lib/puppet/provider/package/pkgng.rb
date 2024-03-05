@@ -113,7 +113,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
       # just 'curl'), drop the category prefix. pkgng doesn't support version
       # pinning with the origin syntax (pkg install curl-1.2.3 is valid, but
       # pkg install www/curl-1.2.3 is not).
-      if resource[:name] =~ /\//
+      if resource[:name] =~ %r{/}
         installname = resource[:name].split('/')[1] + '-' + resource[:ensure]
       else
         installname = resource[:name] + '-' + resource[:ensure]

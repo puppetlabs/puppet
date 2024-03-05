@@ -34,7 +34,7 @@ class Puppet::Provider::Package::Targetable < Puppet::Provider::Package
         catalog_packages.each do |catalog_package|
           if catalog_package[:name] == instance.name && catalog_package.original_parameters[:command] == command
             catalog_package.provider = instance
-            self.debug "Prefetched instance: %{name} via command: %{cmd}" % { name: instance.name, cmd: (command || :default) }
+            self.debug "Prefetched instance: %{name} via command: %{cmd}" % { name: instance.name, cmd: command || :default }
           end
         end
       end

@@ -160,7 +160,7 @@ module Logging
     file = options[:file]
     line = options[:line]
     # TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
-    raise Puppet::DevError, _("Need either :file and :line, or :key") if (key.nil?) && (file.nil? || line.nil?)
+    raise Puppet::DevError, _("Need either :file and :line, or :key") if key.nil? && (file.nil? || line.nil?)
 
     key ||= "#{file}:#{line}"
     issue_deprecation_warning(message, key, file, line, false)
@@ -243,7 +243,7 @@ module Logging
           next if $logged_deprecation_warnings.has_key?(offender)
 
           $logged_deprecation_warnings[offender] = true
-          next unless (pattern.nil?) || (message =~ pattern)
+          next unless pattern.nil? || (message =~ pattern)
 
           f.puts(message)
           f.puts(offender)

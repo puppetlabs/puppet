@@ -69,7 +69,7 @@ module RDoc::PuppetParserCore
     # find a module
     fullpath = File.expand_path(path)
     Puppet.debug "rdoc: testing #{fullpath}"
-    if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins|lib)\/.+\.(rb)$/
+    if fullpath =~ %r{(.*)/([^/]+)/(?:manifests|plugins|lib)/.+\.(rb)$}
       modpath = ::Regexp.last_match(1)
       name = ::Regexp.last_match(2)
       Puppet.debug "rdoc: module #{name} into #{modpath} ?"
@@ -138,7 +138,7 @@ module RDoc::PuppetParserCore
   # create documentation for plugins
   def parse_plugins(container)
     Puppet.debug "rdoc: scanning plugin or fact"
-    if @input_file_name =~ /\/facter\/[^\/]+\.rb$/
+    if @input_file_name =~ %r{/facter/[^/]+\.rb$}
       parse_fact(container)
     else
       parse_puppet_plugin(container)

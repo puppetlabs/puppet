@@ -56,7 +56,7 @@ class Puppet::FileServing::Configuration
 
     mount_name, path = request.key.split(File::Separator, 2)
 
-    raise(ArgumentError, _("Cannot find file: Invalid mount '%{mount_name}'") % { mount_name: mount_name }) unless mount_name =~ %r{^[-\w]+$}
+    raise(ArgumentError, _("Cannot find file: Invalid mount '%{mount_name}'") % { mount_name: mount_name }) unless mount_name =~ /^[-\w]+$/
     raise(ArgumentError, _("Cannot find file: Invalid relative path '%{path}'") % { path: path }) if path and path.split('/').include?('..')
 
     mount = find_mount(mount_name, request.environment)
@@ -71,7 +71,7 @@ class Puppet::FileServing::Configuration
       path = nil
     elsif path
       # Remove any double slashes that might have occurred
-      path = path.gsub(/\/+/, "/")
+      path = path.gsub(%r{/+}, "/")
     end
 
     return mount, path

@@ -108,7 +108,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       end
     end
 
-    return versions.sort.last if versions.any?
+    return versions.max if versions.any?
 
     Puppet.debug("No available version for package #{@resource[:name]} is included in range #{should_range}")
     should_range

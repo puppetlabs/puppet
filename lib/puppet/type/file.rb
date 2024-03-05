@@ -461,7 +461,7 @@ Puppet::Type.newtype(:file) do
   def self.[](path)
     return nil unless path
 
-    super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
+    super(path.gsub(%r{/+}, '/').sub(%r{/$}, ''))
   end
 
   def self.instances

@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
   end
 
   def install
-    if @resource[:source] =~ /\/$/
+    if @resource[:source] =~ %r{/$}
       if @resource[:source] =~ /^(ftp|https?):/
         Puppet::Util.withenv :PACKAGESITE => @resource[:source] do
           pkgadd "-r", @resource[:name]

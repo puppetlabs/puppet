@@ -163,7 +163,7 @@ module Puppet::Util::Package::Version
     end
 
     def match_non_letters(a)
-      a.match(/^([\.\+-]+)/)
+      a.match(/^([.+-]+)/)
     end
 
     def match_tildes(a)

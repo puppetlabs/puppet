@@ -33,6 +33,24 @@ Layout/IndentationWidth:
 Layout/LineEndStringConcatenationIndentation:
   Enabled: true
 
+# Enabling this cop will remove raising RuntimeErrors and cause spec test
+# failures
+Style/RedundantException:
+  Exclude:
+    - 'lib/puppet/file_bucket/dipper.rb'
+    - 'lib/puppet/forge.rb'
+    - 'lib/puppet/module_tool/applications/unpacker.rb'
+    - 'lib/puppet/module_tool/local_tarball.rb'
+    - 'lib/puppet/module_tool/tar.rb'
+    - 'lib/puppet/pops/types/class_loader.rb'
+
+# Enabling this cop causes a plethora of failed rspec tests, mostly
+# Errno::ENAMETOOLONG and Puppet::Context::UndefinedBindingError: Unable to
+# lookup 'environments' errors
+Style/RedundantSelfAssignment:
+  Exclude:
+    - 'lib/puppet/context.rb'
+
 # Explicitly enables this cop new in 1.7
 Layout/SpaceBeforeBrackets:
   Enabled: true

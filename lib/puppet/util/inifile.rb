@@ -150,7 +150,7 @@ module Puppet::Util::IniConfig
     )
     INI_CONTINUATION = /^[ \t\r\n\f]/
     INI_SECTION_NAME = /^\[([^\]]+)\]/
-    INI_PROPERTY     = /^\s*([^\s=]+)\s*\=\s*(.*)$/
+    INI_PROPERTY     = /^\s*([^\s=]+)\s*=\s*(.*)$/
 
     # @api private
     def parse(text)

@@ -169,7 +169,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     when sources.empty?
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
-    when (!(sources.all? { |source| source =~ /^puppet:/ }))
+    when !(sources.all? { |source| source =~ /^puppet:/ })
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
       return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
     else
@@ -185,8 +185,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     location = Puppet::Module::FILETYPES['files']
 
-    !!(source_as_uri.path =~ /^\/modules\// &&
-       metadata.full_path =~ /#{environment_path}\/[^\/]+\/[^\/]+\/#{location}\/.+/)
+    !!(source_as_uri.path =~ %r{^/modules/} &&
+       metadata.full_path =~ %r{#{environment_path}/[^/]+/[^/]+/#{location}/.+})
   end
 
   # Helper method to log file resources that could not be inlined because they

@@ -76,7 +76,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def command(cmd)
-    cmd = ("role_#{cmd}").intern if is_role? or (!exists? and @resource[:ensure] == :role)
+    cmd = "role_#{cmd}".intern if is_role? or (!exists? and @resource[:ensure] == :role)
     super(cmd)
   end
 

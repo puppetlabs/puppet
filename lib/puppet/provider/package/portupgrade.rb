@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     Puppet.debug "portupgrade.rb Building packages list from installed ports"
 
     # regex to match output from pkg_info
-    regex = %r{^(\S+)-([^-\s]+):(\S+)$}
+    regex = /^(\S+)-([^-\s]+):(\S+)$/
     # Corresponding field names
     fields = [:portname, :ensure, :portorigin]
     # define Temporary hash used, packages array of hashes

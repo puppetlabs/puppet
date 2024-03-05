@@ -5,7 +5,7 @@ require 'uri'
 require 'tempfile'
 
 require_relative '../../../puppet/util/checksums'
-require_relative '../../../puppet/type/file/data_sync.rb'
+require_relative '../../../puppet/type/file/data_sync'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do

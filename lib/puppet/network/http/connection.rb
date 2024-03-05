@@ -245,7 +245,7 @@ class Puppet::Network::HTTP::Connection
   end
 
   def to_url(path)
-    if path =~ /^https?:\/\//
+    if path =~ %r{^https?://}
       # The old Connection class accepts a URL as the request path, and sends
       # it in "absolute-form" in the request line, e.g. GET https://puppet:8140/.
       # See https://httpwg.org/specs/rfc7230.html#absolute-form. It just so happens

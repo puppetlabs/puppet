@@ -353,7 +353,7 @@ module Puppet
 
       munge do |value|
         if value.is_a?(String)
-          unless value =~ /^[\d]+$/
+          unless value =~ /^\d+$/
             raise ArgumentError, _("Tries must be an integer")
           end
 
