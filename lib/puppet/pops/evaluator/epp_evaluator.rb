@@ -31,7 +31,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
 
     unless Puppet::FileSystem.exist?(file)
       unless file =~ /\.epp$/
-        file = file + ".epp"
+        file += ".epp"
       end
     end
 

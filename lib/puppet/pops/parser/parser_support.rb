@@ -77,7 +77,7 @@ class Parser
   def parse_file(file)
     unless Puppet::FileSystem.exist?(file)
       unless file =~ /\.pp$/
-        file = file + ".pp"
+        file += ".pp"
       end
     end
     @lexer.file = file

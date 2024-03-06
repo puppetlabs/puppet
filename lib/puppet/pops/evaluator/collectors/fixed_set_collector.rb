@@ -25,7 +25,7 @@ class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Eva
       resolved << ref
     end
 
-    @resources = @resources - resolved
+    @resources -= resolved
 
     @scope.compiler.delete_collection(self) if @resources.empty?
 

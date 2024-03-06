@@ -665,19 +665,6 @@ Style/SafeNavigation:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/SelfAssignment:
-  Exclude:
-    - 'lib/puppet/pops/evaluator/access_operator.rb'
-    - 'lib/puppet/pops/evaluator/collectors/fixed_set_collector.rb'
-    - 'lib/puppet/pops/evaluator/epp_evaluator.rb'
-    - 'lib/puppet/pops/parser/epp_parser.rb'
-    - 'lib/puppet/pops/parser/parser_support.rb'
-    - 'lib/puppet/pops/time/timestamp.rb'
-    - 'lib/puppet/pops/types/recursion_guard.rb'
-    - 'lib/puppet/property/ordered_list.rb'
-    - 'lib/puppet/util/autoload.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowAsExpressionSeparator.
 Style/Semicolon:
   Enabled: false
