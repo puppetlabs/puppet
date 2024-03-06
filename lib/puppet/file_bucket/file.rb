@@ -73,7 +73,7 @@ class Puppet::FileBucket::File
   end
 
   def self.from_binary(contents)
-    self.new(contents)
+    new(contents)
   end
 
   class StringContents

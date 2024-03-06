@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
 
   def self.instances
     instance_by_name.collect do |name|
-      self.new(
+      new(
         :name => name,
         :provider => :apple,
         :ensure => :installed

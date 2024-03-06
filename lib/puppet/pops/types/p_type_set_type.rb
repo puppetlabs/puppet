@@ -359,20 +359,20 @@ class PTypeSetType < PMetaType
   end
 
   DEFAULT =
-    self
-    .new({
-           KEY_NAME => 'DefaultTypeSet',
-           KEY_NAME_AUTHORITY => Pcore::RUNTIME_NAME_AUTHORITY,
-           Pcore::KEY_PCORE_URI => Pcore::PCORE_URI,
-           Pcore::KEY_PCORE_VERSION => Pcore::PCORE_VERSION,
-           KEY_VERSION => SemanticPuppet::Version.new(0, 0, 0)
-         })
+
+    new({
+          KEY_NAME => 'DefaultTypeSet',
+          KEY_NAME_AUTHORITY => Pcore::RUNTIME_NAME_AUTHORITY,
+          Pcore::KEY_PCORE_URI => Pcore::PCORE_URI,
+          Pcore::KEY_PCORE_VERSION => Pcore::PCORE_VERSION,
+          KEY_VERSION => SemanticPuppet::Version.new(0, 0, 0)
+        })
 
   protected
 
   # @api_private
   def _assignable?(o, guard)
-    self.instance_of?(o.class) && (self == DEFAULT || eql?(o))
+    instance_of?(o.class) && (self == DEFAULT || eql?(o))
   end
 
   private

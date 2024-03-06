@@ -9,7 +9,7 @@ module Puppet::ModuleTool
   module Applications
     class Unpacker < Application
       def self.unpack(filename, target)
-        app = self.new(filename, :target_dir => target)
+        app = new(filename, :target_dir => target)
         app.unpack
         app.sanity_check
         app.move_into(target)

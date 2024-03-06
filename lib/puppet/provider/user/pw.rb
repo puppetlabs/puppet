@@ -96,7 +96,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
 
   # Get expiry from system and convert to Puppet-style date
   def expiry
-    expiry = self.get(:expiry)
+    expiry = get(:expiry)
     expiry = :absent if expiry == 0
 
     if expiry != :absent

@@ -282,7 +282,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
   end
 
   def update
-    self.install(false)
+    install(false)
   end
 
   def install_options

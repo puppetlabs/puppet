@@ -26,14 +26,14 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
 
     Puppet::FileSystem.replace_file(filename, 0o660) { |f| f.print to_msgpack(request.instance) }
   rescue TypeError => detail
-    Puppet.log_exception(detail, _("Could not save %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail })
+    Puppet.log_exception(detail, _("Could not save %{name} %{request}: %{detail}") % { name: name, request: request.key, detail: detail })
   end
 
   def destroy(request)
     Puppet::FileSystem.unlink(path(request.key))
   rescue => detail
     unless detail.is_a? Errno::ENOENT
-      raise Puppet::Error, _("Could not destroy %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail }, detail.backtrace
+      raise Puppet::Error, _("Could not destroy %{name} %{request}: %{detail}") % { name: name, request: request.key, detail: detail }, detail.backtrace
     end
 
     1 # emulate success...

@@ -8,7 +8,7 @@ class Puppet::Parser::AST::BlockExpression < Puppet::Parser::AST::Branch
   end
 
   def sequence_with(other)
-    Puppet::Parser::AST::BlockExpression.new(:children => self.children + other.children)
+    Puppet::Parser::AST::BlockExpression.new(:children => children + other.children)
   end
 
   def to_s

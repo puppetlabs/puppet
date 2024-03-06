@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
               hash[field] = value
             }
 
-            hash[:provider] = self.name
+            hash[:provider] = name
 
             packages << new(hash)
             hash = {}
@@ -117,7 +117,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def update
-    self.install(true)
+    install(true)
   end
 
   def parse_pkgconf

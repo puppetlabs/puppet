@@ -133,22 +133,22 @@ module Puppet
         if @resource.check_all_attributes
           return :notrun
         else
-          return self.should
+          return should
         end
       end
 
       # Actually execute the command.
       def sync
         event = :executed_command
-        tries = self.resource[:tries]
-        try_sleep = self.resource[:try_sleep]
+        tries = resource[:tries]
+        try_sleep = resource[:try_sleep]
 
         begin
           tries.times do |try|
             # Only add debug messages for tries > 1 to reduce log spam.
             debug("Exec try #{try + 1}/#{tries}") if tries > 1
-            @output, @status = provider.run(self.resource[:command])
-            break if self.should.include?(@status.exitstatus.to_s)
+            @output, @status = provider.run(resource[:command])
+            break if should.include?(@status.exitstatus.to_s)
 
             if try_sleep > 0 and tries > 1
               debug("Sleeping for #{try_sleep} seconds between tries")
@@ -165,7 +165,7 @@ module Puppet
           when :true
             log = @resource[:loglevel]
           when :on_failure
-            unless self.should.include?(@status.exitstatus.to_s)
+            unless should.include?(@status.exitstatus.to_s)
               log = @resource[:loglevel]
             else
               log = :false
@@ -173,21 +173,21 @@ module Puppet
           end
           unless log == :false
             if @resource.parameter(:command).sensitive
-              self.send(log, "[output redacted]")
+              send(log, "[output redacted]")
             else
               @output.split(/\n/).each { |line|
-                self.send(log, line)
+                send(log, line)
               }
             end
           end
         end
 
-        unless self.should.include?(@status.exitstatus.to_s)
+        unless should.include?(@status.exitstatus.to_s)
           if @resource.parameter(:command).sensitive
             # Don't print sensitive commands in the clear
-            self.fail(_("[command redacted] returned %{status} instead of one of [%{expected}]") % { status: @status.exitstatus, expected: self.should.join(",") })
+            self.fail(_("[command redacted] returned %{status} instead of one of [%{expected}]") % { status: @status.exitstatus, expected: should.join(",") })
           else
-            self.fail(_("'%{cmd}' returned %{status} instead of one of [%{expected}]") % { cmd: self.resource[:command], status: @status.exitstatus, expected: self.should.join(",") })
+            self.fail(_("'%{cmd}' returned %{status} instead of one of [%{expected}]") % { cmd: resource[:command], status: @status.exitstatus, expected: should.join(",") })
           end
         end
 
@@ -503,10 +503,10 @@ module Puppet
         end
 
         if sensitive
-          self.debug("[output redacted]")
+          debug("[output redacted]")
         else
           output.split(/\n/).each { |line|
-            self.debug(line)
+            debug(line)
           }
         end
 
@@ -566,10 +566,10 @@ module Puppet
         end
 
         if sensitive
-          self.debug("[output redacted]")
+          debug("[output redacted]")
         else
           output.split(/\n/).each { |line|
-            self.debug(line)
+            debug(line)
           }
         end
 
@@ -596,7 +596,7 @@ module Puppet
       cmd = cmd[0] if cmd.is_a? Array
 
       if cmd.is_a?(Puppet::Pops::Evaluator::DeferredValue)
-        self.debug("The 'command' parameter is deferred and cannot be autorequired")
+        debug("The 'command' parameter is deferred and cannot be autorequired")
       else
         cmd.scan(file_regex) { |str|
           reqs << str
@@ -621,7 +621,7 @@ module Puppet
           # to do.
           line = line[0] if line.is_a? Array
           if line.is_a?(Puppet::Pops::Evaluator::DeferredValue)
-            self.debug("The '#{param}' parameter is deferred and cannot be autorequired")
+            debug("The '#{param}' parameter is deferred and cannot be autorequired")
           else
             reqs += line.scan(file_regex)
           end
@@ -674,21 +674,21 @@ module Puppet
     end
 
     def output
-      if self.property(:returns).nil?
+      if property(:returns).nil?
         return nil
       else
-        return self.property(:returns).output
+        return property(:returns).output
       end
     end
 
     # Run the command, or optionally run a separately-specified command.
     def refresh
-      if self.check_all_attributes(true)
+      if check_all_attributes(true)
         cmd = self[:refresh]
         if cmd
           provider.run(cmd)
         else
-          self.property(:returns).sync
+          property(:returns).sync
         end
       end
     end

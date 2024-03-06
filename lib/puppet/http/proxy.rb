@@ -6,7 +6,7 @@ require_relative '../../puppet/ssl/openssl_loader'
 module Puppet::HTTP::Proxy
   def self.proxy(uri)
     if http_proxy_host && !no_proxy?(uri)
-      Net::HTTP.new(uri.host, uri.port, self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
+      Net::HTTP.new(uri.host, uri.port, http_proxy_host, http_proxy_port, http_proxy_user, http_proxy_password)
     else
       http = Net::HTTP.new(uri.host, uri.port, nil, nil, nil, nil)
       # Net::HTTP defaults the proxy port even though we said not to
@@ -72,7 +72,7 @@ module Puppet::HTTP::Proxy
   end
 
   def self.http_proxy_host
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.host
       return env.host
@@ -86,7 +86,7 @@ module Puppet::HTTP::Proxy
   end
 
   def self.http_proxy_port
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.port
       return env.port
@@ -96,7 +96,7 @@ module Puppet::HTTP::Proxy
   end
 
   def self.http_proxy_user
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.user
       return env.user
@@ -110,7 +110,7 @@ module Puppet::HTTP::Proxy
   end
 
   def self.http_proxy_password
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.password
       return env.password

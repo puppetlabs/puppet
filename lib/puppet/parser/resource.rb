@@ -33,7 +33,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def [](param)
     param = param.intern
     if param == :title
-      return self.title
+      return title
     end
 
     if @parameters.has_key?(param)
@@ -57,7 +57,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   # is drawn from  the class to the stage.   The stage for containment
   # defaults to main, if none is specified.
   def add_edge_to_stage
-    return unless self.class?
+    return unless class?
 
     stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
     unless stage
@@ -138,7 +138,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       scope.lookupdefaults(self.type).each_pair do |name, param|
         next if @parameters.include?(name)
 
-        self.debug "Adding default for #{name}"
+        debug "Adding default for #{name}"
 
         param = param.dup
         @parameters[name] = param
@@ -161,7 +161,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def merge(resource)
     # Test the resource scope, to make sure the resource is even allowed
     # to override.
-    unless self.source.equal?(resource.source) || resource.source.child_of?(self.source)
+    unless source.equal?(resource.source) || resource.source.child_of?(source)
       raise Puppet::ParseError.new(_("Only subclasses can override parameters"), resource.file, resource.line)
     end
 
@@ -190,7 +190,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def name
-    self[:name] || self.title
+    self[:name] || title
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.
@@ -203,7 +203,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     unless param.is_a?(Puppet::Parser::Resource::Param)
       param = param.name if param.is_a?(Puppet::Pops::Resource::Param)
       param = Puppet::Parser::Resource::Param.new(
-        :name => param, :value => value, :source => self.source
+        :name => param, :value => value, :source => source
       )
     end
 

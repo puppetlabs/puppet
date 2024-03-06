@@ -71,7 +71,7 @@ module Puppet::Util::Tagging
   # @return [Boolean] true if this instance is tagged with at least one of the provided tags
   #
   def raw_tagged?(tag_array)
-    my_tags = self.tags
+    my_tags = tags
     !tag_array.index { |t| my_tags.include?(t) }.nil?
   end
 

@@ -849,7 +849,7 @@ module Puppet
           name = "#{keyfile}:unnamed-#{name_index += 1}"
         end
         names << name
-        Puppet.debug "#{self.ref} parsed for purging Ssh_authorized_key[#{name}]"
+        Puppet.debug "#{ref} parsed for purging Ssh_authorized_key[#{name}]"
       end
 
       names.map { |keyname|

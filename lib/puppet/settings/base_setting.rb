@@ -107,15 +107,15 @@ class Puppet::Settings::BaseSetting
 
     args.each do |param, value|
       method = param.to_s + "="
-      unless self.respond_to? method
+      unless respond_to? method
         raise ArgumentError, _("%{class_name} (setting '%{setting}') does not accept %{parameter}") %
                              { class_name: self.class, setting: args[:name], parameter: param }
       end
 
-      self.send(method, value)
+      send(method, value)
     end
-    unless self.desc
-      raise ArgumentError, _("You must provide a description for the %{class_name} config option") % { class_name: self.name }
+    unless desc
+      raise ArgumentError, _("You must provide a description for the %{class_name} config option") % { class_name: name }
     end
   end
 
@@ -161,7 +161,7 @@ class Puppet::Settings::BaseSetting
     # If the value has not been overridden, then print it out commented
     # and unconverted, so it's clear that that's the default and how it
     # works.
-    value = @settings.value(self.name)
+    value = @settings.value(name)
 
     if value != @default
       line = "#{@name} = #{value}"
@@ -180,7 +180,7 @@ class Puppet::Settings::BaseSetting
   # @return [String] Retrieves the value, or if it's not set, retrieves the default.
   # @api public
   def value(bypass_interpolation = false)
-    @settings.value(self.name, nil, bypass_interpolation)
+    @settings.value(name, nil, bypass_interpolation)
   end
 
   # Modify the value when it is first evaluated
@@ -223,6 +223,6 @@ class Puppet::Settings::BaseSetting
   end
 
   def inspect
-    %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}" @default="#{@default}" @call_hook="#{@call_hook}">)
+    %Q(<#{self.class}:#{object_id} @name="#{@name}" @section="#{@section}" @default="#{@default}" @call_hook="#{@call_hook}">)
   end
 end

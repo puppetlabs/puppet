@@ -92,7 +92,7 @@ module Puppet
     end
 
     def content
-      self.should
+      should
     end
 
     # Override this method to provide diffs if asked for.

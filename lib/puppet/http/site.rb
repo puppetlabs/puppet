@@ -10,7 +10,7 @@ class Puppet::HTTP::Site
   attr_reader :scheme, :host, :port
 
   def self.from_uri(uri)
-    self.new(uri.scheme, uri.host, uri.port)
+    new(uri.scheme, uri.host, uri.port)
   end
 
   def initialize(scheme, host, port)

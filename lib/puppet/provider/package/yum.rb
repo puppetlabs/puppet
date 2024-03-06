@@ -124,9 +124,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     when 100
       updates = parse_updates(output)
     when 0
-      self.debug "#{command(:cmd)} check-update exited with 0; no package updates available."
+      debug "#{command(:cmd)} check-update exited with 0; no package updates available."
     else
-      self.warning _("Could not check for updates, '%{cmd} check-update' exited with %{status}") % { cmd: command(:cmd), status: output.exitstatus }
+      warning _("Could not check for updates, '%{cmd} check-update' exited with %{status}") % { cmd: command(:cmd), status: output.exitstatus }
     end
     updates
   end
@@ -251,17 +251,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     end
 
     should = @resource.should(:ensure)
-    self.debug "Ensuring => #{should}"
+    debug "Ensuring => #{should}"
     operation = :install
 
     case should
     when :latest
-      current_package = self.query
+      current_package = query
       if current_package && !current_package[:ensure].to_s.empty?
         operation = update_command
-        self.debug "Ensuring latest, so using #{operation}"
+        debug "Ensuring latest, so using #{operation}"
       else
-        self.debug "Ensuring latest, but package is absent, so using install"
+        debug "Ensuring latest, but package is absent, so using install"
         operation = :install
       end
       should = nil
@@ -270,7 +270,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # version feed it to yum directly
       if @resource[:source]
         wanted = @resource[:source]
-        self.debug "Installing directly from #{wanted}"
+        debug "Installing directly from #{wanted}"
       end
       should = nil
     when false, :absent
@@ -282,26 +282,26 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         # version, and also supplying the path to a package that supplies that
         # version.
         wanted = @resource[:source]
-        self.debug "Installing directly from #{wanted}"
+        debug "Installing directly from #{wanted}"
       else
         # No explicit source was specified, so add the package version
         should = best_version(should)
         wanted += "-#{should}"
         if wanted.scan(self.class::ARCH_REGEX)
-          self.debug "Detected Arch argument in package! - Moving arch to end of version string"
+          debug "Detected Arch argument in package! - Moving arch to end of version string"
           wanted.gsub!(/(.+)(#{self.class::ARCH_REGEX})(.+)/, '\1\3\2')
         end
       end
-      current_package = self.query
+      current_package = query
       if current_package
         if @resource[:install_only]
-          self.debug "Updating package #{@resource[:name]} from version #{current_package[:ensure]} to #{should} as install_only packages are never downgraded"
+          debug "Updating package #{@resource[:name]} from version #{current_package[:ensure]} to #{should} as install_only packages are never downgraded"
           operation = update_command
         elsif rpm_compare_evr(should, current_package[:ensure]) < 0
-          self.debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
+          debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = :downgrade
         elsif rpm_compare_evr(should, current_package[:ensure]) > 0
-          self.debug "Upgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
+          debug "Upgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = update_command
         end
       end
@@ -319,8 +319,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # If a version was specified, query again to see if it is a matching version
     if should
-      is = self.query
-      raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
+      is = query
+      raise Puppet::Error, _("Could not find package %{name}") % { name: name } unless is
 
       version = is[:ensure]
       # FIXME: Should we raise an exception even if should == :latest
@@ -339,7 +339,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       return "#{upd[:epoch]}:#{upd[:version]}-#{upd[:release]}"
     else
       # Yum didn't find updates, pretend the current version is the latest
-      self.debug "Yum didn't find updates, current version (#{properties[:ensure]}) is the latest"
+      debug "Yum didn't find updates, current version (#{properties[:ensure]}) is the latest"
       version = properties[:ensure]
       raise Puppet::DevError, _("Tried to get latest on a missing package") if version == :absent || version == :purged
 
@@ -349,7 +349,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   def update
     # Install in yum can be used for update, too
-    self.install
+    install
   end
 
   def purge

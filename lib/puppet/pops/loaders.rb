@@ -28,7 +28,7 @@ class Loaders
     environment.lock.synchronize do
       obj = environment.loaders
       if obj.nil?
-        obj = self.allocate
+        obj = allocate
         obj.send(:initialize, environment, for_agent, load_from_pcore)
       end
       obj

@@ -36,7 +36,7 @@ Puppet::Reports.register_report(:http) do
     end
 
     client = Puppet.runtime[:http]
-    client.post(url, self.to_yaml, headers: headers, options: options) do |response|
+    client.post(url, to_yaml, headers: headers, options: options) do |response|
       unless response.success?
         Puppet.err _("Unable to submit report to %{url} [%{code}] %{message}") % { url: Puppet[:reporturl].to_s, code: response.code, message: response.reason }
       end

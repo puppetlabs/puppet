@@ -40,7 +40,7 @@ class Puppet::Interface::Action
   # @return [void]
   # @api private
   def __dup_and_rebind_to(to)
-    bound_version = self.dup
+    bound_version = dup
     bound_version.instance_variable_set(:@face, to)
     return bound_version
   end

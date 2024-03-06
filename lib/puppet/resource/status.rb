@@ -102,7 +102,7 @@ module Puppet
       end
 
       def self.from_data_hash(data)
-        obj = self.allocate
+        obj = allocate
         obj.initialize_from_hash(data)
         obj
       end
@@ -216,7 +216,7 @@ module Puppet
           'tags' => @tags.to_a,
           'time' => @time.iso8601(9),
           'failed' => @failed,
-          'failed_to_restart' => self.failed_to_restart?,
+          'failed_to_restart' => failed_to_restart?,
           'changed' => @changed,
           'out_of_sync' => @out_of_sync,
           'skipped' => @skipped,

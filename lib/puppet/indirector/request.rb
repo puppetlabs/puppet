@@ -144,7 +144,7 @@ class Puppet::Indirector::Request
   end
 
   def remote?
-    self.node or self.ip
+    node or ip
   end
 
   private

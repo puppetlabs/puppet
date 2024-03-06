@@ -30,10 +30,10 @@ module Puppet
     def retrieve
       return :absent unless @resource.stat
 
-      context = self.get_selinux_current_context(@resource[:path])
+      context = get_selinux_current_context(@resource[:path])
       is = parse_selinux_context(name, context)
       if name == :selrange and selinux_support?
-        self.selinux_category_to_label(is)
+        selinux_category_to_label(is)
       else
         is
       end
@@ -44,13 +44,13 @@ module Puppet
         return nil
       end
 
-      context = self.get_selinux_default_context(@resource[:path], @resource[:ensure])
+      context = get_selinux_default_context(@resource[:path], @resource[:ensure])
       unless context
         return nil
       end
 
-      property_default = self.parse_selinux_context(property, context)
-      self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" unless property_default.nil?
+      property_default = parse_selinux_context(property, context)
+      debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" unless property_default.nil?
       property_default
     end
 
@@ -72,14 +72,14 @@ module Puppet
       end
 
       if name == :selrange
-        self.selinux_category_to_label(should)
+        selinux_category_to_label(should)
       else
         should
       end
     end
 
     def sync
-      self.set_selinux_context(@resource[:path], @should, name)
+      set_selinux_context(@resource[:path], @should, name)
       :file_changed
     end
   end
@@ -103,7 +103,7 @@ module Puppet
       enabled."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:seluser) }
+    defaultto { retrieve_default_context(:seluser) }
   end
 
   Puppet::Type.type(:file).newproperty(:selrole, :parent => Puppet::SELFileContext) do
@@ -114,7 +114,7 @@ module Puppet
       enabled."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:selrole) }
+    defaultto { retrieve_default_context(:selrole) }
   end
 
   Puppet::Type.type(:file).newproperty(:seltype, :parent => Puppet::SELFileContext) do
@@ -125,7 +125,7 @@ module Puppet
       enabled."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:seltype) }
+    defaultto { retrieve_default_context(:seltype) }
   end
 
   Puppet::Type.type(:file).newproperty(:selrange, :parent => Puppet::SELFileContext) do
@@ -137,6 +137,6 @@ module Puppet
       Security)."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:selrange) }
+    defaultto { retrieve_default_context(:selrange) }
   end
 end

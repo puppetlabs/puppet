@@ -25,7 +25,7 @@ class Puppet::Util::Windows::RootCerts
   # Returns a new instance.
   # @return [Puppet::Util::Windows::RootCerts] object constructed from current root certificates
   def self.instance
-    new(self.load_certs)
+    new(load_certs)
   end
 
   # Returns an array of root certificates.

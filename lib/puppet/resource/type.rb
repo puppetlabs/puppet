@@ -47,7 +47,7 @@ class Puppet::Resource::Type
   attr_reader :type
 
   RESOURCE_KINDS.each do |t|
-    define_method("#{t}?") { self.type == t }
+    define_method("#{t}?") { type == t }
   end
 
   # Are we a child of the passed class?  Do a recursive search up our
@@ -140,7 +140,7 @@ class Puppet::Resource::Type
     # This might just be an empty, stub class.
     return unless other.code
 
-    unless self.code
+    unless code
       self.code = other.code
       return
     end
@@ -237,7 +237,7 @@ class Puppet::Resource::Type
       scope[TITLE] = resource.title
       scope[NAME] = resource.name
     end
-    scope.class_set(self.name, scope) if hostclass? || node?
+    scope.class_set(name, scope) if hostclass? || node?
 
     param_hash = scope.with_parameter_scope(resource.to_s, arguments.keys) do |param_scope|
       # Assign directly to the parameter scope to avoid scope parameter validation at this point. It
@@ -401,9 +401,9 @@ class Puppet::Resource::Type
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce _("%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition") % { param: param, name: self.name }
+      warnonce _("%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition") % { param: param, name: name }
     else
-      raise Puppet::ParseError, _("%{param} is a metaparameter; please choose another parameter name in the %{name} definition") % { param: param, name: self.name }
+      raise Puppet::ParseError, _("%{param} is a metaparameter; please choose another parameter name in the %{name} definition") % { param: param, name: name }
     end
   end
 

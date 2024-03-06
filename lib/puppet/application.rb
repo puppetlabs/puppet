@@ -187,7 +187,7 @@ class Application
           self.options[long.to_s.to_sym] = value
         end
       end
-      self.option_parser_commands << [options, fname]
+      option_parser_commands << [options, fname]
     end
 
     def banner(banner = nil)
@@ -261,7 +261,7 @@ class Application
     # @param [String] class_name the fully qualified name of the class to try to load
     # @return [Class] the Class instance, or nil? if it could not be loaded.
     def try_load_class(class_name)
-      return self.const_defined?(class_name) ? const_get(class_name) : nil
+      return const_defined?(class_name) ? const_get(class_name) : nil
     end
     private :try_load_class
 
@@ -553,14 +553,14 @@ class Application
     self.class.option_parser_commands.each do |options, fname|
       option_parser.on(*options) do |value|
         # Call the method that "option()" created.
-        self.send(fname, value)
+        send(fname, value)
       end
     end
 
     # Scan command line.  We just hand any exceptions to our upper levels,
     # rather than printing help and exiting, so that we can meaningfully
     # respond with context-sensitive help if we want to. --daniel 2011-04-12
-    option_parser.parse!(self.command_line.args)
+    option_parser.parse!(command_line.args)
   end
 
   def handlearg(opt, val)

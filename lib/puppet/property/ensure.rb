@@ -62,7 +62,7 @@ class Puppet::Property::Ensure < Puppet::Property
   rescue Puppet::Error
     raise
   rescue => detail
-    raise Puppet::DevError, _("Could not convert change %{name} to string: %{detail}") % { name: self.name, detail: detail }, detail.backtrace
+    raise Puppet::DevError, _("Could not convert change %{name} to string: %{detail}") % { name: name, detail: detail }, detail.backtrace
   end
 
   # Retrieves the _is_ value for the ensure property.

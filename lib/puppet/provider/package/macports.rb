@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
       fields.zip(match.captures) { |field, value|
         hash[field] = value
       }
-      hash[:provider] = self.name
+      hash[:provider] = name
       return hash
     end
     nil

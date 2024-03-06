@@ -131,7 +131,7 @@ module Types
 
       chopped_path = @path.clone
       chopped_path.delete_at(element_index)
-      copy = self.clone
+      copy = clone
       copy.instance_variable_set(:@path, chopped_path)
       copy
     end

@@ -69,7 +69,7 @@ class Puppet::Network::HTTP::Route
   end
 
   def matches?(request)
-    Puppet.debug { "Evaluating match for #{self.inspect}" }
+    Puppet.debug { "Evaluating match for #{inspect}" }
     if match(request.routing_path)
       return true
     else

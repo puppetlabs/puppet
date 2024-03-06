@@ -44,7 +44,7 @@ class Puppet::Resource
   VALUE_KEY = 'value'
 
   def self.from_data_hash(data)
-    resource = self.allocate
+    resource = allocate
     resource.initialize_from_hash(data)
     resource
   end
@@ -116,7 +116,7 @@ class Puppet::Resource
     converter = stringify ? Puppet::Pops::Serialization::ToStringifiedConverter.new : nil
 
     params = {}
-    self.to_hash.each_pair do |param, value|
+    to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
       unless param == namevar && value == title
         if stringify
@@ -162,7 +162,7 @@ class Puppet::Resource
   end
 
   def yaml_property_munge(x)
-    self.value.to_json_data(x)
+    value.to_json_data(x)
   end
 
   # Proxy these methods to the parameters hash.  It's likely they'll
@@ -187,7 +187,7 @@ class Puppet::Resource
   end
 
   def ==(other)
-    return false unless other.respond_to?(:title) and self.type == other.type and self.title == other.title
+    return false unless other.respond_to?(:title) and type == other.type and title == other.title
 
     return false unless to_hash == other.to_hash
 
@@ -229,7 +229,7 @@ class Puppet::Resource
 
   %w[exported virtual strict].each do |m|
     define_method(m + "?") do
-      self.send(m)
+      send(m)
     end
   end
 
@@ -275,7 +275,7 @@ class Puppet::Resource
       self.kind = src.kind
       self.exported = src.exported
       self.virtual = src.virtual
-      self.set_tags(src)
+      set_tags(src)
       self.environment = src.environment
       @rstype = src.resource_type
       @type = src.type
@@ -343,7 +343,7 @@ class Puppet::Resource
 
       self.kind = self.class.to_kind(rt) unless kind
       if strict? && rt.nil?
-        if self.class?
+        if class?
           raise ArgumentError, _("Could not find declared class %{title}") % { title: title }
         else
           raise ArgumentError, _("Invalid resource type %{type}") % { type: type }
@@ -428,7 +428,7 @@ class Puppet::Resource
 
   def uniqueness_key
     # Temporary kludge to deal with inconsistent use patterns; ensure we don't return nil for namevar/:name
-    h = self.to_hash
+    h = to_hash
     name = h[namevar] || h[:name] || self.name
     h[namevar] ||= name
     h[:name]   ||= name
@@ -460,7 +460,7 @@ class Puppet::Resource
     }.join
     # rubocop:enable Lint/FormatParameterMismatch
 
-    "  %s:\n%s" % [self.title, attributes]
+    "  %s:\n%s" % [title, attributes]
   end
 
   # Convert our resource to a hiera hash suitable for serialization.
@@ -497,8 +497,8 @@ class Puppet::Resource
     }.join
     # rubocop:enable Lint/FormatParameterMismatch
 
-    escaped = self.title.gsub(/'/, "\\\\'")
-    "%s { '%s':\n%s}" % [self.type.to_s.downcase, escaped, attributes]
+    escaped = title.gsub(/'/, "\\\\'")
+    "%s { '%s':\n%s}" % [type.to_s.downcase, escaped, attributes]
   end
 
   def to_ref
@@ -513,15 +513,15 @@ class Puppet::Resource
   # must check its kind before deciding whether the catalog format is of an older
   # version or not.
   def to_ral
-    if self.kind == COMPILABLE_TYPE_STRING
-      typeklass = Puppet::Type.type(self.type)
-    elsif self.catalog && self.catalog.catalog_format >= 2
+    if kind == COMPILABLE_TYPE_STRING
+      typeklass = Puppet::Type.type(type)
+    elsif catalog && catalog.catalog_format >= 2
       typeklass = Puppet::Type.type(:component)
     else
-      typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+      typeklass = Puppet::Type.type(type) || Puppet::Type.type(:component)
     end
 
-    raise(Puppet::Error, "Resource type '#{self.type}' was not found") unless typeklass
+    raise(Puppet::Error, "Resource type '#{type}' was not found") unless typeklass
 
     typeklass.new(self)
   end

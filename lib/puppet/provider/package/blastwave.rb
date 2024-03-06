@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
       hash[:avail] = hash[:ensure] if hash[:avail] == "SAME"
 
       # Use the name method, so it works with subclasses.
-      hash[:provider] = self.name
+      hash[:provider] = name
 
       return hash
     else

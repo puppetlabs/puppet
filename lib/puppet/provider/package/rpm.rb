@@ -175,7 +175,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   def update
-    self.install
+    install
   end
 
   def install_options
@@ -209,7 +209,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     match = self::NEVRA_REGEX.match(line)
     if match
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
-      hash[:provider] = self.name
+      hash[:provider] = name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
       hash[:ensure].prepend("#{hash[:epoch]}:") if hash[:epoch] != '0'
     else
@@ -227,7 +227,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     list = []
     multiversion_hash = {}
     multiline.each_line do |line|
-      hash = self.nevra_to_hash(line)
+      hash = nevra_to_hash(line)
       next if hash.empty?
 
       if multiversion_hash.empty?

@@ -264,7 +264,7 @@ class Puppet::Module
     end
 
     def ==(other)
-      self.name == other.name &&
+      name == other.name &&
         self.module == other.module
     end
 

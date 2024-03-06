@@ -250,11 +250,11 @@ class Puppet::Module
 
     [:source, :author, :version, :license, :dependencies].each do |attr|
       value = data[attr.to_s]
-      raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}" if value.nil?
+      raise MissingMetadata, "No #{attr} module metadata provided for #{name}" if value.nil?
 
       if attr == :dependencies
         unless value.is_a?(Array)
-          raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{self.name} must be an array, not: '#{value}'"
+          raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{name} must be an array, not: '#{value}'"
         end
 
         value.each do |dep|
@@ -366,7 +366,7 @@ class Puppet::Module
   end
 
   def required_by
-    environment.module_requirements[self.forge_name] || {}
+    environment.module_requirements[forge_name] || {}
   end
 
   # Identify and mark unmet dependencies.  A dependency will be marked unmet
@@ -413,8 +413,8 @@ class Puppet::Module
         :name => name,
         :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
         :parent => {
-          :name => self.forge_name,
-          :version => self.version.gsub(/^(?=\d)/, "v")
+          :name => forge_name,
+          :version => version.gsub(/^(?=\d)/, "v")
         },
         :mod_details => {
           :installed_version => dep_mod.nil? ? nil : dep_mod.version
@@ -449,10 +449,10 @@ class Puppet::Module
   end
 
   def ==(other)
-    self.name == other.name &&
-      self.version == other.version &&
-      self.path == other.path &&
-      self.environment == other.environment
+    name == other.name &&
+      version == other.version &&
+      path == other.path &&
+      environment == other.environment
   end
 
   private

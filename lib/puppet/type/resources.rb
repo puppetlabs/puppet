@@ -116,7 +116,7 @@ Puppet::Type.newtype(:resources) do
   # Generate any new resources we need to manage.  This is pretty hackish
   # right now, because it only supports purging.
   def generate
-    return [] unless self.purge?
+    return [] unless purge?
 
     resource_type.instances
                  .reject { |r| catalog.resource_refs.include? r.ref }

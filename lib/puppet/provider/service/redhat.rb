@@ -23,7 +23,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     # and --del removes the service from chkconfig management
     chkconfig("--level", "0123456", @resource[:name], :off)
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error, "Could not disable #{self.name}: #{detail}", detail.backtrace
+    raise Puppet::Error, "Could not disable #{name}: #{detail}", detail.backtrace
   end
 
   def enabled?
@@ -49,7 +49,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     chkconfig("--add", @resource[:name])
     chkconfig(@resource[:name], :on)
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error, "Could not enable #{self.name}: #{detail}", detail.backtrace
+    raise Puppet::Error, "Could not enable #{name}: #{detail}", detail.backtrace
   end
 
   def initscript

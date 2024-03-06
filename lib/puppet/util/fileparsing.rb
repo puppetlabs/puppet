@@ -246,7 +246,7 @@ module Puppet::Util::FileParsing
   def lines(text)
     # NOTE: We do not have to remove trailing separators because split will ignore
     # them by default (unless you pass -1 as a second parameter)
-    text.split(self.line_separator)
+    text.split(line_separator)
   end
 
   # Split a bunch of text into lines and then parse them individually.

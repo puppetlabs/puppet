@@ -35,7 +35,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     regex = Regexp.new(@resource[:pattern])
     ps = getps
 
-    self.debug "Executing '#{ps}'"
+    debug "Executing '#{ps}'"
     table = Puppet::Util::Execution.execute(ps)
 
     # The output of the PS command can be a mashup of several different
@@ -53,7 +53,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     table.each_line { |line|
       next unless regex.match(line)
 
-      self.debug "Process matched: #{line}"
+      debug "Process matched: #{line}"
       ary = line.sub(/^[[:space:]]+/u, '').split(/[[:space:]]+/u)
       return ary[1]
     }
@@ -81,7 +81,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     else
       pid = getpid
       if pid
-        self.debug "PID is #{pid}"
+        debug "PID is #{pid}"
         return :running
       else
         return :stopped
@@ -122,13 +122,13 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     else
       pid = getpid
       unless pid
-        self.info _("%{name} is not running") % { name: self.name }
+        info _("%{name} is not running") % { name: name }
         return false
       end
       begin
         output = kill pid
       rescue Puppet::ExecutionFailure
-        @resource.fail Puppet::Error, "Could not kill #{self.name}, PID #{pid}: #{output}", $!
+        @resource.fail Puppet::Error, "Could not kill #{name}, PID #{pid}: #{output}", $!
       end
       return true
     end

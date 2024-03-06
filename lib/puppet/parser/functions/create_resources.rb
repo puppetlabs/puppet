@@ -105,7 +105,7 @@ ENDHEREDOC
         Puppet::Parser::Resource::Param.new(
           :name => name,
           :value => value, # wide open to various data types, must be correct
-          :source => self.source, # TODO: support :line => line, :file => file,
+          :source => source, # TODO: support :line => line, :file => file,
           :add => false
         )
       end

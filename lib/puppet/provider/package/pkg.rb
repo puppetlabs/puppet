@@ -53,7 +53,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         { :status => 'known' }
       else
         raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
-            { resource_name: self.name, full_flags: flags, bad_flag: flags[0..0] }
+            { resource_name: name, full_flags: flags, bad_flag: flags[0..0] }
       end
     ).merge(
       case flags[1..1]
@@ -63,7 +63,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         {}
       else
         raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
-            { resource_name: self.name, full_flags: flags, bad_flag: flags[1..1] }
+            { resource_name: name, full_flags: flags, bad_flag: flags[1..1] }
       end
     )
   end
@@ -93,7 +93,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     when /known/
       { :status => 'known' }
     else
-      raise ArgumentError, _('Unknown format %{resource_name}: %{state}') % { resource_name: self.name, state: state }
+      raise ArgumentError, _('Unknown format %{resource_name}: %{state}') % { resource_name: name, state: state }
     end
   end
 
@@ -112,8 +112,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
        { :publisher => Regexp.last_match(1), :name => Regexp.last_match(2), :ensure => Regexp.last_match(3) }.merge pkg_state(Regexp.last_match(4)).merge(ufoxi_flag(Regexp.last_match(5)))
 
      else
-       raise ArgumentError, _('Unknown line format %{resource_name}: %{parse_line}') % { resource_name: self.name, parse_line: line }
-     end).merge({ :provider => self.name })
+       raise ArgumentError, _('Unknown line format %{resource_name}: %{parse_line}') % { resource_name: name, parse_line: line }
+     end).merge({ :provider => name })
   end
 
   def hold
@@ -223,7 +223,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def install(nofail = false)
     name = @resource[:name]
     should = @resource[:ensure]
-    is = self.query
+    is = query
     if is[:ensure].to_sym == :absent
       command = 'install'
     else
@@ -237,7 +237,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     unless should.is_a? Symbol
       name += "@#{should}"
     end
-    self.unhold if self.properties[:mark] == :hold
+    unhold if properties[:mark] == :hold
     begin
       tries = 1
       # pkg install exits with code 7 when the image is currently in use by another process and cannot be modified
@@ -252,7 +252,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         r = exec_cmd(command(:pkg), command, *args, name)
       end
     ensure
-      self.hold if @resource[:mark] == :hold
+      hold if @resource[:mark] == :hold
     end
     return r if nofail
     raise Puppet::Error, _("Unable to update %{package}") % { package: r[:out] } if r[:exit] != 0
@@ -267,11 +267,11 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       cmd << '-r'
     end
     cmd << @resource[:name]
-    self.unhold if self.properties[:mark] == :hold
+    unhold if properties[:mark] == :hold
     begin
       pkg cmd
     rescue StandardError, LoadError => e
-      self.hold if self.properties[:mark] == :hold
+      hold if properties[:mark] == :hold
       raise e
     end
   end

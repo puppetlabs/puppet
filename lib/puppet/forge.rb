@@ -148,7 +148,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     def install(dir)
-      staging_dir = self.prepare
+      staging_dir = prepare
 
       module_dir = dir + name[/-(.*)/, 1]
       module_dir.rmtree if module_dir.exist?

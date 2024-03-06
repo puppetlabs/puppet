@@ -13,8 +13,8 @@ Puppet::Type.type(:service).provide :service do
       service_command(:restart)
       nil
     else
-      self.stop
-      self.start
+      stop
+      start
     end
   end
 

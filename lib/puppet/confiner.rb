@@ -33,7 +33,7 @@ module Puppet::Confiner
   # @api private
   #
   def confine_collection
-    @confine_collection ||= Puppet::ConfineCollection.new(self.to_s)
+    @confine_collection ||= Puppet::ConfineCollection.new(to_s)
   end
 
   # Checks whether this implementation is suitable for the current platform (or returns a summary

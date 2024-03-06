@@ -7,7 +7,7 @@ class Puppet::Util::TagSet < Set
   include Puppet::Network::FormatSupport
 
   def self.from_yaml(yaml)
-    self.new(Puppet::Util::Yaml.safe_load(yaml, [Symbol]))
+    new(Puppet::Util::Yaml.safe_load(yaml, [Symbol]))
   end
 
   def to_yaml
@@ -15,7 +15,7 @@ class Puppet::Util::TagSet < Set
   end
 
   def self.from_data_hash(data)
-    self.new(data)
+    new(data)
   end
 
   # TODO: A method named #to_data_hash should not return an array

@@ -208,7 +208,7 @@ module Puppet::Pops
   # Simple strategy that returns the first value found. It never merges any values.
   #
   class FirstFoundStrategy < MergeStrategy
-    INSTANCE = self.new(EMPTY_HASH)
+    INSTANCE = new(EMPTY_HASH)
 
     def self.key
       :first
@@ -238,7 +238,7 @@ module Puppet::Pops
 
   # Same as {FirstFoundStrategy} but used when no strategy has been explicitly given
   class DefaultMergeStrategy < FirstFoundStrategy
-    INSTANCE = self.new(EMPTY_HASH)
+    INSTANCE = new(EMPTY_HASH)
 
     def self.key
       :default
@@ -251,7 +251,7 @@ module Puppet::Pops
   # will be those of e1
   #
   class HashMergeStrategy < MergeStrategy
-    INSTANCE = self.new(EMPTY_HASH)
+    INSTANCE = new(EMPTY_HASH)
 
     def self.key
       :hash
@@ -281,7 +281,7 @@ module Puppet::Pops
   # first contributor of elements and e2 the second.
   #
   class UniqueMergeStrategy < MergeStrategy
-    INSTANCE = self.new(EMPTY_HASH)
+    INSTANCE = new(EMPTY_HASH)
 
     def self.key
       :unique
@@ -363,7 +363,7 @@ module Puppet::Pops
   #   Results: {:x => [{:y => 1, :z => 2}]}
   #
   class DeepMergeStrategy < MergeStrategy
-    INSTANCE = self.new(EMPTY_HASH)
+    INSTANCE = new(EMPTY_HASH)
 
     def self.key
       :deep
@@ -432,7 +432,7 @@ module Puppet::Pops
   # Same as {UnconstrainedDeepMergeStrategy} but with reverse priority of merged elements.
   # (needed for backward compatibility with Hiera v3)
   class ReverseDeepMergeStrategy < UnconstrainedDeepMergeStrategy
-    INSTANCE = self.new(EMPTY_HASH)
+    INSTANCE = new(EMPTY_HASH)
 
     def self.key
       :reverse_deep

@@ -21,9 +21,9 @@ class Puppet::Parser::AST::ResourceParam < Puppet::Parser::AST::Branch
       :name => @param,
       :value => value.nil? ? :undef : value,
       :source => scope.source,
-      :line => self.line,
-      :file => self.file,
-      :add => self.add
+      :line => line,
+      :file => file,
+      :add => add
     )
   end
 

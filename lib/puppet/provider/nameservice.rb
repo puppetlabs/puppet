@@ -160,7 +160,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     begin
       sensitive = has_sensitive_data?
-      execute(self.addcmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive })
+      execute(addcmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive })
       if feature?(:manages_password_age) && (cmd = passcmd)
         execute(cmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive })
       end
@@ -177,7 +177,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.deletecmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment })
+      execute(deletecmd, { :failonfail => true, :combine => true, :custom_environment => @custom_environment })
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end

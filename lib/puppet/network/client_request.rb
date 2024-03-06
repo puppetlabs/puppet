@@ -7,7 +7,7 @@ module Puppet::Network # :nodoc:
     attr_accessor :name, :ip, :authenticated, :handler, :method
 
     def authenticated?
-      self.authenticated
+      authenticated
     end
 
     # A common way of talking about the full call.  Individual servers
@@ -26,7 +26,7 @@ module Puppet::Network # :nodoc:
     end
 
     def to_s
-      "#{self.name}(#{self.ip})"
+      "#{name}(#{ip})"
     end
   end
 end

@@ -117,7 +117,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Install a package using 'apt-get'.  This function needs to support
   # installing a specific version.
   def install
-    self.run_preseed if @resource[:responsefile]
+    run_preseed if @resource[:responsefile]
     should = @resource[:ensure]
 
     if should.is_a?(String)
@@ -165,17 +165,17 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
     # rubocop:enable Style/RedundantCondition
 
-    self.unhold if self.properties[:mark] == :hold
+    unhold if properties[:mark] == :hold
     begin
       aptget(*cmd)
     ensure
-      self.hold if @resource[:mark] == :hold
+      hold if @resource[:mark] == :hold
     end
 
     # If a source file was specified, we must make sure the expected version was installed from specified file
     if source && !%i[present installed].include?(should)
-      is = self.query
-      raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
+      is = query
+      raise Puppet::Error, _("Could not find package %{name}") % { name: name } unless is
 
       version = is[:ensure]
 
@@ -191,7 +191,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     if output =~ /Candidate:\s+(\S+)\s/
       return Regexp.last_match(1)
     else
-      self.err _("Could not find latest version")
+      err _("Could not find latest version")
       return nil
     end
   end
@@ -202,26 +202,26 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   def run_preseed
     response = @resource[:responsefile]
     if response && Puppet::FileSystem.exist?(response)
-      self.info(_("Preseeding %{response} to debconf-set-selections") % { response: response })
+      info(_("Preseeding %{response} to debconf-set-selections") % { response: response })
 
       preseed response
     else
-      self.info _("No responsefile specified or non existent, not preseeding anything")
+      info _("No responsefile specified or non existent, not preseeding anything")
     end
   end
 
   def uninstall
-    self.run_preseed if @resource[:responsefile]
+    run_preseed if @resource[:responsefile]
     args = ['-y', '-q']
-    args << '--allow-change-held-packages' if self.properties[:mark] == :hold
+    args << '--allow-change-held-packages' if properties[:mark] == :hold
     args << :remove << @resource[:name]
     aptget(*args)
   end
 
   def purge
-    self.run_preseed if @resource[:responsefile]
+    run_preseed if @resource[:responsefile]
     args = ['-y', '-q']
-    args << '--allow-change-held-packages' if self.properties[:mark] == :hold
+    args << '--allow-change-held-packages' if properties[:mark] == :hold
     args << :remove << '--purge' << @resource[:name]
     aptget(*args)
     # workaround a "bug" in apt, that already removed packages are not purged

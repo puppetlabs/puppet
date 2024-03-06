@@ -31,7 +31,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
     rescue TypeError => detail
-      Puppet.err _("Could not save %{indirection} %{request}: %{detail}") % { indirection: self.name, request: request.key, detail: detail }
+      Puppet.err _("Could not save %{indirection} %{request}: %{detail}") % { indirection: name, request: request.key, detail: detail }
     end
   end
 

@@ -76,10 +76,10 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   # List all services of this type.
   def self.instances
-    get_services(self.defpath)
+    get_services(defpath)
   end
 
-  def self.get_services(defpath, exclude = self.excludes)
+  def self.get_services(defpath, exclude = excludes)
     defpath = [defpath] unless defpath.is_a? Array
     instances = []
     defpath.each do |path|
@@ -118,7 +118,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   # Where is our init script?
   def initscript
-    @initscript ||= self.search(@resource[:name])
+    @initscript ||= search(@resource[:name])
   end
 
   def paths
@@ -127,9 +127,9 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         true
       else
         if Puppet::FileSystem.exist?(path)
-          self.debug "Search path #{path} is not a directory"
+          debug "Search path #{path} is not a directory"
         else
-          self.debug "Search path #{path} does not exist"
+          debug "Search path #{path} does not exist"
         end
         false
       end
@@ -142,7 +142,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
       if Puppet::FileSystem.exist? fqname
         return fqname
       else
-        self.debug("Could not find #{name} in #{path}")
+        debug("Could not find #{name} in #{path}")
       end
     end
 
@@ -151,7 +151,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
       if Puppet::FileSystem.exist? fqname_sh
         return fqname_sh
       else
-        self.debug("Could not find #{name}.sh in #{path}")
+        debug("Could not find #{name}.sh in #{path}")
       end
     end
     raise Puppet::Error, "Could not find init script for '#{name}'"

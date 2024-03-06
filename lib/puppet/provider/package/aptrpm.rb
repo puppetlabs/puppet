@@ -56,25 +56,25 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
         if version =~ /^([^(]+)\(/
           Regexp.last_match(1)
         else
-          self.warning _("Could not match version '%{version}'") % { version: version }
+          warning _("Could not match version '%{version}'") % { version: version }
           nil
         end
       }.sort { |a, b| versioncmp(a, b) }
 
       if available_versions.length == 0
-        self.debug "No latest version"
+        debug "No latest version"
         print output if Puppet[:debug]
       end
 
       # Get the latest and greatest version number
       return available_versions.pop
     else
-      self.err _("Could not match string")
+      err _("Could not match string")
     end
   end
 
   def update
-    self.install
+    install
   end
 
   def uninstall

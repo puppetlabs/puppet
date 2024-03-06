@@ -41,7 +41,7 @@ module Puppet::Util::Package::Version
     def <=>(other)
       raise ArgumentError, _("Cannot compare, as %{other} is not a Rpm Version") % { other: other } unless other.is_a?(self.class)
 
-      rpm_compare_evr(self.to_s, other.to_s)
+      rpm_compare_evr(to_s, other.to_s)
     end
 
     private

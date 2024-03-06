@@ -164,7 +164,7 @@ module Puppet
         return true
       end
 
-      if self.should == :present
+      if should == :present
         return !(currentvalue.nil? or currentvalue == :absent)
       else
         return super(currentvalue)
@@ -175,7 +175,7 @@ module Puppet
       stat = @resource.stat
       if stat
         return stat.ftype.intern
-      elsif self.should == :false
+      elsif should == :false
         return :false
       else
         return :absent
@@ -183,8 +183,8 @@ module Puppet
     end
 
     def sync
-      @resource.remove_existing(self.should)
-      if self.should == :absent
+      @resource.remove_existing(should)
+      if should == :absent
         return :file_removed
       end
 

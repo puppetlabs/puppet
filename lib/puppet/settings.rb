@@ -220,7 +220,7 @@ class Puppet::Settings
   # understand, and add them to the passed option list.
   def addargs(options)
     # Add all of the settings as valid options.
-    self.each { |_name, setting|
+    each { |_name, setting|
       setting.getopt_args.each { |args| options << args }
     }
 
@@ -231,7 +231,7 @@ class Puppet::Settings
   # understand, and add them to the passed option list.
   def optparse_addargs(options)
     # Add all of the settings as valid options.
-    self.each { |_name, setting|
+    each { |_name, setting|
       options << setting.optparse_args
     }
 
@@ -344,7 +344,7 @@ class Puppet::Settings
     option_parser.ignore_invalid_options = true
 
     # Add all global options to it.
-    self.optparse_addargs([]).each do |option|
+    optparse_addargs([]).each do |option|
       option_parser.on(*option) do |arg|
         opt, val = Puppet::Settings.clean_opt(option[0], arg)
         handlearg(opt, val)
@@ -429,7 +429,7 @@ class Puppet::Settings
 
   def call_hooks_deferred_to_application_initialization(options = {})
     @hooks_to_call_on_application_initialization.each do |setting|
-      setting.handle(self.value(setting.name))
+      setting.handle(value(setting.name))
     rescue InterpolationError => err
       raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
       # swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
@@ -620,7 +620,7 @@ class Puppet::Settings
 
     # Determine our environment, if we have one.
     if @config[:environment]
-      env = self.value(:environment).to_sym
+      env = value(:environment).to_sym
     else
       env = NONE
     end
@@ -790,7 +790,7 @@ class Puppet::Settings
   # Iterate across all of the objects in a given section.
   def persection(section)
     section = section.to_sym
-    self.each { |_name, obj|
+    each { |_name, obj|
       if obj.section == section
         yield obj
       end
@@ -838,7 +838,7 @@ class Puppet::Settings
 
     new = @used
     @used = []
-    self.use(*new)
+    use(*new)
   end
 
   class SearchPathElement < Struct.new(:name, :type); end
@@ -1056,7 +1056,7 @@ class Puppet::Settings
     end
 
     call.each do |setting|
-      setting.handle(self.value(setting.name))
+      setting.handle(value(setting.name))
     end
   end
 
@@ -1583,7 +1583,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">)
+      %Q(<#{self.class}:#{object_id} @name="#{@name}" @values="#{@values}">)
     end
   end
 
@@ -1607,7 +1607,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q(<#{self.class}:#{self.object_id} @name="#{@name}" @section="#{@section}">)
+      %Q(<#{self.class}:#{object_id} @name="#{@name}" @section="#{@section}">)
     end
   end
 
@@ -1644,7 +1644,7 @@ Generated on #{Time.now}.
     end
 
     def inspect
-      %Q(<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">)
+      %Q(<#{self.class}:#{object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">)
     end
   end
 end

@@ -11,5 +11,5 @@ Puppet::Parser::Functions.newfunction(:tag, :arity => -2, :doc => "Add the speci
     )
   end
 
-  self.resource.tag(*vals)
+  resource.tag(*vals)
 end

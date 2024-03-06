@@ -195,7 +195,7 @@ class Puppet::Settings::IniFile
     end
 
     def ==(other)
-      super(other) && self.line_number == other.line_number
+      super(other) && line_number == other.line_number
     end
   end
 

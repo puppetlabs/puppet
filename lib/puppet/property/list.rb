@@ -64,7 +64,7 @@ module Puppet
       def insync?(is)
         return true unless is
 
-        (prepare_is_for_comparison(is) == self.should)
+        (prepare_is_for_comparison(is) == should)
       end
     end
   end

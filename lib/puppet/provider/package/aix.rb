@@ -53,7 +53,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     updates = {}
     sources.each do |source|
-      execute(self.srclistcmd(source)).each_line do |line|
+      execute(srclistcmd(source)).each_line do |line|
         next unless line =~ /^[^#][^:]*:([^:]*):([^:]*)/
 
         current = {}
@@ -166,6 +166,6 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   end
 
   def update
-    self.install(false)
+    install(false)
   end
 end

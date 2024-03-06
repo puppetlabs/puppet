@@ -642,7 +642,7 @@ module Generators
     end
 
     def <=>(other)
-      self.name <=> other.name
+      name <=> other.name
     end
   end
 
@@ -809,7 +809,7 @@ module Generators
     end
 
     def <=>(other)
-      self.name <=> other.name
+      name <=> other.name
     end
   end
 

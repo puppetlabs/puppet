@@ -27,21 +27,21 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   defaultfor 'os.family' => :gentoo
 
   def self.instances
-    result_format = self.eix_result_format
-    result_fields = self.eix_result_fields
+    result_format = eix_result_format
+    result_fields = eix_result_fields
 
-    limit = self.eix_limit
-    version_format = self.eix_version_format
-    slot_versions_format = self.eix_slot_versions_format
-    installed_versions_format = self.eix_installed_versions_format
-    installable_versions_format = self.eix_install_versions_format
+    limit = eix_limit
+    version_format = eix_version_format
+    slot_versions_format = eix_slot_versions_format
+    installed_versions_format = eix_installed_versions_format
+    installable_versions_format = eix_install_versions_format
     begin
       eix_file = File.directory?('/var/cache/eix') ? '/var/cache/eix/portage.eix' : '/var/cache/eix'
       update_eix unless FileUtils.uptodate?(eix_file, %w[/usr/bin/eix /usr/portage/metadata/timestamp])
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
-        search_output = eix(*(self.eix_search_arguments + ['--installed']))
+        search_output = eix(*(eix_search_arguments + ['--installed']))
       end
 
       packages = []
@@ -98,17 +98,17 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def reinstall
-    self.install
+    install
   end
 
   def update
-    self.install
+    install
   end
 
   def qatom
-    output_format = self.qatom_output_format
-    result_format = self.qatom_result_format
-    result_fields = self.qatom_result_fields
+    output_format = qatom_output_format
+    result_format = qatom_result_format
+    result_fields = qatom_result_fields
     @atom ||= begin
       package_info = {}
       # do the search
@@ -234,7 +234,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def latest
-    self.query[:version_available]
+    query[:version_available]
   end
 
   private
@@ -301,7 +301,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def self.eix_search_arguments
-    ['--nocolor', '--pure-packages', '--format', self.eix_search_format]
+    ['--nocolor', '--pure-packages', '--format', eix_search_format]
   end
 
   def install_options

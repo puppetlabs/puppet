@@ -23,7 +23,7 @@ module Puppet::ModuleTool
     # We override Object's ==, eql, and hash so we can more easily find identical
     # dependencies.
     def ==(o)
-      self.hash == o.hash
+      hash == o.hash
     end
 
     alias :eql? :==

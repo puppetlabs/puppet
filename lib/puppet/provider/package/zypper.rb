@@ -92,7 +92,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   # Install a package using 'zypper'.
   def install
     should = @resource.should(:ensure)
-    self.debug "Ensuring => #{should}"
+    debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
     # XXX: We don't actually deal with epochs here.
@@ -113,7 +113,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
     # extract version numbers and convert to integers
     major, minor, patch = zypper_version.scan(/\d+/).map { |x| x.to_i }
-    self.debug "Detected zypper version #{major}.#{minor}.#{patch}"
+    debug "Detected zypper version #{major}.#{minor}.#{patch}"
 
     # zypper version < 1.0 does not support --quiet flag
     if major < 1
@@ -144,8 +144,8 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
     zypper(*options)
 
-    unless self.query
-      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: self.name }
+    unless query
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: name }
     end
   end
 
@@ -159,7 +159,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
 
   def update
     # zypper install can be used for update, too
-    self.install
+    install
   end
 
   def uninstall

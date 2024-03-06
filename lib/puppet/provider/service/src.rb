@@ -84,12 +84,12 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
 
   def start
     super
-    self.wait(:running)
+    wait(:running)
   end
 
   def stop
     super
-    self.wait(:stopped)
+    wait(:stopped)
   end
 
   def restart
@@ -111,8 +111,8 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
         if do_refresh == :true
           execute([command(:refresh), "-s", @resource[:name]])
         else
-          self.stop
-          self.start
+          stop
+          start
         end
         return :true
       rescue Puppet::ExecutionFailure => detail
@@ -141,7 +141,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
       return state
     end
   rescue Puppet::ExecutionFailure => detail
-    self.debug(detail.message)
+    debug(detail.message)
     return :stopped
   end
 end

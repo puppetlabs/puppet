@@ -77,7 +77,7 @@ class Puppet::Util::Feature
     feature = method.to_s.sub(/\?$/, '')
     @loader.load(feature, Puppet.lookup(:current_environment))
 
-    respond_to?(method) && self.send(method)
+    respond_to?(method) && send(method)
   end
 
   # Actually test whether the feature is present.  We only want to test when

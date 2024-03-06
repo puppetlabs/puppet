@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   has_feature :enableable
 
   def self.instances
-    self.get_services(self.excludes) # Take exclude list from init provider
+    get_services(excludes) # Take exclude list from init provider
   end
 
   def self.excludes
@@ -117,7 +117,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
           return fqname
         end
 
-        self.debug("Could not find #{name}#{suffix} in #{path}")
+        debug("Could not find #{name}#{suffix} in #{path}")
       end
     end
 

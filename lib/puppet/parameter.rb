@@ -119,7 +119,7 @@ class Puppet::Parameter
           @doc << "\n\n#{vals}"
         end
 
-        features = self.required_features
+        features = required_features
         if features
           @doc << "\n\nRequires features #{features.flatten.collect { |f| f.to_s }.join(" ")}."
         end
@@ -385,7 +385,7 @@ class Puppet::Parameter
   #
   def noop
     @noop ||= false
-    @noop || self.resource.noop || Puppet[:noop] || false
+    @noop || resource.noop || Puppet[:noop] || false
   end
 
   # Returns an array of strings representing the containment hierarchy
@@ -395,9 +395,9 @@ class Puppet::Parameter
   # @api private
   def pathbuilder
     if @resource
-      return [@resource.pathbuilder, self.name]
+      return [@resource.pathbuilder, name]
     else
-      return [self.name]
+      return [name]
     end
   end
 
@@ -446,7 +446,7 @@ class Puppet::Parameter
       Puppet.debug { "Reraising #{detail}" }
       raise
     rescue => detail
-      raise Puppet::DevError, _("Munging failed for value %{value} in class %{class_name}: %{detail}") % { value: value.inspect, class_name: self.name, detail: detail }, detail.backtrace
+      raise Puppet::DevError, _("Munging failed for value %{value} in class %{class_name}: %{detail}") % { value: value.inspect, class_name: name, detail: detail }, detail.backtrace
     end
     ret
   end
@@ -482,7 +482,7 @@ class Puppet::Parameter
     rescue Puppet::Error, TypeError
       raise
     rescue => detail
-      raise Puppet::DevError, _("Validate method failed for class %{class_name}: %{detail}") % { class_name: self.name, detail: detail }, detail.backtrace
+      raise Puppet::DevError, _("Validate method failed for class %{class_name}: %{detail}") % { class_name: name, detail: detail }, detail.backtrace
     end
   end
 
@@ -539,7 +539,7 @@ class Puppet::Parameter
       @tags = []
       # This might not be true in testing
       @tags = @resource.tags if @resource.respond_to? :tags
-      @tags << self.name.to_s
+      @tags << name.to_s
     end
     @tags
   end

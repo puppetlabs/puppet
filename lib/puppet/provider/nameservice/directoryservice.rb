@@ -79,7 +79,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # Create a new instance of this Puppet::Type for each object present
     #    on the system.
     list_all_present.collect do |name_string|
-      self.new(single_report(name_string, *type_property_array))
+      new(single_report(name_string, *type_property_array))
     end
   end
 
@@ -144,7 +144,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local accounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
     attribute_hash
   end
 
@@ -168,9 +168,9 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       fail(_("Could not get report.  command execution failed."))
     end
 
-    dscl_plist = self.parse_dscl_plist_data(dscl_output)
+    dscl_plist = parse_dscl_plist_data(dscl_output)
 
-    self.generate_attribute_hash(dscl_plist, *type_properties)
+    generate_attribute_hash(dscl_plist, *type_properties)
   end
 
   def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -325,7 +325,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         else
           value = autogen(name)
           if value
-            self.send(name.to_s + "=", value)
+            send(name.to_s + "=", value)
           else
             next
           end

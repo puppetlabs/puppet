@@ -115,8 +115,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   # Remove the old package, and install the new one.  This will probably
   # often fail.
   def update
-    self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
-    self.install
+    uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
+    install
   end
 
   def prepare_cmd(opt)

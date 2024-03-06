@@ -282,7 +282,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     begin
       target_records = retrieve(target)
       unless target_records
-        raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: self.name }
+        raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: name }
       end
     rescue Puppet::Util::FileType::FileReadError => detail
       if @raise_prefetch_errors
@@ -292,7 +292,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @failed_prefetch_targets[target] = detail.to_s
       else
         puts detail.backtrace if Puppet[:trace]
-        Puppet.err _("Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty") % { resource: self.resource_type.name, name: self.name, target: target, detail: detail }
+        Puppet.err _("Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty") % { resource: resource_type.name, name: name, target: target, detail: detail }
       end
 
       target_records = []
@@ -306,7 +306,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     target_records = prefetch_hook(target_records) if respond_to?(:prefetch_hook)
 
-    raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: self.name } unless target_records
+    raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: name } unless target_records
 
     target_records
   end
@@ -331,7 +331,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       old = @target
       begin
         @target = path
-        return self.parse(text)
+        return parse(text)
       rescue Puppet::Error => detail
         detail.file = @target if detail.respond_to?(:file=)
         raise detail
@@ -380,9 +380,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.targets(resources = nil)
     targets = []
     # First get the default target
-    raise Puppet::DevError, _("Parsed Providers must define a default target") unless self.default_target
+    raise Puppet::DevError, _("Parsed Providers must define a default target") unless default_target
 
-    targets << self.default_target
+    targets << default_target
 
     # Then get each of the file objects
     targets += @target_objects.keys

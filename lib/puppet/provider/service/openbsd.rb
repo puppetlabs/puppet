@@ -56,16 +56,16 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
                      :failonfail => false, :combine => false, :squelch => false)
 
     if output.exitstatus == 1
-      self.debug("Is disabled")
+      debug("Is disabled")
       return :false
     else
-      self.debug("Is enabled")
+      debug("Is enabled")
       return :true
     end
   end
 
   def enable
-    self.debug("Enabling")
+    debug("Enabling")
     rcctl(:enable, @resource[:name])
     if @resource[:flags]
       rcctl(:set, @resource[:name], :flags, @resource[:flags])
@@ -73,7 +73,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   end
 
   def disable
-    self.debug("Disabling")
+    debug("Disabling")
     rcctl(:disable, @resource[:name])
   end
 
@@ -88,12 +88,12 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   def flags
     output = execute([command(:rcctl), "get", @resource[:name], "flags"],
                      :failonfail => false, :combine => false, :squelch => false).chomp
-    self.debug("Flags are: \"#{output}\"")
+    debug("Flags are: \"#{output}\"")
     output
   end
 
   def flags=(value)
-    self.debug("Changing flags from #{flags} to #{value}")
+    debug("Changing flags from #{flags} to #{value}")
     rcctl(:set, @resource[:name], :flags, value)
     # If the service is already running, force a restart as the flags have been changed.
     rcctl(:restart, @resource[:name]) if running?

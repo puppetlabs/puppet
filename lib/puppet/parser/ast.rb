@@ -29,7 +29,7 @@ class Puppet::Parser::AST
     # We duplicate code here, rather than using exceptwrap, because this
     # is called so many times during parsing.
 
-    return self.evaluate(scope)
+    return evaluate(scope)
   rescue Puppet::Pops::Evaluator::PuppetStopIteration => detail
     raise detail
   #      # Only deals with StopIteration from the break() function as a general

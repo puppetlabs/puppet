@@ -73,7 +73,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def systemctl_change_enable(action)
     output = systemctl(action, '--', @resource[:name])
   rescue
-    raise Puppet::Error, "Could not #{action} #{self.name}: #{output}", $!.backtrace
+    raise Puppet::Error, "Could not #{action} #{name}: #{output}", $!.backtrace
   ensure
     @cached_enabled = nil
   end
@@ -166,7 +166,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def enable
-    self.unmask
+    unmask
     systemctl_change_enable(:enable)
   end
 
@@ -189,7 +189,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   def startcmd
-    self.unmask
+    unmask
     [command(:systemctl), "start", '--', @resource[:name]]
   end
 

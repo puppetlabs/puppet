@@ -658,10 +658,6 @@ Style/RedundantReturn:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/RedundantSelf:
-  Enabled: false
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: implicit, explicit
 Style/RescueStandardError:

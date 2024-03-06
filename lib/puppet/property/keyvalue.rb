@@ -121,7 +121,7 @@ module Puppet
       def insync?(is)
         return true unless is
 
-        (is == self.should)
+        (is == should)
       end
 
       # We only accept an array of key/value pairs (strings), a single
