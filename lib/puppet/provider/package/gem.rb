@@ -243,7 +243,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
           command_options << source
         else
           # interpret it as a gem repository
-          command_options << "--source" << "#{source}" << resource[:name]
+          command_options << "--source" << source.to_s << resource[:name]
         end
       end
     else

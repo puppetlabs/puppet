@@ -180,7 +180,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.validate_command(command)
 
     Dir.mktmpdir("puppet_pip") do |dir|
-      command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}", '-d', "#{dir}", '-v']
+      command_and_options = [self.class.quote(command), 'install', (@resource[:name]).to_s, '-d', dir.to_s, '-v']
       command_and_options << install_options if @resource[:install_options]
       execpipe command_and_options do |process|
         process.collect do |line|

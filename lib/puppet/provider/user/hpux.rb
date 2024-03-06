@@ -40,7 +40,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
       cmd << "/usr/lbin/modprpw"
       cmd << "-v"
       cmd << "-l"
-      cmd << "#{resource.name}"
+      cmd << resource.name.to_s
     end
     cmd
   end

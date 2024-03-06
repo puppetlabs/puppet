@@ -131,7 +131,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     if resource[:manifest]
       Puppet.notice "Configuring #{resource[:name]}"
       command = [resource[:manifest], resource[:name]]
-      system("#{command}")
+      system(command.to_s)
     end
   rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error.new("Cannot config #{self.service} to enable it: #{detail}", detail)

@@ -39,7 +39,7 @@ Puppet::Face.define(:module, '1.0.0') do
         Puppet.warning _("%{count} files modified") % { count: return_value.size }
       end
       return_value.map do |changed_file|
-        "#{changed_file}"
+        changed_file.to_s
       end.join("\n")
     end
   end

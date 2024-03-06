@@ -539,7 +539,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       to_print = resources.filter_map do |resource|
         next unless resource.managed?
 
-        "#{resource.ref.downcase}"
+        resource.ref.downcase.to_s
       end
       f.puts to_print.join("\n")
     end

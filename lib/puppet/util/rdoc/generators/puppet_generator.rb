@@ -849,7 +849,7 @@ module Generators
     end
 
     def index_name
-      "#{@context.name}"
+      @context.name.to_s
     end
 
     def params

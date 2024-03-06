@@ -60,7 +60,7 @@ module Puppet::HTTP::Proxy
         dest_string     = "#{dest.host}:#{dest.port}"
       else
         no_proxy_regex  = /#{host}$/
-        dest_string     = "#{dest.host}"
+        dest_string     = dest.host.to_s
       end
 
       if no_proxy_regex.match(dest_string)

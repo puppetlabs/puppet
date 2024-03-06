@@ -378,7 +378,7 @@ module Puppet::ModuleTool
               :version => release[:version][:vstring]
             }
             dependency = is_dependency ? dependency_info : nil
-            all_versions = @versions["#{@module_name}"].sort_by { |h| h[:semver] }
+            all_versions = @versions[@module_name.to_s].sort_by { |h| h[:semver] }
             versions = all_versions.select { |x| x[:semver].special == '' }
             versions = all_versions if versions.empty?
             latest_version = versions.last[:vstring]

@@ -652,10 +652,6 @@ Style/OptionalBooleanParameter:
 Style/PreferredHashMethods:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-Style/RedundantInterpolation:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: AllowMultipleReturnValues.
 Style/RedundantReturn:

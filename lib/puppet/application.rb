@@ -184,7 +184,7 @@ class Application
         define_method(fname, &block)
       else
         define_method(fname) do |value|
-          self.options["#{long}".to_sym] = value
+          self.options[long.to_s.to_sym] = value
         end
       end
       self.option_parser_commands << [options, fname]
@@ -330,7 +330,7 @@ class Application
   # See also `lib/puppet/util/command_line.rb` for some special case early
   # handling of this.
   option("--version", "-V") do |_arg|
-    puts "#{Puppet.version}"
+    puts Puppet.version
     exit(0)
   end
 

@@ -213,7 +213,7 @@ class AbstractWriter
   end
 
   def to_s
-    "#{self.class.name}"
+    self.class.name.to_s
   end
 
   def inspect

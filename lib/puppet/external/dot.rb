@@ -165,7 +165,7 @@ module DOT
     end
 
     def to_s
-      (@name && @name != "" ? "<#{@name}>" : "") + "#{@label}"
+      (@name && @name != "" ? "<#{@name}>" : "") + @label.to_s
     end
   end
 

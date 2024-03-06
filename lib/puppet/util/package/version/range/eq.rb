@@ -6,7 +6,7 @@ module Puppet::Util::Package::Version
   class Range
     class Eq < Simple
       def to_s
-        "#{@version}"
+        @version.to_s
       end
 
       def include?(version)

@@ -100,7 +100,7 @@ Puppet::Type.newtype(:tidy) do
 
     # Make sure we convert to an array.
     munge do |value|
-      fail _("Tidy can't use matches with recurse 0, false, or undef") if "#{@resource[:recurse]}" =~ /^(0|false|)$/
+      fail _("Tidy can't use matches with recurse 0, false, or undef") if (@resource[:recurse]).to_s =~ /^(0|false|)$/
 
       [value].flatten
     end

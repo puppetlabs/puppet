@@ -100,7 +100,7 @@ module Puppet::ModuleTool::Shared
         next if range === seen[mod][:semver]
 
         req_module   = @module_name
-        req_versions = @versions["#{@module_name}"].map { |v| v[:semver] }
+        req_versions = @versions[@module_name.to_s].map { |v| v[:semver] }
         raise InvalidDependencyCycleError,
               :module_name => mod,
               :source => (source + [{ :name => mod, :version => source.last[:dependency] }]),
@@ -121,14 +121,14 @@ module Puppet::ModuleTool::Shared
         @conditions.each { |_, conds| conds.delete_if { |c| c[:module] == mod } }
       end
 
-      versions = @versions["#{mod}"].select { |h| range === h[:semver] }
+      versions = @versions[mod.to_s].select { |h| range === h[:semver] }
       valid_versions = versions.select { |x| x[:semver].special == '' }
       valid_versions = versions if valid_versions.empty?
 
       version = valid_versions.last
       unless version
         req_module   = @module_name
-        req_versions = @versions["#{@module_name}"].map { |v| v[:semver] }
+        req_versions = @versions[@module_name.to_s].map { |v| v[:semver] }
         raise NoVersionsSatisfyError,
               :requested_name => req_module,
               :requested_version => @version || annotated_version(req_module, req_versions),

@@ -86,7 +86,7 @@ module Puppet::Util::Windows
 
       raw_sid_bytes ? Principal.lookup_account_sid(raw_sid_bytes) : Principal.lookup_account_name(name)
     rescue => e
-      Puppet.debug("#{e.message}")
+      Puppet.debug(e.message.to_s)
       (allow_unresolved && raw_sid_bytes) ? unresolved_principal(name, raw_sid_bytes) : nil
     end
     module_function :name_to_principal
