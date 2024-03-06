@@ -74,9 +74,9 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
                .map { |set| gemsplit(set) }
 
     if options[:justme]
-      return gem_list.shift
+      gem_list.shift
     else
-      return gem_list
+      gem_list
     end
   end
 

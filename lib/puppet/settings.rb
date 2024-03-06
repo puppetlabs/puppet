@@ -679,15 +679,15 @@ class Puppet::Settings
 
   def main_config_file
     if explicit_config_file?
-      return self[:config]
+      self[:config]
     else
-      return File.join(Puppet::Util::RunMode[:server].conf_dir, config_file_name)
+      File.join(Puppet::Util::RunMode[:server].conf_dir, config_file_name)
     end
   end
   private :main_config_file
 
   def user_config_file
-    return File.join(Puppet::Util::RunMode[:user].conf_dir, config_file_name)
+    File.join(Puppet::Util::RunMode[:user].conf_dir, config_file_name)
   end
   private :user_config_file
 
@@ -706,7 +706,7 @@ class Puppet::Settings
       # This just means that the setting wasn't explicitly set on the command line, so we will ignore it and
       #  fall through to the default name.
     end
-    return self.class.default_config_file_name
+    self.class.default_config_file_name
   end
   private :config_file_name
 
@@ -1109,7 +1109,7 @@ Generated on #{Time.now}.
       end
     end
 
-    return str
+    str
   end
 
   # Convert to a parseable manifest
@@ -1247,9 +1247,9 @@ Generated on #{Time.now}.
   #   in {https://projects.puppetlabs.com/issues/16637 #16637}
   def which_configuration_file
     if explicit_config_file? or Puppet.features.root? then
-      return main_config_file
+      main_config_file
     else
-      return user_config_file
+      user_config_file
     end
   end
 
@@ -1379,7 +1379,7 @@ Generated on #{Time.now}.
   # Read the file in.
   # @api private
   def read_file(file)
-    return Puppet::FileSystem.read(file, :encoding => 'utf-8')
+    Puppet::FileSystem.read(file, :encoding => 'utf-8')
   end
 
   # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
@@ -1407,12 +1407,12 @@ Generated on #{Time.now}.
     #  get an exception.
     #
 
-    return true if self[:config]
+    true if self[:config]
   rescue InterpolationError
     # This means we failed to interpolate, which means that they didn't
     #  explicitly specify either :config or :confdir... so we'll fall out to
     #  the default value.
-    return false
+    false
   end
   private :explicit_config_file?
 

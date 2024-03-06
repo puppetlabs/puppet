@@ -23,12 +23,12 @@ module Puppet::Util::ProviderFeatures
     # @return [Boolean] whether all requirements for this feature are met or not.
     def available?(obj)
       if methods
-        return !!methods_available?(obj)
+        !!methods_available?(obj)
       else
         # In this case, the provider has to declare support for this
         # feature, and that's been checked before we ever get to the
         # method checks.
-        return false
+        false
       end
     end
 

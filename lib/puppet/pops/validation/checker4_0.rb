@@ -620,7 +620,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # If a file comes from a module, but isn't in the right place, always error
     names = dir_to_names(relative_path)
 
-    return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
+    adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
   end
 
   def initial_manifest?(path, manifest_setting)
@@ -647,7 +647,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     parent_dir_path = Pathname.new(parent_dir)
     clean_parent = parent_dir_path.cleanpath.to_s + File::SEPARATOR
 
-    return child_dir.start_with?(clean_parent)
+    child_dir.start_with?(clean_parent)
   end
   private :is_parent_dir_of?
 

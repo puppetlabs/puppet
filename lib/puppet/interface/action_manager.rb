@@ -71,7 +71,7 @@ module Puppet::Interface::ActionManager
         result = @actions[name.to_sym] = found.__dup_and_rebind_to(self)
       end
     end
-    return result
+    result
   end
 
   # Retrieves the default action for the face

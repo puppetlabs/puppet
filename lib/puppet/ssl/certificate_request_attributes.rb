@@ -35,6 +35,6 @@ class Puppet::SSL::CertificateRequestAttributes
 
       return true
     end
-    return false
+    false
   end
 end

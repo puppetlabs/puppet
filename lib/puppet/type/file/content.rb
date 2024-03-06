@@ -79,11 +79,11 @@ module Puppet
         newvalue = tmp
       end
       if currentvalue == :absent
-        return "defined content as '#{newvalue}'"
+        "defined content as '#{newvalue}'"
       elsif newvalue == :absent
-        return "undefined content from '#{currentvalue}'"
+        "undefined content from '#{currentvalue}'"
       else
-        return "content changed '#{currentvalue}' to '#{newvalue}'"
+        "content changed '#{currentvalue}' to '#{newvalue}'"
       end
     end
 
@@ -119,7 +119,7 @@ module Puppet
       # The inherited equality is always accepted, so use it if valid.
       return true if super(current, desired)
 
-      return date_matches?(checksum_type, current, desired)
+      date_matches?(checksum_type, current, desired)
     end
 
     def retrieve

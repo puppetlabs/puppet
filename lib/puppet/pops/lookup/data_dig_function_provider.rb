@@ -92,7 +92,7 @@ class V3BackendFunctionProvider < DataDigFunctionProvider
       require 'hiera/backend'
       require "hiera/backend/#{backend_name.downcase}_backend"
       backend = Hiera::Backend.const_get("#{backend_name.capitalize}_backend").new
-      return backend.method(:lookup).arity == 4 ? Hiera::Backend::Backend1xWrapper.new(backend) : backend
+      backend.method(:lookup).arity == 4 ? Hiera::Backend::Backend1xWrapper.new(backend) : backend
     rescue LoadError => e
       lookup_invocation.report_text { "Unable to load backend '#{backend_name}': #{e.message}" }
       throw :no_such_key

@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
       end
 
       # Get the latest and greatest version number
-      return available_versions.pop
+      available_versions.pop
     else
       err _("Could not match string")
     end

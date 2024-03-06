@@ -189,10 +189,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     output = aptcache :policy, @resource[:name]
 
     if output =~ /Candidate:\s+(\S+)\s/
-      return Regexp.last_match(1)
+      Regexp.last_match(1)
     else
       err _("Could not find latest version")
-      return nil
+      nil
     end
   end
 

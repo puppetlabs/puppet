@@ -74,7 +74,7 @@ class Puppet::FileSystem::MemoryImpl
     if block_given?
       yield handle
     else
-      return handle
+      handle
     end
   end
 

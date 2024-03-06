@@ -82,7 +82,7 @@ module ModuleLoaders
 
   class EmptyLoader < BaseLoader
     def find(typed_name)
-      return nil
+      nil
     end
 
     def private_loader

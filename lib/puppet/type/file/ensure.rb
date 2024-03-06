@@ -165,20 +165,20 @@ module Puppet
       end
 
       if should == :present
-        return !(currentvalue.nil? or currentvalue == :absent)
+        !(currentvalue.nil? or currentvalue == :absent)
       else
-        return super(currentvalue)
+        super(currentvalue)
       end
     end
 
     def retrieve
       stat = @resource.stat
       if stat
-        return stat.ftype.intern
+        stat.ftype.intern
       elsif should == :false
-        return :false
+        :false
       else
-        return :absent
+        :absent
       end
     end
 

@@ -87,10 +87,10 @@ class Puppet::Node::Environment
   #   parameters (:modulepath, :manifest, :config_version)
   # @return [Puppet::Node::Environment]
   def override_with(env_params)
-    return self.class.create(name,
-                             env_params[:modulepath] || modulepath,
-                             env_params[:manifest] || manifest,
-                             env_params[:config_version] || config_version)
+    self.class.create(name,
+                      env_params[:modulepath] || modulepath,
+                      env_params[:manifest] || manifest,
+                      env_params[:config_version] || config_version)
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding :manifest,
@@ -537,10 +537,10 @@ class Puppet::Node::Environment
   end
 
   def ==(other)
-    return true if other.is_a?(Puppet::Node::Environment) &&
-                   name == other.name &&
-                   full_modulepath == other.full_modulepath &&
-                   manifest == other.manifest
+    true if other.is_a?(Puppet::Node::Environment) &&
+            name == other.name &&
+            full_modulepath == other.full_modulepath &&
+            manifest == other.manifest
   end
 
   alias eql? ==
@@ -623,7 +623,7 @@ class Puppet::Node::Environment
   #
   # @return [Puppet::Parser::AST::Hostclass]
   def empty_parse_result
-    return Puppet::Parser::AST::Hostclass.new('')
+    Puppet::Parser::AST::Hostclass.new('')
   end
 
   # A None subclass to make it easier to trace the NONE environment when debugging.

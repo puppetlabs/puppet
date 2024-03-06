@@ -190,7 +190,7 @@ module Util
         yield
       }
       object.send(level, msg % { seconds: "%0.2f" % seconds })
-      return seconds
+      seconds
     else
       yield
     end

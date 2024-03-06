@@ -465,7 +465,7 @@ Puppet::Type.newtype(:file) do
   end
 
   def self.instances
-    return []
+    []
   end
 
   # Determine the user to write files as.
@@ -616,12 +616,12 @@ Puppet::Type.newtype(:file) do
         # Remove the parent file name
         list = parent.pathbuilder
         list.pop # remove the parent's path info
-        return list << ref
+        list << ref
       else
-        return super
+        super
       end
     else
-      return [ref]
+      [ref]
     end
   end
 
@@ -810,9 +810,9 @@ Puppet::Type.newtype(:file) do
 
     case current_type
     when "directory"
-      return remove_directory(wanted_type)
+      remove_directory(wanted_type)
     when "link", "file", "fifo", "socket"
-      return remove_file(current_type, wanted_type)
+      remove_file(current_type, wanted_type)
     else
       # Including: “blockSpecial”, “characterSpecial”, “unknown”
       self.fail _("Could not remove files of type %{current_type}") % { current_type: current_type }

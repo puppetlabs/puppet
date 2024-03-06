@@ -325,13 +325,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     text = target_object(path).read
     if text.nil? or text == ""
       # there is no file
-      return []
+      []
     else
       # Set the target, for logging.
       old = @target
       begin
         @target = path
-        return parse(text)
+        parse(text)
       rescue Puppet::Error => detail
         detail.file = @target if detail.respond_to?(:file=)
         raise detail

@@ -28,39 +28,39 @@ class Puppet::Network::HTTP::Route
 
   def get(*handlers)
     @method_handlers[:GET] = handlers
-    return self
+    self
   end
 
   def head(*handlers)
     @method_handlers[:HEAD] = handlers
-    return self
+    self
   end
 
   def options(*handlers)
     @method_handlers[:OPTIONS] = handlers
-    return self
+    self
   end
 
   def post(*handlers)
     @method_handlers[:POST] = handlers
-    return self
+    self
   end
 
   def put(*handlers)
     @method_handlers[:PUT] = handlers
-    return self
+    self
   end
 
   def delete(*handlers)
     @method_handlers[:DELETE] = handlers
-    return self
+    self
   end
 
   def any(*handlers)
     @method_handlers.each do |method, _registered_handlers|
       @method_handlers[method] = handlers
     end
-    return self
+    self
   end
 
   def chain(*routes)
@@ -76,7 +76,7 @@ class Puppet::Network::HTTP::Route
       Puppet.debug { "Did not match path (#{request.routing_path.inspect})" }
     end
 
-    return false
+    false
   end
 
   def process(request, response)

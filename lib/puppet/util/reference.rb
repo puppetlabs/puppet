@@ -71,9 +71,9 @@ class Puppet::Util::Reference
 
   def doc
     if defined?(@doc)
-      return "#{@name} - #{@doc}"
+      "#{@name} - #{@doc}"
     else
-      return @title
+      @title
     end
   end
 

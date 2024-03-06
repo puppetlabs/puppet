@@ -20,7 +20,7 @@ class Puppet::Parser::AST::Hostclass < Puppet::Parser::AST::TopLevelConstruct
         end
       end
     end
-    return all_types
+    all_types
   end
 
   def code

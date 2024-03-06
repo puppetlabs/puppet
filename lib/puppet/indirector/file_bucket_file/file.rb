@@ -31,7 +31,7 @@ module Puppet::FileBucketFile
           raise _("could not find diff_with %{diff}") % { diff: request.options[:diff_with] } unless Puppet::FileSystem.exist?(other_contents_file)
           raise _("Unable to diff on this platform") unless Puppet[:diff] != ""
 
-          return diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
+          diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
         else
           # TRANSLATORS "FileBucket" should not be translated
           Puppet.info _("FileBucket read %{checksum}") % { checksum: checksum }
@@ -88,7 +88,7 @@ module Puppet::FileBucketFile
           msg += "#{chksum} #{date} #{filename}\n"
         }
       }
-      return model.new(msg)
+      model.new(msg)
     end
 
     def head(request)
@@ -137,7 +137,7 @@ module Puppet::FileBucketFile
       file_handle.each_line do |line|
         return true if line.chomp == files_original_path
       end
-      return false
+      false
     end
 
     # @param bucket_file [Puppet::FileBucket::File] IO object representing

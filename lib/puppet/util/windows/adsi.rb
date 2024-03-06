@@ -165,7 +165,7 @@ module Puppet::Util::Windows::ADSI
         domain = matches[0][1] || '.'
         account = matches[0][2]
 
-        return account, domain
+        [account, domain]
       end
 
       # returns Puppet::Util::Windows::SID::Principal[]

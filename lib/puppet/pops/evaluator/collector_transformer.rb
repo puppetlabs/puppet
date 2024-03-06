@@ -182,19 +182,19 @@ class CollectorTransformer
   def match_AndExpression(o, scope)
     left_match = match(o.left_expr, scope)
     right_match = match(o.right_expr, scope)
-    return [left_match, 'and', right_match]
+    [left_match, 'and', right_match]
   end
 
   def match_OrExpression(o, scope)
     left_match = match(o.left_expr, scope)
     right_match = match(o.right_expr, scope)
-    return [left_match, 'or', right_match]
+    [left_match, 'or', right_match]
   end
 
   def match_ComparisonExpression(o, scope)
     left_match = match(o.left_expr, scope)
     right_match = match(o.right_expr, scope)
-    return [left_match, o.operator.to_s, right_match]
+    [left_match, o.operator.to_s, right_match]
   end
 
   def match_VariableExpression(o, scope)

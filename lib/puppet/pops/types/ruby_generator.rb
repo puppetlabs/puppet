@@ -64,7 +64,7 @@ class RubyGenerator < TypeFormatter
         class_body(key, EMPTY_ARRAY, class_def)
         cls = Class.new(parent_class)
         cls.class_eval(class_def)
-        cls.define_singleton_method(:_pcore_type) { return key }
+        cls.define_singleton_method(:_pcore_type) { key }
         key.implementation_class = cls
       end
       hash[key] = cls

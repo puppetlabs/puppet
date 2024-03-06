@@ -60,14 +60,14 @@ module Puppet::ModuleTool::Shared
       return :latest
     end
 
-    return :best
+    :best
   end
 
   def annotated_version(mod, versions)
     if versions.empty?
-      return implicit_version(mod)
+      implicit_version(mod)
     else
-      return "#{implicit_version(mod)}: #{versions.last}"
+      "#{implicit_version(mod)}: #{versions.last}"
     end
   end
 
@@ -158,7 +158,7 @@ module Puppet::ModuleTool::Shared
       deps = @remote["#{mod[:module]}@#{mod[:version][:vstring]}"].sort_by(&:first)
       mod[:dependencies] = resolve_constraints(deps, source + [{ :name => mod[:module], :version => mod[:version][:vstring] }], seen, :install)
     end unless @ignore_dependencies
-    return dependencies
+    dependencies
   end
 
   def download_tarballs(graph, default_path, forge)

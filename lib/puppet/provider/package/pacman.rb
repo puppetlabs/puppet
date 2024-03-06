@@ -141,7 +141,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       if pacman_check
         output = pacman "-Sp", "--print-format", "%v", resource_name
-        return output.chomp
+        output.chomp
       else
         output = yaourt "-Qma", resource_name
         output.split("\n").each do |line|

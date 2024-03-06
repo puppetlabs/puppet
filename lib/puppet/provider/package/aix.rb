@@ -137,9 +137,9 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     if hash[:pkgname]
-      return list.shift
+      list.shift
     else
-      return list
+      list
     end
   end
 
@@ -153,11 +153,11 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     upd = latest_info
 
     unless upd.nil?
-      return (upd[:version]).to_s
+      (upd[:version]).to_s
     else
       raise Puppet::DevError, _("Tried to get latest on a missing package") if properties[:ensure] == :absent
 
-      return properties[:ensure]
+      properties[:ensure]
     end
   end
 

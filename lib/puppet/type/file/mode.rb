@@ -132,9 +132,9 @@ module Puppet
       stat = @resource.stat
       if stat && stat.ftype == "link" && @resource[:links] != :follow
         debug _("Not managing symlink mode")
-        return true
+        true
       else
-        return super(currentvalue)
+        super(currentvalue)
       end
     end
 

@@ -59,7 +59,7 @@ class Puppet::Module
     def self.is_plan_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
 
-      return false
+      false
     end
 
     # Determine whether a plan file has a legal name and extension
@@ -77,7 +77,7 @@ class Puppet::Module
         return [false, _("Plan name cannot be a Puppet data type, but was '%{name}'") % { name: name }]
       end
 
-      return [true]
+      [true]
     end
 
     # Executables list should contain the full path of all possible implementation files
@@ -159,7 +159,7 @@ class Puppet::Module
 
     # Abstracted here so we can add support for subdirectories later
     def self.plan_name_from_path(path)
-      return File.basename(path, '.*')
+      File.basename(path, '.*')
     end
     private_class_method :plan_name_from_path
   end

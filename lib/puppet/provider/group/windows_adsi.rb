@@ -57,7 +57,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
       resource.debug("#{sid.domain}\\#{account} (#{sid.sid})")
       sid.domain ? "#{sid.domain}\\#{account}" : account
     end
-    return users.join(',')
+    users.join(',')
   end
 
   def member_valid?(user_name)

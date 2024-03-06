@@ -67,7 +67,7 @@ class Puppet::Interface
 
       face.instance_eval(&block) if block_given?
 
-      return face
+      face
     end
 
     # Retrieves a face by name and version. Use `:current` for the

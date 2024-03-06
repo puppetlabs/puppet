@@ -290,7 +290,7 @@ module Puppet::ModuleTool
 
         previous = installed_modules[release.name]
         previous = previous.version if previous
-        return {
+        {
           :release => release,
           :name => release.name,
           :path => release.install_dir.to_s,

@@ -32,6 +32,6 @@ class Puppet::Parser::Resource::Param
   def self.from_param(param, value)
     new_param = param.dup
     new_param.value = value
-    return new_param
+    new_param
   end
 end

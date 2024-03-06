@@ -216,13 +216,13 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
     case state
     when "online"
-      return :running
+      :running
     when "offline", "disabled", "uninitialized"
-      return :stopped
+      :stopped
     when "maintenance"
-      return :maintenance
+      :maintenance
     when "degraded"
-      return :degraded
+      :degraded
     when "legacy_run"
       raise Puppet::Error,
             "Cannot manage legacy services through SMF"

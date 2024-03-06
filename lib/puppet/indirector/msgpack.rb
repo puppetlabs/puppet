@@ -71,7 +71,7 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     end
 
     begin
-      return from_msgpack(msgpack)
+      from_msgpack(msgpack)
     rescue => detail
       raise Puppet::Error, _("Could not parse MessagePack data for %{indirection} %{key}: %{detail}") % { indirection: indirection.name, key: key, detail: detail }, detail.backtrace
     end

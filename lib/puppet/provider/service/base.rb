@@ -74,17 +74,17 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
 
       # Explicitly calling exitstatus to facilitate testing
       if status.exitstatus == 0
-        return :running
+        :running
       else
-        return :stopped
+        :stopped
       end
     else
       pid = getpid
       if pid
         debug "PID is #{pid}"
-        return :running
+        :running
       else
-        return :stopped
+        :stopped
       end
     end
   end
@@ -102,12 +102,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # The command used to start.  Generated if the 'binary' argument
   # is passed.
   def startcmd
-    if @resource[:binary]
-      return @resource[:binary]
-    else
-      raise Puppet::Error,
-            "Services must specify a start command or a binary"
-    end
+    @resource[:binary] || raise(Puppet::Error, "Services must specify a start command or a binary")
   end
 
   # Stop the service.  If a 'stop' parameter is specified, it
@@ -130,7 +125,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       rescue Puppet::ExecutionFailure
         @resource.fail Puppet::Error, "Could not kill #{name}, PID #{pid}: #{output}", $!
       end
-      return true
+      true
     end
   end
 

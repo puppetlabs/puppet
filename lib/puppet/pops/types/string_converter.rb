@@ -47,7 +47,7 @@ class StringConverter
     end
 
     def padding
-      return ' ' * 2 * level
+      ' ' * 2 * level
     end
   end
 
@@ -1136,7 +1136,7 @@ class StringConverter
     fmt = format_options.find { |k, _| k.assignable?(val_t) }
     return fmt[1] unless fmt.nil?
 
-    return Format.new("%s")
+    Format.new("%s")
   end
   private :get_format
 end

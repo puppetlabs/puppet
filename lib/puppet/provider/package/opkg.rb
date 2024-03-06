@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     end
     packages
   rescue Puppet::ExecutionFailure
-    return nil
+    nil
   end
 
   def latest
@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
 
     nil
   rescue Puppet::ExecutionFailure
-    return {
+    {
       :ensure => :purged,
       :status => 'missing',
       :name => @resource[:name],

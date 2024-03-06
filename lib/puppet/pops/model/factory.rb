@@ -648,7 +648,7 @@ class Factory
     return false unless expr.instance_of?(self) && expr.model_class <= AbstractResource
 
     expr['form'] = form
-    return true
+    true
   end
 
   # Returns symbolic information about an expected shape of a resource expression given the LHS of a resource expr.

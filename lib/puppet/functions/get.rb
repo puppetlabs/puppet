@@ -138,7 +138,7 @@ Puppet::Functions.create_function(:get, Puppet::Functions::InternalFunction) do
 
     begin
       result = call_function('dig', value, *segments)
-      return result.nil? ? default_value : result
+      result.nil? ? default_value : result
     rescue Puppet::ErrorWithData => e
       if block_given?
         yield(e.error_data)

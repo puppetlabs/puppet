@@ -146,7 +146,7 @@ class Puppet::Settings::BaseSetting
     end
     return default_value unless check_application_defaults_first
 
-    return @settings.value(name, :application_defaults, true) || default_value
+    @settings.value(name, :application_defaults, true) || default_value
   end
 
   # Convert the object to a config statement.

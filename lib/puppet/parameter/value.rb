@@ -57,9 +57,9 @@ class Puppet::Parameter::Value
   #
   def match?(value)
     if regex?
-      return true if name =~ value.to_s
+      true if name =~ value.to_s
     else
-      return(name == convert(value) ? true : @aliases.include?(convert(value)))
+      (name == convert(value) ? true : @aliases.include?(convert(value)))
     end
   end
 

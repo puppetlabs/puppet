@@ -163,7 +163,7 @@ class Locator
       return nil if low == ary.length
       return nil unless satisfied
 
-      return low
+      low
     end
 
     def hash
@@ -192,7 +192,7 @@ class Locator
       # If not found it is after last
       # clear cache
       @prev_offset = @prev_line = nil
-      return line_index.size
+      line_index.size
     end
   end
 

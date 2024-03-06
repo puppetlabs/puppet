@@ -95,7 +95,7 @@ Puppet::Face.define(:help, '0.0.1') do
   end
 
   def render_application_help(applicationname)
-    return Puppet::Application[applicationname].help
+    Puppet::Application[applicationname].help
   rescue StandardError, LoadError => detail
     message = []
     message << _('Could not load help for the application %{application_name}.') % { application_name: applicationname }
@@ -107,7 +107,7 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def render_face_help(facename, actionname, version)
     face, action = load_face_help(facename, actionname, version)
-    return template_for(face, action).result(binding)
+    template_for(face, action).result(binding)
   rescue StandardError, LoadError => detail
     message = []
     message << _('Could not load help for the face %{face_name}.') % { face_name: facename }
@@ -141,7 +141,7 @@ Puppet::Face.define(:help, '0.0.1') do
     template = (Pathname(__FILE__).dirname + "help" + name)
     erb = Puppet::Util.create_erb(template.read)
     erb.filename = template.to_s
-    return erb
+    erb
   end
 
   # Return a list of applications that are not simply just stubs for Faces.
@@ -213,7 +213,7 @@ Puppet::Face.define(:help, '0.0.1') do
         return md[1]
       end
     end
-    return ''
+    ''
   end
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.

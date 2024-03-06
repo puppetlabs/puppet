@@ -234,7 +234,7 @@ class Puppet::Application::Ssl < Puppet::Application
     cert
   rescue Puppet::HTTP::ResponseError => e
     if e.response.code == 404
-      return nil
+      nil
     else
       raise Puppet::Error.new(_("Failed to download certificate: %{message}") % { message: e.message }, e)
     end

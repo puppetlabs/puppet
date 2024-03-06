@@ -80,7 +80,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       :group => 'S-1-0-0',
       :mode => 0o644 }.each do |method, default_value|
       define_method method do
-        return default_value
+        default_value
       end
     end
   end

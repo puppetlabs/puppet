@@ -19,7 +19,7 @@ module Puppet
         else
           Puppet.send(@resource[:loglevel], message)
         end
-        return
+        nil
       end
 
       def retrieve

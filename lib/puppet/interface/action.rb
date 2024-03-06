@@ -42,7 +42,7 @@ class Puppet::Interface::Action
   def __dup_and_rebind_to(to)
     bound_version = dup
     bound_version.instance_variable_set(:@face, to)
-    return bound_version
+    bound_version
   end
 
   def to_s() "#{@face}##{@name}" end
@@ -88,7 +88,7 @@ class Puppet::Interface::Action
     return @when_rendering[alt].bind(@face) if @when_rendering.has_key? alt
 
     # Guess not, nothing to run.
-    return nil
+    nil
   end
 
   # @api private
@@ -394,7 +394,7 @@ class Puppet::Interface::Action
     end
 
     # All done.
-    return result
+    result
   end
 
   ########################################################################

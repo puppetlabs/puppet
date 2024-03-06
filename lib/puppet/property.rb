@@ -204,11 +204,11 @@ class Puppet::Property < Puppet::Parameter
   #
   def change_to_s(current_value, newvalue)
     if current_value == :absent
-      return "defined '#{name}' as #{should_to_s(newvalue)}"
+      "defined '#{name}' as #{should_to_s(newvalue)}"
     elsif newvalue == :absent or newvalue == [:absent]
-      return "undefined '#{name}' from #{is_to_s(current_value)}"
+      "undefined '#{name}' from #{is_to_s(current_value)}"
     else
-      return "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
+      "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
     end
   rescue Puppet::Error
     raise
@@ -231,11 +231,11 @@ class Puppet::Property < Puppet::Parameter
 
     name == :ensure or return (name.to_s + "_changed").to_sym
 
-    return (resource.type.to_s + case value
-                                 when :present; "_created"
-                                 when :absent;  "_removed"
-                                 else           "_changed"
-                                 end).to_sym
+    (resource.type.to_s + case value
+                          when :present; "_created"
+                          when :absent;  "_removed"
+                          else "_changed"
+                          end).to_sym
   end
 
   # Produces an event describing a change of this property.
@@ -331,14 +331,14 @@ class Puppet::Property < Puppet::Parameter
       #
       # This does mean that property equality is not commutative, and will not
       # work unless the `is` value is carefully arranged to match the should.
-      return (is == @should or is == @should.map(&:to_s))
+      (is == @should or is == @should.map(&:to_s))
 
       # When we stop being idiots about this, and actually have meaningful
       # semantics, this version is the thing we actually want to do.
       #
       # return is.zip(@should).all? {|a, b| property_matches?(a, b) }
     else
-      return @should.any? { |want| property_matches?(is, want) }
+      @should.any? { |want| property_matches?(is, want) }
     end
   end
 
@@ -527,9 +527,9 @@ class Puppet::Property < Puppet::Parameter
     devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
 
     if match_all?
-      return @should.collect { |val| unmunge(val) }
+      @should.collect { |val| unmunge(val) }
     else
-      return unmunge(@should[0])
+      unmunge(@should[0])
     end
   end
 

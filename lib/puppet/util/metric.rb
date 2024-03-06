@@ -36,9 +36,9 @@ class Puppet::Util::Metric
   def [](name)
     value = @values.find { |v| v[0] == name }
     if value
-      return value[2]
+      value[2]
     else
-      return 0
+      0
     end
   end
 

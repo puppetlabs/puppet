@@ -116,7 +116,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.instances(command).each do |pkg|
       return pkg.properties if @resource[:name].casecmp(pkg.name).zero?
     end
-    return nil
+    nil
   end
 
   # Return latest version available for current package

@@ -275,7 +275,7 @@ class Type
       define_method(name.to_s + "?") do
         val = self[name]
         if val == :true or val == true
-          return true
+          true
         end
       end
     end
@@ -662,7 +662,7 @@ class Type
       # not the current value.
       obj.value
     else
-      return nil
+      nil
     end
   end
 
@@ -933,9 +933,9 @@ class Type
   # @return [Boolean] true, if this type's name is isomorphic with the object
   def self.isomorphic?
     if defined?(@isomorphic)
-      return @isomorphic
+      @isomorphic
     else
-      return true
+      true
     end
   end
 
@@ -965,7 +965,7 @@ class Type
         end
       }
     end
-    return @managed
+    @managed
   end
 
   ###############################
@@ -1115,7 +1115,7 @@ class Type
     # is the first property, which is important for skipping 'retrieve' on
     # all the properties if the resource is absent.
     ensure_state = false
-    return properties.each_with_object({}) do |property, prophash|
+    properties.each_with_object({}) do |property, prophash|
       if property.name == :ensure
         ensure_state = property.retrieve
         prophash[property] = ensure_state

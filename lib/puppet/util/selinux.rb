@@ -142,10 +142,10 @@ module Puppet::Util::SELinux
 
     retval = Selinux.lsetfilecon(file, context)
     if retval == 0
-      return true
+      true
     else
       Puppet.warning _("Failed to set SELinux context %{context} on %{file}") % { context: context, file: file }
-      return false
+      false
     end
   end
 
@@ -294,7 +294,7 @@ module Puppet::Util::SELinux
     end
 
     # Should never be reached...
-    return mounts['/']
+    mounts['/']
   end
 
   ##

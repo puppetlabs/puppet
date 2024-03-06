@@ -36,7 +36,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   end
 
   def exist?(path)
-    return Puppet::Util::Windows::File.exist?(path)
+    Puppet::Util::Windows::File.exist?(path)
   end
 
   def symlink(path, dest, options = {})

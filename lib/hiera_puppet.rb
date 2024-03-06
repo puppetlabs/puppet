@@ -47,7 +47,7 @@ module HieraPuppet
     default  = args[1]
     override = args[2]
 
-    return [key, default, override]
+    [key, default, override]
   end
 
   def hiera

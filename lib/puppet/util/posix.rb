@@ -87,10 +87,10 @@ module Puppet::Util::POSIX
     end
 
     begin
-      return Etc.send(method, id).send(field)
+      Etc.send(method, id).send(field)
     rescue NoMethodError, ArgumentError
       # ignore it; we couldn't find the object
-      return nil
+      nil
     end
   end
 
@@ -128,8 +128,8 @@ module Puppet::Util::POSIX
   # Determine what the field name is for users and groups.
   def idfield(space)
     case space.intern
-    when :gr, :group; return :gid
-    when :pw, :user, :passwd; return :uid
+    when :gr, :group; :gid
+    when :pw, :user, :passwd; :uid
     else
       raise ArgumentError, _("Can only handle users and groups")
     end
@@ -138,8 +138,8 @@ module Puppet::Util::POSIX
   # Determine what the method is to get users and groups by id
   def methodbyid(space)
     case space.intern
-    when :gr, :group; return :getgrgid
-    when :pw, :user, :passwd; return :getpwuid
+    when :gr, :group; :getgrgid
+    when :pw, :user, :passwd; :getpwuid
     else
       raise ArgumentError, _("Can only handle users and groups")
     end
@@ -148,8 +148,8 @@ module Puppet::Util::POSIX
   # Determine what the method is to get users and groups by name
   def methodbyname(space)
     case space.intern
-    when :gr, :group; return :getgrnam
-    when :pw, :user, :passwd; return :getpwnam
+    when :gr, :group; :getgrnam
+    when :pw, :user, :passwd; :getpwnam
     else
       raise ArgumentError, _("Can only handle users and groups")
     end
@@ -194,13 +194,13 @@ module Puppet::Util::POSIX
 
       if id == check_value_id
         Puppet.debug("Multiple entries found for resource: '#{location}' with #{id_field}: #{id}")
-        return id
+        id
       else
         Puppet.debug("The value retrieved: '#{check_value}' is different than the required state: '#{field}', searching in all entries")
-        return search_posix_field(location, id_field, field)
+        search_posix_field(location, id_field, field)
       end
     else
-      return id
+      id
     end
   end
 end

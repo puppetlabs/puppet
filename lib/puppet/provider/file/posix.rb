@@ -27,9 +27,9 @@ Puppet::Type.type(:file).provide :posix do
     end
 
     if user.uid == ""
-      return nil
+      nil
     else
-      return user.name
+      user.name
     end
   end
 
@@ -51,9 +51,9 @@ Puppet::Type.type(:file).provide :posix do
     end
 
     if group.gid == ""
-      return nil
+      nil
     else
-      return group.name
+      group.name
     end
   end
 
@@ -132,9 +132,9 @@ Puppet::Type.type(:file).provide :posix do
   def mode
     stat = resource.stat
     if stat
-      return (stat.mode & 0o07777).to_s(8).rjust(4, '0')
+      (stat.mode & 0o07777).to_s(8).rjust(4, '0')
     else
-      return :absent
+      :absent
     end
   end
 

@@ -255,10 +255,10 @@ module Puppet
         when :number
           method = ScheduleMethods[value]
           if method.is_a?(Proc)
-            return method.call(previous, now)
+            method.call(previous, now)
           else
             # We negate it, because if they're equal we don't run
-            return now.send(method) != previous.send(method)
+            now.send(method) != previous.send(method)
           end
         when :distance
           scale = ScheduleScales[value]
@@ -267,7 +267,7 @@ module Puppet
           # than the unit of time, we match.  We divide the scale
           # by the repeat, so that we'll repeat that often within
           # the scale.
-          return (now.to_i - previous.to_i) >= (scale / @resource[:repeat])
+          (now.to_i - previous.to_i) >= (scale / @resource[:repeat])
         end
       end
     end

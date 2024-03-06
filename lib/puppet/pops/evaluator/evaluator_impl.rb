@@ -747,7 +747,7 @@ class EvaluatorImpl
     file = o.locator.file
     line = 0
     # Add stack frame for "top scope" logic. See Puppet::Pops::PuppetStack
-    return Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
+    Puppet::Pops::PuppetStack.stack(file, line, self, 'evaluate', [o.body, scope])
     # evaluate(o.body, scope)
   rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
     # breaking out of a file level program is not allowed

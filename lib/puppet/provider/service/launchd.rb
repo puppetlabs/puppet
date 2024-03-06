@@ -165,12 +165,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     if label
       if by_label.has_key? label
-        return { label => by_label[label] }
+        { label => by_label[label] }
       else
         # try refreshing the map, in case a plist has been added in the interim
         by_label = make_label_to_path_map(true)
         if by_label.has_key? label
-          return { label => by_label[label] }
+          { label => by_label[label] }
         else
           raise Puppet::Error, "Unable to find launchd plist for job: #{label}"
         end
@@ -248,7 +248,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # status mechanism and fall back to the base provider status method.
   def status
     if @resource && ((@resource[:hasstatus] == :false) || (@resource[:status]))
-      return super
+      super
     elsif @property_hash[:status].nil?
       # property_hash was flushed so the service changed status
       service_name = @resource[:name]

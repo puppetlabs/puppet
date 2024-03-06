@@ -130,9 +130,9 @@ module Puppet
     def change_to_s(currentvalue, newvalue)
       # newvalue = "{md5}#{@metadata.checksum}"
       if resource.property(:ensure).retrieve == :absent
-        return "creating from source #{metadata.source} with contents #{metadata.checksum}"
+        "creating from source #{metadata.source} with contents #{metadata.checksum}"
       else
-        return "replacing from source #{metadata.source} with contents #{metadata.checksum}"
+        "replacing from source #{metadata.source} with contents #{metadata.checksum}"
       end
     end
 

@@ -76,9 +76,9 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
         packages << new(hash)
       end
 
-      return packages
+      packages
     rescue Puppet::ExecutionFailure
-      return []
+      []
     end
   end
 

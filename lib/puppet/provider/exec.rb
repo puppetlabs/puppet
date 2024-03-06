@@ -82,7 +82,7 @@ class Puppet::Provider::Exec < Puppet::Provider
     # Return output twice as processstatus was returned before, but only exitstatus was ever called.
     # Output has the exitstatus on it so it is returned instead. This is here twice as changing this
     #  would result in a change to the underlying API.
-    return output, output
+    [output, output]
   end
 
   def extractexe(command)

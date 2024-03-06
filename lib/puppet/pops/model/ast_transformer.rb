@@ -91,11 +91,11 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def hostname_LiteralValue(o)
-    return o.value
+    o.value
   end
 
   def hostname_QualifiedName(o)
-    return o.value
+    o.value
   end
 
   def hostname_LiteralNumber(o)
@@ -103,7 +103,7 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def hostname_LiteralDefault(o)
-    return 'default'
+    'default'
   end
 
   def hostname_LiteralRegularExpression(o)

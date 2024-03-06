@@ -52,7 +52,7 @@ class Puppet::FileBucket::Dipper
         Puppet::FileBucket::File.indirection.save(file_bucket_file, dest_path)
       end
 
-      return file_bucket_file.checksum_data
+      file_bucket_file.checksum_data
     rescue => detail
       message = _("Could not back up %{file}: %{detail}") % { file: file, detail: detail }
       Puppet.log_exception(detail, message)
@@ -152,9 +152,9 @@ class Puppet::FileBucket::Dipper
         Puppet.err _("Could not find file with checksum %{sum}") % { sum: sum }
         return nil
       end
-      return newsum
+      newsum
     else
-      return nil
+      nil
     end
   end
 

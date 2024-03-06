@@ -113,7 +113,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
       end
       return true if pkg
     end
-    return false
+    false
   end
 
   def enable(args = @resource[:name])

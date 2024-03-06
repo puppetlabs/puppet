@@ -108,15 +108,15 @@ class Puppet::Provider::NameService < Puppet::Provider
     field = field.intern
     id_generators = { :user => :uid, :group => :gid }
     if id_generators[@resource.class.name] == field
-      return self.class.autogen_id(field, @resource.class.name)
+      self.class.autogen_id(field, @resource.class.name)
     else
       value = self.class.autogen_default(field)
       if value
-        return value
+        value
       elsif respond_to?("autogen_#{field}")
-        return send("autogen_#{field}")
+        send("autogen_#{field}")
       else
-        return nil
+        nil
       end
     end
   end

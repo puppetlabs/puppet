@@ -11,8 +11,8 @@ module Puppet::Util::Terminal
       result = %x(stty size 2>/dev/null).split[1] ||
                %x(tput cols 2>/dev/null).split[0]
     end
-    return (result || '80').to_i
+    (result || '80').to_i
   rescue
-    return 80
+    80
   end
 end

@@ -26,7 +26,7 @@ module Puppet::Util::CharacterEncoding
             }
           end
           # String is already valid UTF-8 - noop
-          return string_copy
+          string_copy
         else
           # If the string comes to us as BINARY encoded, we don't know what it
           # started as. However, to encode! we need a starting place, and our
@@ -34,7 +34,7 @@ module Puppet::Util::CharacterEncoding
           # So set external_encoding to default_external before we try to
           # transcode to UTF-8.
           string_copy.force_encoding(Encoding.default_external) if original_encoding == Encoding::BINARY
-          return string_copy.encode(Encoding::UTF_8)
+          string_copy.encode(Encoding::UTF_8)
         end
       rescue EncodingError => detail
         # Set the encoding on our copy back to its original if we modified it
@@ -46,7 +46,7 @@ module Puppet::Util::CharacterEncoding
         Puppet.debug {
           _("%{error}: %{value} cannot be transcoded by Puppet.") % { error: detail.inspect, value: string.dump }
         }
-        return string_copy
+        string_copy
       end
     end
 
@@ -68,14 +68,15 @@ module Puppet::Util::CharacterEncoding
       string_copy = string.dup
       original_encoding = string_copy.encoding
       return string_copy if original_encoding == Encoding::UTF_8
+
       if string_copy.force_encoding(Encoding::UTF_8).valid_encoding?
-        return string_copy
+        string_copy
       else
         Puppet.debug {
           _("%{value} is not valid UTF-8 and result of overriding encoding would be invalid.") % { value: string.dump }
         }
         # Set copy back to its original encoding before returning
-        return string_copy.force_encoding(original_encoding)
+        string_copy.force_encoding(original_encoding)
       end
     end
   end

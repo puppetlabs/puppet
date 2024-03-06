@@ -216,7 +216,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       Puppet.debug("Failed to match rpm line #{line}")
     end
 
-    return hash
+    hash
   end
 
   # @param line [String] multiple lines of rpm package query information
@@ -250,6 +250,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       return list[0]
     end
 
-    return list
+    list
   end
 end

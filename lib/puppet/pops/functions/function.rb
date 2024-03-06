@@ -43,7 +43,7 @@ class Puppet::Pops::Functions::Function
     result = catch(:return) do
       return self.class.dispatcher.dispatch(self, scope, args, &block)
     end
-    return result.value
+    result.value
   rescue Puppet::Pops::Evaluator::Next => jumper
     begin
       throw :next, jumper.value

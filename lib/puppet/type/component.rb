@@ -47,9 +47,9 @@ Puppet::Type.newtype(:component) do
     end
     p = parent
     if p
-      return [p.pathbuilder, myname]
+      [p.pathbuilder, myname]
     else
-      return [myname]
+      [myname]
     end
   end
 

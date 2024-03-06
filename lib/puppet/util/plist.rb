@@ -51,7 +51,7 @@ module Puppet::Util::Plist
           Puppet.warning(message)
         end
       end
-      return nil
+      nil
     end
 
     # Read plist text using the CFPropertyList gem.

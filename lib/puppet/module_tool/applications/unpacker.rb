@@ -38,7 +38,7 @@ module Puppet::ModuleTool
 
         # Return the Pathname object representing the directory where the
         # module release archive was unpacked the to.
-        return module_dir
+        module_dir
       end
 
       # @api private

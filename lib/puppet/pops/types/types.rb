@@ -737,7 +737,7 @@ class PScalarDataType < PScalarType
   end
 
   def instance?(o, guard = nil)
-    return o.instance_of?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.is_a?(TrueClass) || o.is_a?(FalseClass)
+    o.instance_of?(String) || o.is_a?(Integer) || o.is_a?(Float) || o.is_a?(TrueClass) || o.is_a?(FalseClass)
   end
 
   DEFAULT = PScalarDataType.new

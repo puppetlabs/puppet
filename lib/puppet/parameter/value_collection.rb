@@ -103,12 +103,12 @@ class Puppet::Parameter::ValueCollection
     instance = match?(value)
     if instance
       if instance.regex?
-        return value
+        value
       else
-        return instance.name
+        instance.name
       end
     else
-      return value
+      value
     end
   end
 

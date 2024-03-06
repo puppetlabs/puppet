@@ -66,7 +66,7 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     end
 
     begin
-      return from_json(json)
+      from_json(json)
     rescue => detail
       raise Puppet::Error, _("Could not parse JSON data for %{name} %{key}: %{detail}") % { name: indirection.name, key: key, detail: detail }, detail.backtrace
     end

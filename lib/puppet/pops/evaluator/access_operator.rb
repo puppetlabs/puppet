@@ -665,7 +665,7 @@ class AccessOperator
       Types::PResourceType.new(type_name, t == :no_title ? nil : t)
     end
     # returns single type if request was for a single entity, else an array of types (possibly empty)
-    return result_type_array ? result : result.pop
+    result_type_array ? result : result.pop
   end
 
   NS = '::'
@@ -725,7 +725,7 @@ class AccessOperator
     end
 
     # returns single type as type, else an array of types
-    return result_type_array ? result : result.pop
+    result_type_array ? result : result.pop
   end
 end
 end

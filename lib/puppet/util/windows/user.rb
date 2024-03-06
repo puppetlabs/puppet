@@ -13,7 +13,7 @@ module Puppet::Util::Windows::User
 
     # if Vista or later, check for unrestricted process token
     elevated_supported = Puppet::Util::Windows::Process.supports_elevated_security?
-    return elevated_supported ? Puppet::Util::Windows::Process.elevated_security? : true
+    elevated_supported ? Puppet::Util::Windows::Process.elevated_security? : true
   end
   module_function :admin?
 
@@ -84,7 +84,7 @@ module Puppet::Util::Windows::User
       ERROR_ACCOUNT_DISABLED,
     ]
 
-    return authenticated_error_codes.include?(detail.code)
+    authenticated_error_codes.include?(detail.code)
   end
   module_function :password_is?
 

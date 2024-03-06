@@ -56,7 +56,7 @@ class Puppet::Resource::Type
     return true if override
     return false unless parent
 
-    return(klass == parent_type ? true : parent_type.child_of?(klass))
+    (klass == parent_type ? true : parent_type.child_of?(klass))
   end
 
   # Now evaluate the code associated with this class or definition.
@@ -376,7 +376,7 @@ class Puppet::Resource::Type
     ary = fullname.split(DOUBLE_COLON)
     n = ary.pop || ""
     ns = ary.join(DOUBLE_COLON)
-    return ns, n
+    [ns, n]
   end
 
   def parent_scope(scope, klass)

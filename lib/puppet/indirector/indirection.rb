@@ -311,7 +311,7 @@ class Puppet::Indirector::Indirection
 
         instance.expiration ||= expiration
       end
-      return result
+      result
     end
   end
 

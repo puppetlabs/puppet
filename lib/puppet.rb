@@ -75,9 +75,9 @@ module Puppet
   # @api public
   def self.[](param)
     if param == :debug
-      return Puppet::Util::Log.level == :debug
+      Puppet::Util::Log.level == :debug
     else
-      return @@settings[param]
+      @@settings[param]
     end
   end
 

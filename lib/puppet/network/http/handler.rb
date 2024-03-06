@@ -107,14 +107,10 @@ module Puppet::Network::HTTP::Handler
 
   def find_route_or_raise(request)
     route = @routes.find { |r| r.matches?(request) }
-    if route
-      return route
-    else
-      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
-        _("No route for %{request} %{path}") % { request: request.method, path: request.path },
-        HANDLER_NOT_FOUND
-      )
-    end
+    route || raise(Puppet::Network::HTTP::Error::HTTPNotFoundError.new(
+                     _("No route for %{request} %{path}") % { request: request.method, path: request.path },
+                     HANDLER_NOT_FOUND
+                   ))
   end
 
   def set_puppet_version_header(response)

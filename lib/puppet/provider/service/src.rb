@@ -142,6 +142,6 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     end
   rescue Puppet::ExecutionFailure => detail
     debug(detail.message)
-    return :stopped
+    :stopped
   end
 end

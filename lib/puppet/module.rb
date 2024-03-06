@@ -46,21 +46,21 @@ class Puppet::Module
     fullpath = File.join(path, name)
     return false unless Puppet::FileSystem.directory?(fullpath)
 
-    return is_module_directory_name?(name)
+    is_module_directory_name?(name)
   end
 
   def self.is_module_directory_name?(name)
     # it must match an installed module name according to forge validator
     return true if name =~ /^[a-z][a-z0-9_]*$/
 
-    return false
+    false
   end
 
   def self.is_module_namespaced_name?(name)
     # it must match the full module name according to forge validator
     return true if name =~ /^[a-zA-Z0-9]+-[a-z][a-z0-9_]*$/
 
-    return false
+    false
   end
 
   # @api private
@@ -96,7 +96,7 @@ class Puppet::Module
 
   # @deprecated The puppetversion module metadata field is no longer used.
   def validate_puppet_version
-    return
+    nil
   end
 
   def has_metadata?
@@ -116,7 +116,7 @@ class Puppet::Module
         return false
       end
 
-      return true
+      true
     end
 
     # A method for returning a given file of a given type.
@@ -135,7 +135,7 @@ class Puppet::Module
 
       return nil unless Puppet::FileSystem.exist?(full_path)
 
-      return full_path
+      full_path
     end
 
     # Return the base directory for the given type
@@ -171,9 +171,9 @@ class Puppet::Module
     end
 
     if Puppet::FileSystem.exist?(full_path)
-      return full_path
+      full_path
     else
-      return nil
+      nil
     end
   end
 
@@ -204,9 +204,9 @@ class Puppet::Module
     end
 
     if Puppet::FileSystem.exist?(full_path)
-      return full_path
+      full_path
     else
-      return nil
+      nil
     end
   end
 
@@ -336,7 +336,7 @@ class Puppet::Module
   # @return true if the module has a directory for the locale, false
   #         false otherwise
   def has_translations?(locale)
-    return Puppet::FileSystem.exist?(File.join(locale_directory, locale))
+    Puppet::FileSystem.exist?(File.join(locale_directory, locale))
   end
 
   def has_external_facts?

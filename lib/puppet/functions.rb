@@ -748,7 +748,7 @@ module Puppet::Functions
             # this is the scope.function_xxx(...) call
             return scope.send(self.class.method3x, mapped_args)
           end
-          return result.value
+          result.value
         rescue Puppet::Pops::Evaluator::Next => jumper
           begin
             throw :next, jumper.value

@@ -53,11 +53,11 @@ class Puppet::Property::Ensure < Puppet::Property
 
   def change_to_s(currentvalue, newvalue)
     if currentvalue == :absent || currentvalue.nil?
-      return _("created")
+      _("created")
     elsif newvalue == :absent
-      return _("removed")
+      _("removed")
     else
-      return _('%{name} changed %{is} to %{should}') % { name: name, is: is_to_s(currentvalue), should: should_to_s(newvalue) }
+      _('%{name} changed %{is} to %{should}') % { name: name, is: is_to_s(currentvalue), should: should_to_s(newvalue) }
     end
   rescue Puppet::Error
     raise
@@ -88,9 +88,9 @@ class Puppet::Property::Ensure < Puppet::Property
       raise Puppet::DevError, _("No ability to determine if %{name} exists") % { name: @resource.class.name }
     end
     if result
-      return :present
+      :present
     else
-      return :absent
+      :absent
     end
   end
 

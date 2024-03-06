@@ -141,10 +141,10 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     case status
     when :running
       # obviously if the daemon is running then it is enabled
-      return :true
+      :true
     else
       # the service is enabled if it is linked
-      return Puppet::FileSystem.symlink?(service) ? :true : :false
+      Puppet::FileSystem.symlink?(service) ? :true : :false
     end
   end
 

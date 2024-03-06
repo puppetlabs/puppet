@@ -13,7 +13,7 @@ module Puppet::Util::Backups
     file ||= self[:path]
     return true unless Puppet::FileSystem.exist?(file)
 
-    return(bucket ? perform_backup_with_bucket(file) : perform_backup_with_backuplocal(file, self[:backup]))
+    (bucket ? perform_backup_with_bucket(file) : perform_backup_with_backuplocal(file, self[:backup]))
   end
 
   private
@@ -44,7 +44,7 @@ module Puppet::Util::Backups
 
       # N.B. cp_r works on both files and directories
       FileUtils.cp_r(file, bfile, :preserve => true)
-      return true
+      true
     rescue => detail
       # since they said they want a backup, let's error out
       # if we couldn't make one
@@ -83,6 +83,6 @@ module Puppet::Util::Backups
   def backup_file_with_filebucket(f)
     sum = bucket.backup(f)
     info _("Filebucketed %{f} to %{filebucket} with sum %{sum}") % { f: f, filebucket: bucket.name, sum: sum }
-    return sum
+    sum
   end
 end

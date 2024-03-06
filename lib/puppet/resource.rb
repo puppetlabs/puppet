@@ -475,7 +475,7 @@ class Puppet::Resource
     res['ensure'] = value if value
     res.merge!(params.sort.to_h)
 
-    return { h['title'] => res }
+    { h['title'] => res }
   end
 
   # Convert our resource to Puppet code.
@@ -671,7 +671,7 @@ class Puppet::Resource
       # resource should fail here.
       raise Puppet::Error, _("No set of title patterns matched the title \"%{title}\".") % { title: title }
     else
-      return { :name => title.to_s }
+      { :name => title.to_s }
     end
   end
 end

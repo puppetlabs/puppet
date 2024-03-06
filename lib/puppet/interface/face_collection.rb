@@ -40,7 +40,7 @@ module Puppet::Interface::FaceCollection
       end
     end
 
-    return action
+    action
   end
 
   # get face from memory, without loading.
@@ -51,7 +51,7 @@ module Puppet::Interface::FaceCollection
     versions = @faces[name].keys - [:current]
     range = pattern.is_a?(SemanticPuppet::Version) ? SemanticPuppet::VersionRange.new(pattern, pattern) : SemanticPuppet::VersionRange.parse(pattern)
     found = find_matching(range, versions)
-    return @faces[name][found]
+    @faces[name][found]
   end
 
   def self.find_matching(range, versions)
@@ -105,7 +105,7 @@ module Puppet::Interface::FaceCollection
       safely_require name, version
     end
 
-    return get_face(name, version)
+    get_face(name, version)
   end
 
   def self.safely_require(name, version = nil)

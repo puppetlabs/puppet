@@ -290,7 +290,7 @@ class Puppet::Provider
   def self.fact_match(fact, values)
     fact_val = Puppet.runtime[:facter].value(fact).to_s.downcase
     if fact_val.empty?
-      return false
+      false
     else
       values = [values] unless values.is_a?(Array)
       values.any? do |value|
@@ -536,7 +536,7 @@ class Puppet::Provider
   def name
     n = @property_hash[:name]
     if n
-      return n
+      n
     elsif resource
       resource.name
     else
@@ -579,7 +579,7 @@ class Puppet::Provider
     return nil unless other.is_a? Puppet::Provider
 
     # Otherwise, order by the providers class name.
-    return self.class.name <=> other.class.name
+    self.class.name <=> other.class.name
   end
 
   # @comment Document prefetch here as it does not exist anywhere else (called from transaction if implemented)

@@ -93,7 +93,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     else
       a = [nil, nil]
     end
-    return a
+    a
   end
 
   def add_resource_before(other, *resources)

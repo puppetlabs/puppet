@@ -58,7 +58,7 @@ module Puppet::ModuleTool
       merge_dependencies(data) if data['dependencies']
 
       @data.merge!(data)
-      return self
+      self
     end
 
     # Validates the name and version_requirement for a dependency, then creates
@@ -156,7 +156,7 @@ module Puppet::ModuleTool
         data['issues_url'] ||= @data['issues_url'] || source_uri.to_s.sub(%r{/*$}, '') + '/issues'
       end
     rescue URI::Error
-      return
+      nil
     end
 
     # Validates and parses the dependencies.

@@ -24,7 +24,7 @@ module Puppet::HTTP::Proxy
     rescue URI::InvalidURIError
       return nil
     end
-    return nil
+    nil
   end
 
   # The documentation around the format of the no_proxy variable seems
@@ -68,7 +68,7 @@ module Puppet::HTTP::Proxy
       end
     end
 
-    return false
+    false
   end
 
   def self.http_proxy_host
@@ -82,7 +82,7 @@ module Puppet::HTTP::Proxy
       return nil
     end
 
-    return Puppet.settings[:http_proxy_host]
+    Puppet.settings[:http_proxy_host]
   end
 
   def self.http_proxy_port
@@ -92,7 +92,7 @@ module Puppet::HTTP::Proxy
       return env.port
     end
 
-    return Puppet.settings[:http_proxy_port]
+    Puppet.settings[:http_proxy_port]
   end
 
   def self.http_proxy_user
@@ -106,7 +106,7 @@ module Puppet::HTTP::Proxy
       return nil
     end
 
-    return Puppet.settings[:http_proxy_user]
+    Puppet.settings[:http_proxy_user]
   end
 
   def self.http_proxy_password
@@ -120,7 +120,7 @@ module Puppet::HTTP::Proxy
       return nil
     end
 
-    return Puppet.settings[:http_proxy_password]
+    Puppet.settings[:http_proxy_password]
   end
 
   def self.no_proxy
@@ -134,6 +134,6 @@ module Puppet::HTTP::Proxy
       return nil
     end
 
-    return Puppet.settings[:no_proxy]
+    Puppet.settings[:no_proxy]
   end
 end

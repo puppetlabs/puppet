@@ -9,7 +9,7 @@ module Puppet::Indirector::FactSearch
 
       return false unless node_matches_option?(type, name, operator, value, facts)
     end
-    return true
+    true
   end
 
   def node_matches_option?(type, name, operator, value, facts)

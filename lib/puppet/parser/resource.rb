@@ -150,9 +150,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   # Is this resource modeling an isomorphic resource type?
   def isomorphic?
     if builtin_type?
-      return resource_type.isomorphic?
+      resource_type.isomorphic?
     else
-      return true
+      true
     end
   end
 

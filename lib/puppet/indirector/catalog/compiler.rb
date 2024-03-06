@@ -120,9 +120,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     when 'pson'
       # We unescape here because the corresponding code in Puppet::Configurer::FactHandler encodes with Puppet::Util.uri_query_encode
       # PSON is deprecated, but continue to accept from older agents
-      return Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
+      Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
     when 'application/json'
-      return Puppet::Node::Facts.convert_from('json', CGI.unescape(facts))
+      Puppet::Node::Facts.convert_from('json', CGI.unescape(facts))
     else
       raise ArgumentError, _("Unsupported facts format")
     end
@@ -156,24 +156,23 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     source_as_uri = URI.parse(Puppet::Util.uri_encode(source))
     server = source_as_uri.host
     port = ":#{source_as_uri.port}" if source_as_uri.port
-    return "puppet://#{server}#{port}/#{path}"
+    "puppet://#{server}#{port}/#{path}"
   end
 
   # Helper method to decide if a file resource's metadata can be inlined.
   # Also used to profile/log reasons for not inlining.
   def inlineable?(resource, sources)
-    case
-    when resource[:ensure] == 'absent'
+    if resource[:ensure] == 'absent'
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-      return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
-    when sources.empty?
+      Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
+    elsif sources.empty?
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-      return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
-    when !(sources.all? { |source| source =~ /^puppet:/ })
+      Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
+    elsif !(sources.all? { |source| source =~ /^puppet:/ })
       # TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-      return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
+      Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
     else
-      return true
+      true
     end
   end
 

@@ -39,9 +39,9 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       Puppet.debug("#{m[0]} marked as bad by `systemctl`. It is recommended to be further checked.") if m[1] == "bad"
       i << new(:name => m[0])
     end
-    return i
+    i
   rescue Puppet::ExecutionFailure
-    return []
+    []
   end
 
   # Static services cannot be enabled or disabled manually. Indirect services
@@ -55,11 +55,11 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
         current == @resource[:enable]
       else
         Puppet.debug("Unable to enable or disable static service #{@resource[:name]}")
-        return true
+        true
       end
     when 'indirect'
       Puppet.debug("Service #{@resource[:name]} is in 'indirect' state and cannot be enabled/disabled")
-      return true
+      true
     else
       current == @resource[:enable]
     end
@@ -122,7 +122,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       return ret if ret
     end
 
-    return :false
+    :false
   end
 
   # This method is required for Debian systems due to the way the SysVInit-Systemd
@@ -133,7 +133,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def debian_enabled?
     status = execute(["/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start"], :failonfail => false)
     if [104, 106].include?(status.exitstatus)
-      return :true
+      :true
     elsif [101, 105].include?(status.exitstatus)
       # 101 is action not allowed, which means we have to do the check manually.
       # 105 is unknown, which generally means the initscript does not support query
@@ -141,12 +141,12 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
       # For those that do not, perform the checks manually
       # http://www.debian.org/doc/debian-policy/ch-opersys.html
       if get_start_link_count >= 4
-        return :true
+        :true
       else
-        return :false
+        :false
       end
     else
-      return :false
+      :false
     end
   end
 

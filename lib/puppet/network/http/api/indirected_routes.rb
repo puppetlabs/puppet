@@ -248,7 +248,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
   end
 
   def self.pluralize(indirection)
-    return(indirection == "status" ? "statuses" : indirection + "s")
+    (indirection == "status" ? "statuses" : indirection + "s")
   end
   private_class_method :pluralize
 

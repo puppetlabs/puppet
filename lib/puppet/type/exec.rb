@@ -131,9 +131,9 @@ module Puppet
         # value, which causes us to be treated as in_sync?, which means we
         # don't actually execute anything.  I think. --daniel 2011-03-10
         if @resource.check_all_attributes
-          return :notrun
+          :notrun
         else
-          return should
+          should
         end
       end
 
@@ -675,9 +675,9 @@ module Puppet
 
     def output
       if property(:returns).nil?
-        return nil
+        nil
       else
-        return property(:returns).output
+        property(:returns).output
       end
     end
 

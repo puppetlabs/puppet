@@ -194,7 +194,7 @@ module Puppet::Environments
       if Puppet::FileSystem.symlink?(dir) && Puppet[:versioned_environment_dirs]
         dir = Pathname.new Puppet::FileSystem.expand_path(Puppet::FileSystem.readlink(dir))
       end
-      return dir
+      dir
     end
 
     # @!macro loader_search_paths

@@ -25,7 +25,7 @@ class Puppet::Util::Pidlock
 
   def unlock
     if mine?
-      return @lockfile.unlock
+      @lockfile.unlock
     else
       false
     end

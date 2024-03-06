@@ -40,9 +40,9 @@ class Puppet::Util::FileType
         val = real_read
         @loaded = Time.now
         if val
-          return val.gsub(/# HEADER.*\n/, '')
+          val.gsub(/# HEADER.*\n/, '')
         else
-          return ""
+          ""
         end
       rescue Puppet::Error
         raise
@@ -57,7 +57,7 @@ class Puppet::Util::FileType
       define_method(:write) do |text|
         val = real_write(text)
         @synced = Time.now
-        return val
+        val
       rescue Puppet::Error
         raise
       rescue => detail
@@ -110,7 +110,7 @@ class Puppet::Util::FileType
         # being explicitly preserved
         Puppet::FileSystem.read(@path, :encoding => Encoding.default_external)
       else
-        return nil
+        nil
       end
     end
 
@@ -202,11 +202,11 @@ class Puppet::Util::FileType
     rescue => detail
       case detail.to_s
       when /no crontab for/
-        return ""
+        ""
       when /are not allowed to/
         Puppet.debug _("The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files).") % { path: @path }
 
-        return ""
+        ""
       else
         raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
       end
@@ -245,9 +245,9 @@ class Puppet::Util::FileType
     # does not think I should be allowed to set the @path to my own user name
     def cmdbase
       if @uid == Puppet::Util::SUIDManager.uid || Puppet.runtime[:facter].value('os.name') == "HP-UX"
-        return "crontab"
+        "crontab"
       else
-        return "crontab -u #{@path}"
+        "crontab -u #{@path}"
       end
     end
   end
@@ -267,11 +267,11 @@ class Puppet::Util::FileType
     rescue => detail
       case detail.to_s
       when /can't open your crontab/
-        return ""
+        ""
       when /you are not authorized to use cron/
         Puppet.debug _("The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files).") % { path: @path }
 
-        return ""
+        ""
       else
         raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
       end
@@ -318,11 +318,11 @@ class Puppet::Util::FileType
     rescue => detail
       case detail.to_s
       when /open.*in.*directory/
-        return ""
+        ""
       when /not.*authorized.*cron/
         Puppet.debug _("The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files).") % { path: @path }
 
-        return ""
+        ""
       else
         raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
       end

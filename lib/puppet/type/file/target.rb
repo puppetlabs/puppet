@@ -64,11 +64,11 @@ module Puppet
 
     def insync?(currentvalue)
       if [:nochange, :notlink].include?(should) or @resource.recurse?
-        return true
+        true
       elsif !@resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
-        return true
+        true
       else
-        return super(currentvalue)
+        super(currentvalue)
       end
     end
 
@@ -76,12 +76,12 @@ module Puppet
       stat = @resource.stat
       if stat
         if stat.ftype == "link"
-          return Puppet::FileSystem.readlink(@resource[:path])
+          Puppet::FileSystem.readlink(@resource[:path])
         else
-          return :notlink
+          :notlink
         end
       else
-        return :absent
+        :absent
       end
     end
   end

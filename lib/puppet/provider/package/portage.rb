@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         packages << new(package)
       end
 
-      return packages
+      packages
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, detail
     end

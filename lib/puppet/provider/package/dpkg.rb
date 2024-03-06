@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
 
-    return hash
+    hash
   end
 
   public

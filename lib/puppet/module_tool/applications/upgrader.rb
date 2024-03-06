@@ -271,7 +271,7 @@ module Puppet::ModuleTool
           end
         end
 
-        return {
+        {
           :release => release,
           :name => release.name,
           :path => release.install_dir,

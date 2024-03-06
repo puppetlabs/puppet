@@ -254,14 +254,14 @@ class Application
         raise Puppet::Error, _("Unable to load application class '%{class_name}' from file 'puppet/application/%{application_name}.rb'") % { class_name: class_name, application_name: application_name }
       end
 
-      return clazz
+      clazz
     end
 
     # Given the fully qualified name of a class, attempt to get the class instance.
     # @param [String] class_name the fully qualified name of the class to try to load
     # @return [Class] the Class instance, or nil? if it could not be loaded.
     def try_load_class(class_name)
-      return const_defined?(class_name) ? const_get(class_name) : nil
+      const_defined?(class_name) ? const_get(class_name) : nil
     end
     private :try_load_class
 

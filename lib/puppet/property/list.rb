@@ -48,9 +48,9 @@ module Puppet
         # ok, some 'convention' if the list property is named groups, provider should implement a groups method
         tmp = provider.send(name) if provider
         if tmp && tmp != :absent
-          return tmp.instance_of?(Array) ? tmp : tmp.split(delimiter)
+          tmp.instance_of?(Array) ? tmp : tmp.split(delimiter)
         else
-          return :absent
+          :absent
         end
       end
 

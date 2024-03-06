@@ -34,7 +34,7 @@ module Puppet::Interface::OptionManager
     elsif self.class.respond_to?(sym)
       result = self.class.send(sym) + result
     end
-    return result
+    result
   end
 
   # Declare that this app can take a specific option, and provide the
@@ -77,7 +77,7 @@ module Puppet::Interface::OptionManager
       @options_hash[name] = option
     end
 
-    return option
+    option
   end
 
   # @api private
@@ -98,7 +98,7 @@ module Puppet::Interface::OptionManager
       end
     end
 
-    return result
+    result
   end
 
   # @api private

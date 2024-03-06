@@ -102,7 +102,7 @@ class Puppet::FileBucket::File
     def to_binary
       # This is not so horrible as for FileContent, but still possible to mutate the content that the
       # checksum is based on... so semi horrible...
-      return @contents;
+      @contents;
     end
   end
 

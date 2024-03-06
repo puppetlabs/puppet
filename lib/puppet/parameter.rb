@@ -395,9 +395,9 @@ class Puppet::Parameter
   # @api private
   def pathbuilder
     if @resource
-      return [@resource.pathbuilder, name]
+      [@resource.pathbuilder, name]
     else
-      return [name]
+      [name]
     end
   end
 

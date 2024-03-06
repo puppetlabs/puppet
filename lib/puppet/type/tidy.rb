@@ -110,7 +110,7 @@ Puppet::Type.newtype(:tidy) do
     def tidy?(path, stat)
       basename = File.basename(path)
       flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
-      return(value.find { |pattern| File.fnmatch(pattern, basename, flags) } ? true : false)
+      (value.find { |pattern| File.fnmatch(pattern, basename, flags) } ? true : false)
     end
   end
 
@@ -139,7 +139,7 @@ Puppet::Type.newtype(:tidy) do
     def convert(unit, multi)
       num = AgeConvertors[unit]
       if num
-        return num * multi
+        num * multi
       else
         self.fail _("Invalid age unit '%{unit}'") % { unit: unit }
       end
@@ -181,7 +181,7 @@ Puppet::Type.newtype(:tidy) do
       if num
         result = multi
         num.times do result *= 1024 end
-        return result
+        result
       else
         self.fail _("Invalid size unit '%{unit}'") % { unit: unit }
       end
@@ -260,9 +260,9 @@ Puppet::Type.newtype(:tidy) do
     # Our ensure property knows how to retrieve everything for us.
     obj = @parameters[:ensure]
     if obj
-      return obj.retrieve
+      obj.retrieve
     else
-      return {}
+      {}
     end
   end
 
@@ -329,10 +329,10 @@ Puppet::Type.newtype(:tidy) do
     basename = File.basename(path)
     flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
     if self[:matches].find { |pattern| File.fnmatch(pattern, basename, flags) }
-      return true
+      true
     else
       debug "No specified patterns match #{path}, not tidying"
-      return false
+      false
     end
   end
 
@@ -371,10 +371,10 @@ Puppet::Type.newtype(:tidy) do
     Puppet::FileSystem.lstat(path)
   rescue Errno::ENOENT
     debug _("File does not exist")
-    return nil
+    nil
   rescue Errno::EACCES
     # TRANSLATORS "stat" is a program name and should not be translated
     warning _("Could not stat; permission denied")
-    return nil
+    nil
   end
 end

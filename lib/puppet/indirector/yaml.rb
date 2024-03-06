@@ -11,7 +11,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     return nil unless Puppet::FileSystem.exist?(file)
 
     begin
-      return load_file(file)
+      load_file(file)
     rescue Puppet::Util::Yaml::YamlLoadError => detail
       raise Puppet::Error, _("Could not parse YAML data for %{indirection} %{request}: %{detail}") % { indirection: indirection.name, request: request.key, detail: detail }, detail.backtrace
     end

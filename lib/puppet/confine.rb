@@ -75,7 +75,7 @@ class Puppet::Confine
       end
     end
 
-    return true
+    true
   ensure
     reset
   end

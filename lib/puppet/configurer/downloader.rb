@@ -86,6 +86,6 @@ class Puppet::Configurer::Downloader
       defargs[:owner] = Process.uid
       defargs[:group] = Process.gid
     end
-    return defargs
+    defargs
   end
 end

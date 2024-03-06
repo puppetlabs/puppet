@@ -110,9 +110,9 @@ module Puppet
         # ok, some 'convention' if the keyvalue property is named properties, provider should implement a properties method
         key_hash = provider.send(name) if provider
         if key_hash && key_hash != :absent
-          return key_hash
+          key_hash
         else
-          return :absent
+          :absent
         end
       end
 

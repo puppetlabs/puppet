@@ -48,11 +48,9 @@ class Puppet::Relationship
   # of :NONE comes from.
   def match?(event)
     if self.event.nil? or event == :NONE or self.event == :NONE
-      return false
-    elsif self.event == :ALL_EVENTS or event == self.event
-      return true
+      false
     else
-      return false
+      self.event == :ALL_EVENTS or event == self.event
     end
   end
 

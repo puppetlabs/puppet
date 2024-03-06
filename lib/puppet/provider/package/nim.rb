@@ -271,11 +271,11 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     if packages[package_name].count == 1
       version = packages[package_name].keys[0]
-      return packages[package_name][version], nil
+      [packages[package_name][version], nil]
     else
       versions = packages[package_name].keys
       latest_version = (versions.sort { |a, b| Puppet::Util::Package.versioncmp(b, a) })[0]
-      return packages[package_name][latest_version], latest_version
+      [packages[package_name][latest_version], latest_version]
     end
   end
 

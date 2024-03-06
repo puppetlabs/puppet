@@ -197,7 +197,7 @@ module Process
         FFI::WIN32.CloseHandle(handle)
       end
 
-      return 0
+      0
     end
 
     private

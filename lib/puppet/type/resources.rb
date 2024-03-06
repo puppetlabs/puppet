@@ -100,9 +100,9 @@ Puppet::Type.newtype(:resources) do
     @checkmethod ||= "#{self[:name]}_check"
     @hascheck ||= respond_to?(@checkmethod)
     if @hascheck
-      return send(@checkmethod, resource)
+      send(@checkmethod, resource)
     else
-      return true
+      true
     end
   end
 
