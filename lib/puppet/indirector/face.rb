@@ -53,7 +53,7 @@ class Puppet::Indirector::Face < Puppet::Face
       raise RuntimeError, message, detail.backtrace
     end
 
-    return result
+    result
   end
 
   action :destroy do

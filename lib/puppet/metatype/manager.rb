@@ -88,7 +88,7 @@ module Manager
       selfobj = singleton_class
 
       if @types.include?(name)
-        if self.respond_to?(newmethod)
+        if respond_to?(newmethod)
           # Remove the old newmethod
           selfobj.send(:remove_method, newmethod)
         end
@@ -106,7 +106,7 @@ module Manager
       )
 
       # Now define a "new<type>" method for convenience.
-      if self.respond_to? newmethod
+      if respond_to? newmethod
         # Refuse to overwrite existing methods like 'newparam' or 'newtype'.
         # TRANSLATORS 'new%{method}' will become a method name, do not translate this string
         Puppet.warning(_("'new%{method}' method already exists; skipping") % { method: name.to_s })

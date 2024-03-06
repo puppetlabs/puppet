@@ -93,12 +93,12 @@ module Puppet
       def retrieve
         if provider.exists?
           if provider.respond_to?(:is_role?) and provider.is_role?
-            return :role
+            :role
           else
-            return :present
+            :present
           end
         else
-          return :absent
+          :absent
         end
       end
 
@@ -849,7 +849,7 @@ module Puppet
           name = "#{keyfile}:unnamed-#{name_index += 1}"
         end
         names << name
-        Puppet.debug "#{self.ref} parsed for purging Ssh_authorized_key[#{name}]"
+        Puppet.debug "#{ref} parsed for purging Ssh_authorized_key[#{name}]"
       end
 
       names.map { |keyname|

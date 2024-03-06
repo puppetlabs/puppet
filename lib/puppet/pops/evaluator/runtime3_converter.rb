@@ -165,7 +165,7 @@ class Runtime3Converter
     @convert_visitor = Puppet::Pops::Visitor.new(self, 'convert', 2, 2)
   end
 
-  @instance = self.new
+  @instance = new
 end
 
 # A Ruby function written for the 3.x API cannot be expected to handle extended data types. This
@@ -220,6 +220,6 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
     end
   end
 
-  @instance = self.new
+  @instance = new
 end
 end

@@ -185,6 +185,6 @@ class Puppet::FileServing::Fileset
 
   def continue_recursion_at?(depth)
     # recurse if told to, and infinite recursion or current depth not at the limit
-    self.recurse && (self.recurselimit == :infinite || depth <= self.recurselimit)
+    recurse && (recurselimit == :infinite || depth <= recurselimit)
   end
 end

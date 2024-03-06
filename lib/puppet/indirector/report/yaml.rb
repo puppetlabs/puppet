@@ -30,7 +30,7 @@ class Puppet::Transaction::Report::Yaml < Puppet::Indirector::Yaml
         fh.print YAML.dump(request.instance)
       end
     rescue TypeError => detail
-      Puppet.err _("Could not save %{indirection} %{request}: %{detail}") % { indirection: self.name, request: request.key, detail: detail }
+      Puppet.err _("Could not save %{indirection} %{request}: %{detail}") % { indirection: name, request: request.key, detail: detail }
     end
   end
 end

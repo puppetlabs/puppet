@@ -241,7 +241,7 @@ class Parser
       @yydebug = false
       main = yyparse(@lexer, :scan)
     end
-    return main
+    main
   ensure
     @lexer.clear
     @namestack = []

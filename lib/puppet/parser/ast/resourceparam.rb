@@ -17,13 +17,13 @@ class Puppet::Parser::AST::ResourceParam < Puppet::Parser::AST::Branch
   # Return the parameter and the value.
   def evaluate(scope)
     value = @value.safeevaluate(scope)
-    return Puppet::Parser::Resource::Param.new(
+    Puppet::Parser::Resource::Param.new(
       :name => @param,
       :value => value.nil? ? :undef : value,
       :source => scope.source,
-      :line => self.line,
-      :file => self.file,
-      :add => self.add
+      :line => line,
+      :file => file,
+      :add => add
     )
   end
 

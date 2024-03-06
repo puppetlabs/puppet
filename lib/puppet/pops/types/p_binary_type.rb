@@ -122,7 +122,7 @@ class PBinaryType < PAnyType
     end
 
     def ==(o)
-      self.eql?(o)
+      eql?(o)
     end
 
     def length

@@ -411,7 +411,7 @@ class LookupAdapter < DataAdapter
   def module_provider(lookup_invocation, module_name)
     # Test if the key is present for the given module_name. It might be there even if the
     # value is nil (which indicates that no module provider is configured for the given name)
-    unless self.include?(module_name)
+    unless include?(module_name)
       self[module_name] = initialize_module_provider(lookup_invocation, module_name)
     end
     self[module_name]

@@ -290,7 +290,7 @@ class Puppet::Provider
   def self.fact_match(fact, values)
     fact_val = Puppet.runtime[:facter].value(fact).to_s.downcase
     if fact_val.empty?
-      return false
+      false
     else
       values = [values] unless values.is_a?(Array)
       values.any? do |value|
@@ -380,7 +380,7 @@ class Puppet::Provider
   # @raise [Puppet::DevError] Error indicating that the method should have been implemented by subclass.
   # @see prefetch
   def self.instances
-    raise Puppet::DevError, _("To support listing resources of this type the '%{provider}' provider needs to implement an 'instances' class method returning the current set of resources. We recommend porting your module to the simpler Resource API instead: https://puppet.com/search/docs?keys=resource+api") % { provider: self.name }
+    raise Puppet::DevError, _("To support listing resources of this type the '%{provider}' provider needs to implement an 'instances' class method returning the current set of resources. We recommend porting your module to the simpler Resource API instead: https://puppet.com/search/docs?keys=resource+api") % { provider: name }
   end
 
   # Creates getter- and setter- methods for each property supported by the resource type.
@@ -415,7 +415,7 @@ class Puppet::Provider
     end
   end
 
-  self.initvars
+  initvars
 
   # This method is used to generate a method for a command.
   # @return [void]
@@ -437,7 +437,7 @@ class Puppet::Provider
   # @return [String] Returns the data source, which is the provider name if no other source has been set.
   # @todo Unclear what "the source" is used for?
   def self.source
-    @source ||= self.name
+    @source ||= name
   end
 
   # Returns true if the given attribute/parameter is supported by the provider.
@@ -536,8 +536,8 @@ class Puppet::Provider
   def name
     n = @property_hash[:name]
     if n
-      return n
-    elsif self.resource
+      n
+    elsif resource
       resource.name
     else
       raise Puppet::DevError, _("No resource and no name in property hash in %{class_name} instance") % { class_name: self.class.name }
@@ -579,7 +579,7 @@ class Puppet::Provider
     return nil unless other.is_a? Puppet::Provider
 
     # Otherwise, order by the providers class name.
-    return self.class.name <=> other.class.name
+    self.class.name <=> other.class.name
   end
 
   # @comment Document prefetch here as it does not exist anywhere else (called from transaction if implemented)

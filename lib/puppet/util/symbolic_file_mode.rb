@@ -19,7 +19,7 @@ module SymbolicFileMode
     return true if value =~ /^0?[0-7]{1,4}$/
     return true if value =~ /^([ugoa]*[-=+][-=+rstwxXugo]*)(,[ugoa]*[-=+][-=+rstwxXugo]*)*$/
 
-    return false
+    false
   end
 
   def display_mode(value)
@@ -146,12 +146,10 @@ module SymbolicFileMode
       raise Puppet::Error, _("%{error}%{rest} in symbolic mode %{modification}") % { error: e, rest: rest, modification: modification.inspect }, e.backtrace
     end
 
-    result =
-      final_mode['s'] << 9 |
+    final_mode['s'] << 9 |
       final_mode['u'] << 6 |
       final_mode['g'] << 3 |
       final_mode['o'] << 0
-    return result
   end
 end
 end

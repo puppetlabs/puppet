@@ -35,7 +35,7 @@ module Puppet
     def self.username_and_modname_from(full_module_name)
       matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
       if matcher
-        return matcher.captures
+        matcher.captures
       else
         raise ArgumentError, _("Not a valid full name: %{full_module_name}") % { full_module_name: full_module_name }
       end
@@ -87,7 +87,7 @@ module Puppet
         str << branch
       end
 
-      return str
+      str
     end
 
     def self.build_tree(mods, dir)

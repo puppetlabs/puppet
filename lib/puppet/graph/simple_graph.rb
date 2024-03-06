@@ -223,7 +223,7 @@ class Puppet::Graph::SimpleGraph
       end
     end
 
-    return found.sort
+    found.sort
   end
 
   # @return [Array] array of dependency cycles (arrays)
@@ -268,7 +268,7 @@ class Puppet::Graph::SimpleGraph
     filename = File.join(Puppet[:graphdir], "cycles.dot")
     # DOT files are assumed to be UTF-8 by default - http://www.graphviz.org/doc/info/lang.html
     File.open(filename, "w:UTF-8") { |f| f.puts graph }
-    return filename
+    filename
   end
 
   # Add a new vertex to the graph.

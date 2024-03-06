@@ -55,7 +55,7 @@ class Puppet::Module
     def self.is_task_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
 
-      return false
+      false
     end
 
     def self.is_tasks_file?(path)
@@ -70,7 +70,7 @@ class Puppet::Module
       FORBIDDEN_EXTENSIONS.each do |ext|
         return false if path.end_with?(ext)
       end
-      return true
+      true
     end
 
     def self.get_file_details(path, mod)
@@ -264,7 +264,7 @@ class Puppet::Module
     end
 
     def ==(other)
-      self.name == other.name &&
+      name == other.name &&
         self.module == other.module
     end
 
@@ -281,7 +281,7 @@ class Puppet::Module
 
     # Abstracted here so we can add support for subdirectories later
     def self.task_name_from_path(path)
-      return File.basename(path, '.*')
+      File.basename(path, '.*')
     end
     private_class_method :task_name_from_path
   end

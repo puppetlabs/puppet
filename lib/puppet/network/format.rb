@@ -14,7 +14,7 @@ class Puppet::Network::Format
     value = @options.delete(name)
     value = default if value.nil?
 
-    self.send(name.to_s + "=", value)
+    send(name.to_s + "=", value)
   end
 
   def initialize(name, options = {}, &block)
@@ -111,6 +111,6 @@ class Puppet::Network::Format
 
     method = send(name)
 
-    return(type == :class ? klass.respond_to?(method) : klass.method_defined?(method))
+    (type == :class ? klass.respond_to?(method) : klass.method_defined?(method))
   end
 end

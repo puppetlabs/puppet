@@ -7,8 +7,8 @@ Puppet::Reports.register_report(:log) do
     the log destination is syslog."
 
   def process
-    self.logs.each do |log|
-      log.source = "//#{self.host}/#{log.source}"
+    logs.each do |log|
+      log.source = "//#{host}/#{log.source}"
       Puppet::Util::Log.newmessage(log)
     end
   end

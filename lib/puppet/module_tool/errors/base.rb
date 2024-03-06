@@ -10,7 +10,7 @@ module Puppet::ModuleTool::Errors
       if @action == :upgrade
         "#{v(@installed_version)} -> #{v(@requested_version)}"
       else
-        "#{v(@installed_version || @requested_version)}"
+        v(@installed_version || @requested_version).to_s
       end
     end
   end

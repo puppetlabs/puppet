@@ -122,7 +122,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   def run_command
-    return [:rdoc].include?(options[:mode]) ? send(options[:mode]) : other
+    [:rdoc].include?(options[:mode]) ? send(options[:mode]) : other
   end
 
   def rdoc

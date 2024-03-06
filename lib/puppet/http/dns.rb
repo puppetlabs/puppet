@@ -118,7 +118,7 @@ module Puppet::HTTP
     # @param [String] service_name the service whose TTL we want
     # @return [Integer] the TTL for this service, in seconds
     def ttl(service_name)
-      return @record_cache[service_name].ttl
+      @record_cache[service_name].ttl
     end
 
     # Checks if the cached entry for the given service has expired.
@@ -128,9 +128,9 @@ module Puppet::HTTP
     def expired?(service_name)
       entry = @record_cache[service_name]
       if entry
-        return Time.now > (entry.resolution_time + entry.ttl)
+        Time.now > (entry.resolution_time + entry.ttl)
       else
-        return true
+        true
       end
     end
 

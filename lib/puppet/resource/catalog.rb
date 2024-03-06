@@ -93,7 +93,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     else
       a = [nil, nil]
     end
-    return a
+    a
   end
 
   def add_resource_before(other, *resources)
@@ -539,7 +539,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       to_print = resources.filter_map do |resource|
         next unless resource.managed?
 
-        "#{resource.ref.downcase}"
+        resource.ref.downcase.to_s
       end
       f.puts to_print.join("\n")
     end
@@ -590,14 +590,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # This pretty much just converts all of the resources from one class to another, using
   # a conversion method.
   def to_catalog(convert)
-    result = self.class.new(self.name, self.environment_instance)
+    result = self.class.new(name, environment_instance)
 
-    result.version = self.version
-    result.code_id = self.code_id
-    result.catalog_uuid = self.catalog_uuid
-    result.catalog_format = self.catalog_format
-    result.metadata = self.metadata
-    result.recursive_metadata = self.recursive_metadata
+    result.version = version
+    result.code_id = code_id
+    result.catalog_uuid = catalog_uuid
+    result.catalog_format = catalog_format
+    result.metadata = metadata
+    result.recursive_metadata = recursive_metadata
 
     map = {}
     resources.each do |resource|
@@ -643,7 +643,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     map.clear
 
-    result.add_class(*self.classes)
+    result.add_class(*classes)
     result.merge_tags_from(self)
 
     result

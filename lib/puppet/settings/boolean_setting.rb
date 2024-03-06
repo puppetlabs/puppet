@@ -21,8 +21,8 @@ class Puppet::Settings::BooleanSetting < Puppet::Settings::BaseSetting
 
   def munge(value)
     case value
-    when true, "true"; return true
-    when false, "false"; return false
+    when true, "true"; true
+    when false, "false"; false
     else
       raise Puppet::Settings::ValidationError, _("Invalid value '%{value}' for boolean parameter: %{name}") % { value: value.inspect, name: @name }
     end

@@ -222,7 +222,7 @@ Puppet::Network::FormatHandler.create(:flat,
           a["#{i}.#{el_k}"] = el_v
         end
       else
-        a["#{i}"] = el
+        a[i.to_s] = el
       end
     end
     a

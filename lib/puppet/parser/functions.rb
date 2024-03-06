@@ -215,7 +215,7 @@ module Puppet::Parser::Functions
             raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})") % { name: name, arg_count: args[0].size, min_arg_count: (arity + 1).abs }
           end
 
-          r = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.convert_return(self.send(real_fname, args[0]))
+          r = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.convert_return(send(real_fname, args[0]))
           # avoid leaking aribtrary value if not being an rvalue function
           options[:type] == :rvalue ? r : nil
         else

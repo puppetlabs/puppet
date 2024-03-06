@@ -32,7 +32,7 @@ module Puppet::Pops::Types
     # @raise [ArgumentError] In case an `Iterable` cannot be produced
     # @api public
     def self.asserted_iterable(my_caller, obj, infer_elements = false)
-      iter = self.on(obj, nil, infer_elements)
+      iter = on(obj, nil, infer_elements)
       raise ArgumentError, "#{my_caller.class}(): wrong argument type (#{obj.class}; is not Iterable." if iter.nil?
 
       iter

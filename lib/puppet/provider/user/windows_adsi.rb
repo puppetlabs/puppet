@@ -81,7 +81,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
       resource.debug("#{sid.domain}\\#{account} (#{sid.sid})")
       "#{sid.domain}\\#{account}"
     end
-    return groups.join(',')
+    groups.join(',')
   end
 
   def create

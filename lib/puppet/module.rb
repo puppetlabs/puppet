@@ -46,21 +46,21 @@ class Puppet::Module
     fullpath = File.join(path, name)
     return false unless Puppet::FileSystem.directory?(fullpath)
 
-    return is_module_directory_name?(name)
+    is_module_directory_name?(name)
   end
 
   def self.is_module_directory_name?(name)
     # it must match an installed module name according to forge validator
     return true if name =~ /^[a-z][a-z0-9_]*$/
 
-    return false
+    false
   end
 
   def self.is_module_namespaced_name?(name)
     # it must match the full module name according to forge validator
     return true if name =~ /^[a-zA-Z0-9]+-[a-z][a-z0-9_]*$/
 
-    return false
+    false
   end
 
   # @api private
@@ -96,7 +96,7 @@ class Puppet::Module
 
   # @deprecated The puppetversion module metadata field is no longer used.
   def validate_puppet_version
-    return
+    nil
   end
 
   def has_metadata?
@@ -116,7 +116,7 @@ class Puppet::Module
         return false
       end
 
-      return true
+      true
     end
 
     # A method for returning a given file of a given type.
@@ -135,7 +135,7 @@ class Puppet::Module
 
       return nil unless Puppet::FileSystem.exist?(full_path)
 
-      return full_path
+      full_path
     end
 
     # Return the base directory for the given type
@@ -171,9 +171,9 @@ class Puppet::Module
     end
 
     if Puppet::FileSystem.exist?(full_path)
-      return full_path
+      full_path
     else
-      return nil
+      nil
     end
   end
 
@@ -204,9 +204,9 @@ class Puppet::Module
     end
 
     if Puppet::FileSystem.exist?(full_path)
-      return full_path
+      full_path
     else
-      return nil
+      nil
     end
   end
 
@@ -250,11 +250,11 @@ class Puppet::Module
 
     [:source, :author, :version, :license, :dependencies].each do |attr|
       value = data[attr.to_s]
-      raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}" if value.nil?
+      raise MissingMetadata, "No #{attr} module metadata provided for #{name}" if value.nil?
 
       if attr == :dependencies
         unless value.is_a?(Array)
-          raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{self.name} must be an array, not: '#{value}'"
+          raise MissingMetadata, "The value for the key dependencies in the file metadata.json of the module #{name} must be an array, not: '#{value}'"
         end
 
         value.each do |dep|
@@ -336,7 +336,7 @@ class Puppet::Module
   # @return true if the module has a directory for the locale, false
   #         false otherwise
   def has_translations?(locale)
-    return Puppet::FileSystem.exist?(File.join(locale_directory, locale))
+    Puppet::FileSystem.exist?(File.join(locale_directory, locale))
   end
 
   def has_external_facts?
@@ -366,7 +366,7 @@ class Puppet::Module
   end
 
   def required_by
-    environment.module_requirements[self.forge_name] || {}
+    environment.module_requirements[forge_name] || {}
   end
 
   # Identify and mark unmet dependencies.  A dependency will be marked unmet
@@ -413,8 +413,8 @@ class Puppet::Module
         :name => name,
         :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
         :parent => {
-          :name => self.forge_name,
-          :version => self.version.gsub(/^(?=\d)/, "v")
+          :name => forge_name,
+          :version => version.gsub(/^(?=\d)/, "v")
         },
         :mod_details => {
           :installed_version => dep_mod.nil? ? nil : dep_mod.version
@@ -449,10 +449,10 @@ class Puppet::Module
   end
 
   def ==(other)
-    self.name == other.name &&
-      self.version == other.version &&
-      self.path == other.path &&
-      self.environment == other.environment
+    name == other.name &&
+      version == other.version &&
+      path == other.path &&
+      environment == other.environment
   end
 
   private

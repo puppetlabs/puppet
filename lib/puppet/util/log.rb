@@ -312,7 +312,7 @@ class Puppet::Util::Log
 
     tags = args[:tags]
     if tags
-      tags.each { |t| self.tag(t) }
+      tags.each { |t| tag(t) }
     end
 
     # Don't add these unless defined (preserve 3.x API as much as possible)
@@ -345,7 +345,7 @@ class Puppet::Util::Log
   end
 
   def to_hash
-    self.to_data_hash
+    to_data_hash
   end
 
   def to_data_hash

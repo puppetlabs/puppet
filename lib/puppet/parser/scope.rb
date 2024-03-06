@@ -625,7 +625,7 @@ class Puppet::Parser::Scope
       end
     end
     # report with leading '::' by using empty class_name
-    return handle_not_found('', fqn, options)
+    handle_not_found('', fqn, options)
   end
 
   # @api private

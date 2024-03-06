@@ -44,9 +44,9 @@ class Formatter
     # indent from every line.
     if text =~ /^(\s+)/
       indent = ::Regexp.last_match(1)
-      return text.gsub(/^#{indent}/, '')
+      text.gsub(/^#{indent}/, '')
     else
-      return text
+      text
     end
   end
 end

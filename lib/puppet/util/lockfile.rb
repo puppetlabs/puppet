@@ -51,7 +51,7 @@ class Puppet::Util::Lockfile
   #  was locked.
   # @return [String] the data object.
   def lock_data
-    return File.read(@file_path) if file_locked?
+    File.read(@file_path) if file_locked?
   end
 
   # Private, internal utility method for encapsulating the logic about

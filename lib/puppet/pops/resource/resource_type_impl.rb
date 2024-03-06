@@ -75,7 +75,7 @@ class ResourceTypeImpl
     return nil unless other.is_a?(Puppet::CompilableResourceType)
 
     # against other type instances.
-    self.ref <=> other.ref
+    ref <=> other.ref
   end
 
   METAPARAMS = [

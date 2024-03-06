@@ -65,8 +65,8 @@ module Puppet::Util::SUIDManager
     return yield unless root?
     return yield unless new_uid or new_gid
 
-    old_euid = self.euid
-    old_egid = self.egid
+    old_euid = euid
+    old_egid = egid
     begin
       change_privileges(new_uid, new_gid, false)
 

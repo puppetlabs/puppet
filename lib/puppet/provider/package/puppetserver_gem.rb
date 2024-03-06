@@ -74,9 +74,9 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
                .map { |set| gemsplit(set) }
 
     if options[:justme]
-      return gem_list.shift
+      gem_list.shift
     else
-      return gem_list
+      gem_list
     end
   end
 
@@ -106,7 +106,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
         raise Puppet::Error, _('puppet:// URLs are not supported as gem sources')
       else
         # interpret it as a gem repository
-        command_options << '--source' << "#{resource[:source]}" << resource[:name]
+        command_options << '--source' << resource[:source].to_s << resource[:name]
       end
     else
       command_options << resource[:name]

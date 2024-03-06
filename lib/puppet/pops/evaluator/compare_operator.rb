@@ -183,15 +183,15 @@ class CompareOperator
       end
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
-      return !!matched
+      !!matched
     when String, SemanticPuppet::Version
       a.any? { |element| match(b, element, scope) }
     when Types::PAnyType
       a.each { |element| return true if b.instance?(element) }
-      return false
+      false
     else
       a.each { |element| return true if equals(element, b) }
-      return false
+      false
     end
   end
 

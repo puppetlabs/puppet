@@ -43,7 +43,7 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
       #      rescue => except
       #        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, @lexer.pos, except)
     end
-    return main
+    main
   ensure
     @lexer.clear
     @namestack = []

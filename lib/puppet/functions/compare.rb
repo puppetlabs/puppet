@@ -115,7 +115,7 @@ Puppet::Functions.create_function(:compare) do
 
     if a.class != b.class
       # TRANSLATORS 'compare' is a name
-      return _("compare(): Can only compare values of the same type (or for Timestamp/Timespan also against Numeric). Got %{type_a} and %{type_b}") % {
+      _("compare(): Can only compare values of the same type (or for Timestamp/Timespan also against Numeric). Got %{type_a} and %{type_b}") % {
         type_a: type_label(a), type_b: type_label(b)
       }
     end

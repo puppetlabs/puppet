@@ -25,9 +25,9 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
 
     if output =~ /\A\s*\Z/ # all whitespace
       Puppet.debug { "Empty response for #{name} from #{self.name} terminus" }
-      return nil
+      nil
     else
-      return output
+      output
     end
   end
 

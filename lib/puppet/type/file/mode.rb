@@ -131,10 +131,10 @@ module Puppet
       end
       stat = @resource.stat
       if stat && stat.ftype == "link" && @resource[:links] != :follow
-        self.debug _("Not managing symlink mode")
-        return true
+        debug _("Not managing symlink mode")
+        true
       else
-        return super(currentvalue)
+        super(currentvalue)
       end
     end
 
@@ -153,7 +153,7 @@ module Puppet
     # been synced.
     def retrieve
       if @resource.stat
-        @should &&= @should.collect { |s| self.dirmask(s) }
+        @should &&= @should.collect { |s| dirmask(s) }
       end
 
       super

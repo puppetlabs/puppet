@@ -14,8 +14,8 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
   def install
     up2date "-u", @resource[:name]
 
-    unless self.query
-      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: self.name }
+    unless query
+      raise Puppet::ExecutionFailure, _("Could not find package %{name}") % { name: name }
     end
   end
 
@@ -25,16 +25,16 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
     output = up2date "--showall"
 
     if output =~ /^#{Regexp.escape @resource[:name]}-(\d+.*)\.\w+/
-      return Regexp.last_match(1)
+      Regexp.last_match(1)
     else
       # up2date didn't find updates, pretend the current
       # version is the latest
-      return @property_hash[:ensure]
+      @property_hash[:ensure]
     end
   end
 
   def update
     # Install in up2date can be used for update, too
-    self.install
+    install
   end
 end

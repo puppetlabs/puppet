@@ -313,7 +313,7 @@ module TypeFactory
   # @api public
   #
   def self.all_callables
-    return PCallableType::DEFAULT
+    PCallableType::DEFAULT
   end
 
   # Produces a Callable type with one signature without support for a block

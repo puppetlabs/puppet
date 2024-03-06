@@ -100,9 +100,9 @@ Puppet::Type.newtype(:resources) do
     @checkmethod ||= "#{self[:name]}_check"
     @hascheck ||= respond_to?(@checkmethod)
     if @hascheck
-      return send(@checkmethod, resource)
+      send(@checkmethod, resource)
     else
-      return true
+      true
     end
   end
 
@@ -116,7 +116,7 @@ Puppet::Type.newtype(:resources) do
   # Generate any new resources we need to manage.  This is pretty hackish
   # right now, because it only supports purging.
   def generate
-    return [] unless self.purge?
+    return [] unless purge?
 
     resource_type.instances
                  .reject { |r| catalog.resource_refs.include? r.ref }

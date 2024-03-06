@@ -68,7 +68,7 @@ module Puppet::Network::FormatSupport
     end
 
     def friendly_name
-      if self.respond_to? :indirection
+      if respond_to? :indirection
         indirection.name
       else
         self

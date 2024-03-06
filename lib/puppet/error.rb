@@ -98,7 +98,7 @@ module Puppet
     def self.from_issue_and_stack(issue, args = {})
       filename, line = Puppet::Pops::PuppetStack.top_of_stack
 
-      self.new(
+      new(
         issue.format(args),
         filename,
         line,

@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     package = parse_pkgsearch_line.detect { |p| p[:status] == '<' }
     return properties[:ensure] unless package
 
-    return package[:ensure]
+    package[:ensure]
   end
 
   def update

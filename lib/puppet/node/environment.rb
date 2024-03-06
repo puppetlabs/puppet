@@ -87,10 +87,10 @@ class Puppet::Node::Environment
   #   parameters (:modulepath, :manifest, :config_version)
   # @return [Puppet::Node::Environment]
   def override_with(env_params)
-    return self.class.create(name,
-                             env_params[:modulepath] || modulepath,
-                             env_params[:manifest] || manifest,
-                             env_params[:config_version] || config_version)
+    self.class.create(name,
+                      env_params[:modulepath] || modulepath,
+                      env_params[:manifest] || manifest,
+                      env_params[:config_version] || config_version)
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding :manifest,
@@ -118,7 +118,7 @@ class Puppet::Node::Environment
 
     overrides.empty? ?
       self :
-      self.override_with(overrides)
+      override_with(overrides)
   end
 
   # @param [String] name Environment name to check for valid syntax.
@@ -279,7 +279,7 @@ class Puppet::Node::Environment
   # @param param [String, Symbol] The environment setting to look up
   # @return [Object] The resolved setting value
   def [](param)
-    Puppet.settings.value(param, self.name)
+    Puppet.settings.value(param, name)
   end
 
   # @api public
@@ -518,7 +518,7 @@ class Puppet::Node::Environment
 
   # @api public
   def inspect
-    %Q(<#{self.class}:#{self.object_id} @name="#{name}" @manifest="#{manifest}" @modulepath="#{full_modulepath.join(":")}" >)
+    %Q(<#{self.class}:#{object_id} @name="#{name}" @manifest="#{manifest}" @modulepath="#{full_modulepath.join(":")}" >)
   end
 
   # @return [Symbol] The `name` value, cast to a string, then cast to a symbol.
@@ -537,10 +537,10 @@ class Puppet::Node::Environment
   end
 
   def ==(other)
-    return true if other.is_a?(Puppet::Node::Environment) &&
-                   self.name == other.name &&
-                   self.full_modulepath == other.full_modulepath &&
-                   self.manifest == other.manifest
+    true if other.is_a?(Puppet::Node::Environment) &&
+            name == other.name &&
+            full_modulepath == other.full_modulepath &&
+            manifest == other.manifest
   end
 
   alias eql? ==
@@ -587,7 +587,7 @@ class Puppet::Node::Environment
       parser.string = @parsed_code
       parser.parse
     else
-      file = self.manifest
+      file = manifest
       # if the manifest file is a reference to a directory, parse and combine
       # all .pp files in that directory
       if file == NO_MANIFEST
@@ -608,7 +608,7 @@ class Puppet::Node::Environment
     end
   rescue Puppet::ParseErrorWithIssue => detail
     @known_resource_types.parse_failed = true
-    detail.environment = self.name
+    detail.environment = name
     raise
   rescue => detail
     @known_resource_types.parse_failed = true
@@ -623,7 +623,7 @@ class Puppet::Node::Environment
   #
   # @return [Puppet::Parser::AST::Hostclass]
   def empty_parse_result
-    return Puppet::Parser::AST::Hostclass.new('')
+    Puppet::Parser::AST::Hostclass.new('')
   end
 
   # A None subclass to make it easier to trace the NONE environment when debugging.

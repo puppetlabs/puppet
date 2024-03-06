@@ -84,7 +84,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   #
   # @api private
   def self.launchd_overrides
-    if self.get_os_version < 14
+    if get_os_version < 14
       "/var/db/launchd.db/com.apple.launchd/overrides.plist"
     else
       "/var/db/com.apple.xpc.launchd/disabled.plist"
@@ -107,8 +107,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # containing the name, provider, path, and status of each service on the
   # system.
   def self.instances
-    jobs = self.jobsearch
-    @job_list ||= self.job_list
+    jobs = jobsearch
+    @job_list ||= job_list
     jobs.keys.collect do |job|
       job_status = @job_list.has_key?(job) ? :running : :stopped
       new(:name => job, :provider => :launchd, :path => jobs[job], :status => job_status)
@@ -165,12 +165,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     if label
       if by_label.has_key? label
-        return { label => by_label[label] }
+        { label => by_label[label] }
       else
         # try refreshing the map, in case a plist has been added in the interim
         by_label = make_label_to_path_map(true)
         if by_label.has_key? label
-          return { label => by_label[label] }
+          { label => by_label[label] }
         else
           raise Puppet::Error, "Unable to find launchd plist for job: #{label}"
         end
@@ -248,7 +248,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # status mechanism and fall back to the base provider status method.
   def status
     if @resource && ((@resource[:hasstatus] == :false) || (@resource[:status]))
-      return super
+      super
     elsif @property_hash[:status].nil?
       # property_hash was flushed so the service changed status
       service_name = @resource[:name]
@@ -281,7 +281,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # always add -w so it always starts the job, it is a noop if it is not needed, this means we do
     # not have to rescan all launchd plists.
     cmds << "-w"
-    if self.enabled? == :false || self.status == :stopped # launchctl won't load disabled jobs
+    if enabled? == :false || status == :stopped # launchctl won't load disabled jobs
       did_enable_job = true
     end
     cmds << job_path
@@ -291,7 +291,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As load -w clears the Disabled flag, we need to add it in after
-    self.disable if did_enable_job and resource[:enable] == :false
+    disable if did_enable_job and resource[:enable] == :false
   end
 
   def stop
@@ -303,7 +303,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     did_disable_job = false
     cmds = []
     cmds << :launchctl << :unload
-    if self.enabled? == :true # keepalive jobs can't be stopped without disabling
+    if enabled? == :true # keepalive jobs can't be stopped without disabling
       cmds << "-w"
       did_disable_job = true
     end
@@ -314,15 +314,15 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As unload -w sets the Disabled flag, we need to add it in after
-    self.enable if did_disable_job and resource[:enable] == :true
+    enable if did_disable_job and resource[:enable] == :true
   end
 
   def restart
     Puppet.debug("A restart has been triggered for the #{resource[:name]} service")
     Puppet.debug("Stopping the #{resource[:name]} service")
-    self.stop
+    stop
     Puppet.debug("Starting the #{resource[:name]} service")
-    self.start
+    start
   end
 
   # launchd jobs are enabled by default. They are only disabled if the key

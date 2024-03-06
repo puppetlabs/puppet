@@ -114,7 +114,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       uri = decode_uri(response['pagination']['next'])
     end
 
-    return releases
+    releases
   end
 
   def make_http_request(*args)
@@ -148,7 +148,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     def install(dir)
-      staging_dir = self.prepare
+      staging_dir = prepare
 
       module_dir = dir + name[/-(.*)/, 1]
       module_dir.rmtree if module_dir.exist?
@@ -161,7 +161,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
       # Return the Pathname object representing the directory where the
       # module release archive was unpacked the to.
-      return module_dir
+      module_dir
     ensure
       staging_dir.rmtree if staging_dir.exist?
     end

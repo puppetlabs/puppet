@@ -54,7 +54,7 @@ class Loader
   # @yieldreturn [Boolean] `true` to keep the entry, `false` to discard it.
   # @return [Array<TypedName>] the list of names of discovered values
   def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
-    return EMPTY_ARRAY
+    EMPTY_ARRAY
   end
 
   # Produces the value associated with the given name if already loaded, or available for loading
@@ -199,7 +199,7 @@ class Loader
   # at this point to inspect (ie children would print out `loader_name`
   # rather than their version of to_s if they chose to implement it).
   def inspect
-    self.to_s
+    to_s
   end
 
   # An entry for one entity loaded by the loader.

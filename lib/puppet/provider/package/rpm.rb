@@ -85,7 +85,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     # NOTE: Prior to a fix for issue 1243, this method potentially returned a cached value
     # IF YOU CALL THIS METHOD, IT WILL CALL RPM
     # Use get(:property) to check if cached values are available
-    cmd = ["-q", @resource[:name], "#{self.class.nosignature}", "#{self.class.nodigest}", "--qf", "#{self.class::NEVRA_FORMAT}"]
+    cmd = ["-q", @resource[:name], self.class.nosignature.to_s, self.class.nodigest.to_s, "--qf", self.class::NEVRA_FORMAT.to_s]
 
     begin
       output = rpm(*cmd)
@@ -114,7 +114,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       @resource.fail _("RPMs must specify a package source")
     end
 
-    cmd = [command(:rpm), "-q", "--qf", "#{self.class::NEVRA_FORMAT}", "-p", source]
+    cmd = [command(:rpm), "-q", "--qf", self.class::NEVRA_FORMAT.to_s, "-p", source]
     h = self.class.nevra_to_multiversion_hash(execute(cmd))
     h[:ensure]
   rescue Puppet::ExecutionFailure => e
@@ -175,7 +175,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   def update
-    self.install
+    install
   end
 
   def install_options
@@ -209,14 +209,14 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     match = self::NEVRA_REGEX.match(line)
     if match
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
-      hash[:provider] = self.name
+      hash[:provider] = name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
       hash[:ensure].prepend("#{hash[:epoch]}:") if hash[:epoch] != '0'
     else
       Puppet.debug("Failed to match rpm line #{line}")
     end
 
-    return hash
+    hash
   end
 
   # @param line [String] multiple lines of rpm package query information
@@ -227,7 +227,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     list = []
     multiversion_hash = {}
     multiline.each_line do |line|
-      hash = self.nevra_to_hash(line)
+      hash = nevra_to_hash(line)
       next if hash.empty?
 
       if multiversion_hash.empty?
@@ -250,6 +250,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       return list[0]
     end
 
-    return list
+    list
   end
 end

@@ -81,7 +81,7 @@ class Puppet::Util::Autoload
       begin
         mark_loaded(name, file)
         Kernel.load file
-        return true
+        true
       rescue SystemExit, NoMemoryError
         raise
       rescue Exception => detail

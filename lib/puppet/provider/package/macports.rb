@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
       fields.zip(match.captures) { |field, value|
         hash[field] = value
       }
-      hash[:provider] = self.name
+      hash[:provider] = name
       return hash
     end
     nil
@@ -76,7 +76,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
     result = self.class.parse_installed_query_line(execute([command(:port), "-q", :installed, @resource[:name]], :failonfail => false, :combine => false))
     return {} if result.nil?
 
-    return result
+    result
   end
 
   def latest

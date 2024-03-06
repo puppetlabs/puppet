@@ -184,10 +184,10 @@ class Application
         define_method(fname, &block)
       else
         define_method(fname) do |value|
-          self.options["#{long}".to_sym] = value
+          self.options[long.to_s.to_sym] = value
         end
       end
-      self.option_parser_commands << [options, fname]
+      option_parser_commands << [options, fname]
     end
 
     def banner(banner = nil)
@@ -254,14 +254,14 @@ class Application
         raise Puppet::Error, _("Unable to load application class '%{class_name}' from file 'puppet/application/%{application_name}.rb'") % { class_name: class_name, application_name: application_name }
       end
 
-      return clazz
+      clazz
     end
 
     # Given the fully qualified name of a class, attempt to get the class instance.
     # @param [String] class_name the fully qualified name of the class to try to load
     # @return [Class] the Class instance, or nil? if it could not be loaded.
     def try_load_class(class_name)
-      return self.const_defined?(class_name) ? const_get(class_name) : nil
+      const_defined?(class_name) ? const_get(class_name) : nil
     end
     private :try_load_class
 
@@ -330,7 +330,7 @@ class Application
   # See also `lib/puppet/util/command_line.rb` for some special case early
   # handling of this.
   option("--version", "-V") do |_arg|
-    puts "#{Puppet.version}"
+    puts Puppet.version
     exit(0)
   end
 
@@ -553,14 +553,14 @@ class Application
     self.class.option_parser_commands.each do |options, fname|
       option_parser.on(*options) do |value|
         # Call the method that "option()" created.
-        self.send(fname, value)
+        send(fname, value)
       end
     end
 
     # Scan command line.  We just hand any exceptions to our upper levels,
     # rather than printing help and exiting, so that we can meaningfully
     # respond with context-sensitive help if we want to. --daniel 2011-04-12
-    option_parser.parse!(self.command_line.args)
+    option_parser.parse!(command_line.args)
   end
 
   def handlearg(opt, val)

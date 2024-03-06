@@ -103,7 +103,7 @@ class Type
     return nil unless other.is_a?(Puppet::CompilableResourceType) || other.class.is_a?(Puppet::CompilableResourceType)
 
     # against other type instances.
-    self.ref <=> other.ref
+    ref <=> other.ref
   end
 
   # Code related to resource type attributes.
@@ -136,7 +136,7 @@ class Type
     # We cache the value, since this method gets called such a huge number
     # of times (as in, hundreds of thousands in a given run).
     unless @attrclasses.include?(name)
-      @attrclasses[name] = case self.attrtype(name)
+      @attrclasses[name] = case attrtype(name)
                            when :property; @validproperties[name]
                            when :meta; @@metaparamhash[name]
                            when :param; @paramhash[name]
@@ -193,10 +193,10 @@ class Type
   #
   def self.ensurable(&block)
     if block_given?
-      self.newproperty(:ensure, :parent => Puppet::Property::Ensure, &block)
+      newproperty(:ensure, :parent => Puppet::Property::Ensure, &block)
     else
-      self.newproperty(:ensure, :parent => Puppet::Property::Ensure) do
-        self.defaultvalues
+      newproperty(:ensure, :parent => Puppet::Property::Ensure) do
+        defaultvalues
       end
     end
   end
@@ -211,7 +211,7 @@ class Type
     # If the class has all three of these methods defined, then it's
     # ensurable.
     [:exists?, :create, :destroy].all? { |method|
-      self.public_method_defined?(method)
+      public_method_defined?(method)
     }
   end
 
@@ -275,7 +275,7 @@ class Type
       define_method(name.to_s + "?") do
         val = self[name]
         if val == :true or val == true
-          return true
+          true
         end
       end
     end
@@ -576,7 +576,7 @@ class Type
     @validattrs ||= {}
 
     unless @validattrs.include?(name)
-      @validattrs[name] = !!(self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name))
+      @validattrs[name] = !!(validproperty?(name) or validparameter?(name) or metaparam?(name))
     end
 
     @validattrs[name]
@@ -622,7 +622,7 @@ class Type
   # @return [Boolean] true if a new parameter was added, false otherwise
   def add_property_parameter(prop_name)
     if self.class.validproperty?(prop_name) && !@parameters[prop_name]
-      self.newattr(prop_name)
+      newattr(prop_name)
       return true
     end
     false
@@ -662,7 +662,7 @@ class Type
       # not the current value.
       obj.value
     else
-      return nil
+      nil
     end
   end
 
@@ -682,7 +682,7 @@ class Type
     end
     raise Puppet::Error, "Got nil value for #{name}" if value.nil?
 
-    property = self.newattr(name)
+    property = newattr(name)
 
     if property
       begin
@@ -933,9 +933,9 @@ class Type
   # @return [Boolean] true, if this type's name is isomorphic with the object
   def self.isomorphic?
     if defined?(@isomorphic)
-      return @isomorphic
+      @isomorphic
     else
-      return true
+      true
     end
   end
 
@@ -965,7 +965,7 @@ class Type
         end
       }
     end
-    return @managed
+    @managed
   end
 
   ###############################
@@ -995,7 +995,7 @@ class Type
     @parent = nil
 
     # Remove the reference to the provider.
-    if self.provider
+    if provider
       @provider.clear
       @provider = nil
     end
@@ -1035,7 +1035,7 @@ class Type
   #
   # @return [???, nil] WHAT DOES IT RETURN? GUESS IS VOID
   def flush
-    self.provider.flush if self.provider and self.provider.respond_to?(:flush)
+    provider.flush if provider and provider.respond_to?(:flush)
   end
 
   # Says if the ensure property should be retrieved if the resource is ensurable
@@ -1051,7 +1051,7 @@ class Type
   # @return [Puppet::Resource] array of all property values (mix of types)
   # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
   def retrieve
-    fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and !provider.class.suitable?
+    fail "Provider #{provider.class.name} is not functional on this host" if provider.is_a?(Puppet::Provider) and !provider.class.suitable?
 
     result = Puppet::Resource.new(self.class, title)
 
@@ -1115,7 +1115,7 @@ class Type
     # is the first property, which is important for skipping 'retrieve' on
     # all the properties if the resource is absent.
     ensure_state = false
-    return properties.each_with_object({}) do |property, prophash|
+    properties.each_with_object({}) do |property, prophash|
       if property.name == :ensure
         ensure_state = property.retrieve
         prophash[property] = ensure_state
@@ -1151,7 +1151,7 @@ class Type
   # Either requires providers or must be overridden.
   # @raise [Puppet::DevError] when there are no providers and the implementation has not overridden this method.
   def self.instances
-    raise Puppet::DevError, _("%{name} has no providers and has not overridden 'instances'") % { name: self.name } if provider_hash.empty?
+    raise Puppet::DevError, _("%{name} has no providers and has not overridden 'instances'") % { name: name } if provider_hash.empty?
 
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
@@ -1163,7 +1163,7 @@ class Type
         other = provider_instances[title]
         if other
           Puppet.debug {
-            "%s %s found in both %s and %s; skipping the %s version" % [self.name.to_s.capitalize, title, other.class.name, instance.class.name, instance.class.name]
+            "%s %s found in both %s and %s; skipping the %s version" % [name.to_s.capitalize, title, other.class.name, instance.class.name, instance.class.name]
           }
           next
         end
@@ -1229,9 +1229,9 @@ class Type
   def pathbuilder
     p = parent
     if p
-      [p.pathbuilder, self.ref].flatten
+      [p.pathbuilder, ref].flatten
     else
-      [self.ref]
+      [ref]
     end
   end
 
@@ -1550,7 +1550,7 @@ class Type
 
         ## Corrected syntax of debug statement to reflect the way this was called.
         # i.e. before, after, subscribe, notify
-        self.debug do
+        debug do
           relation = case self.class.name
                      when "subscribe"
                        "subscribes"
@@ -1720,7 +1720,7 @@ class Type
 
     if defaults.length > 1
       Puppet.warning(_("Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}") %
-                         { name: self.name, provider_list: defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
+                         { name: name, provider_list: defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
     end
 
     @defaultprovider = defaults.shift unless defaults.empty?
@@ -1736,7 +1736,7 @@ class Type
   # @return [Hash{ ??? => Puppet::Provider}] Returns a hash of WHAT EXACTLY for this type.
   # @see provider_hash_by_type method to get the same for some other type
   def self.provider_hash
-    Puppet::Type.provider_hash_by_type(self.name)
+    Puppet::Type.provider_hash_by_type(name)
   end
 
   # Returns the provider having the given name.
@@ -1811,7 +1811,7 @@ class Type
 
     options[:resource_type] ||= self
 
-    self.providify
+    providify
 
     genclass(
       name,
@@ -1837,7 +1837,7 @@ class Type
       # We expect that the class in which this code is executed will be something
       # like Puppet::Type::Ssh_authorized_key::ParameterProvider.
       desc <<-EOT
-        The specific backend to use for this `#{self.to_s.split('::')[2].downcase}`
+        The specific backend to use for this `#{to_s.split('::')[2].downcase}`
         resource. You will seldom need to specify this --- Puppet will usually
         discover the appropriate provider for your platform.
       EOT
@@ -2088,7 +2088,7 @@ class Type
       next unless Puppet::Type.type(type)
 
       # Retrieve the list of names from the block.
-      list = self.instance_eval(&block)
+      list = instance_eval(&block)
       next unless list
 
       list = [list] unless list.is_a?(Array)
@@ -2331,7 +2331,7 @@ class Type
     [:file, :line, :catalog, :exported, :virtual].each do |getter|
       setter = getter.to_s + "="
       val = resource.send(getter)
-      self.send(setter, val) if val
+      send(setter, val) if val
     end
 
     merge_tags_from(resource)
@@ -2357,7 +2357,7 @@ class Type
   #
   # @return [void]
   def validate_resource
-    self.validate if self.respond_to?(:validate)
+    validate if respond_to?(:validate)
   rescue Puppet::Error, ArgumentError => detail
     error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
     adderrorcontext(error, detail)
@@ -2526,7 +2526,7 @@ class Type
   def ref
     # memoizing this is worthwhile ~ 3 percent of calls are the "first time
     # around" in an average run of Puppet. --daniel 2012-07-17
-    @ref ||= "#{self.class.name.to_s.capitalize}[#{self.title}]"
+    @ref ||= "#{self.class.name.to_s.capitalize}[#{title}]"
   end
 
   # (see self_refresh)
@@ -2572,9 +2572,9 @@ class Type
       if self.class.validparameter?(name_var)
         @title = self[:name]
       elsif self.class.validproperty?(name_var)
-        @title = self.should(name_var)
+        @title = should(name_var)
       else
-        self.devfail "Could not find namevar #{name_var} for #{self.class.name}"
+        devfail "Could not find namevar #{name_var} for #{self.class.name}"
       end
     end
 
@@ -2585,19 +2585,19 @@ class Type
   # @see #ref
   #
   def to_s
-    self.ref
+    ref
   end
 
   # Convert this resource type instance to a Puppet::Resource.
   # @return [Puppet::Resource] Returns a serializable representation of this resource
   #
   def to_resource
-    resource = self.retrieve_resource
+    resource = retrieve_resource
     resource.merge_tags_from(self)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
-      next if param.class.isnamevar? and param.value == self.title
+      next if param.class.isnamevar? and param.value == title
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)

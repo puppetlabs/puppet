@@ -40,14 +40,14 @@ class Puppet::Util::Storage
     @@state = {}
   end
 
-  self.init
+  init
 
   def self.load
     Puppet.settings.use(:main) unless FileTest.directory?(Puppet[:statedir])
     filename = Puppet[:statefile]
 
     unless Puppet::FileSystem.exist?(filename)
-      self.init if @@state.nil?
+      init if @@state.nil?
       return
     end
     unless File.file?(filename)
@@ -68,7 +68,7 @@ class Puppet::Util::Storage
 
     unless @@state.is_a?(Hash)
       Puppet.err _("State got corrupted")
-      self.init
+      init
     end
   end
 

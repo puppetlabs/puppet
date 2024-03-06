@@ -642,7 +642,7 @@ module Generators
     end
 
     def <=>(other)
-      self.name <=> other.name
+      name <=> other.name
     end
   end
 
@@ -809,7 +809,7 @@ module Generators
     end
 
     def <=>(other)
-      self.name <=> other.name
+      name <=> other.name
     end
   end
 
@@ -849,7 +849,7 @@ module Generators
     end
 
     def index_name
-      "#{@context.name}"
+      @context.name.to_s
     end
 
     def params

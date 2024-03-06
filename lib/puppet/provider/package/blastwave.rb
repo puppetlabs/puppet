@@ -50,12 +50,12 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     end
 
     if hash[:justme]
-      return list[0]
+      list[0]
     else
       list.reject! { |h|
         h[:ensure] == :absent
       }
-      return list
+      list
     end
   end
 
@@ -74,12 +74,12 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
       hash[:avail] = hash[:ensure] if hash[:avail] == "SAME"
 
       # Use the name method, so it works with subclasses.
-      hash[:provider] = self.name
+      hash[:provider] = name
 
-      return hash
+      hash
     else
       Puppet.warning _("Cannot match %{line}") % { line: line }
-      return nil
+      nil
     end
   end
 

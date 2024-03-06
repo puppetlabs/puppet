@@ -24,6 +24,6 @@ class Puppet::Node::Facts::Json < Puppet::Indirector::JSON
   private
 
   def json_dir_path
-    self.path("*")
+    path("*")
   end
 end

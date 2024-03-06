@@ -9,7 +9,7 @@ class Puppet::Pops::Lookup::KeyRecorder
 
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def self.singleton
-    @null_recorder ||= self.new
+    @null_recorder ||= new
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 

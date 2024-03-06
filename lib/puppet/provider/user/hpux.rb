@@ -40,7 +40,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
       cmd << "/usr/lbin/modprpw"
       cmd << "-v"
       cmd << "-l"
-      cmd << "#{resource.name}"
+      cmd << resource.name.to_s
     end
     cmd
   end
@@ -76,7 +76,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
         debug "No trusted computing user file #{file_name} found."
       end
     else
-      return ent.passwd
+      ent.passwd
     end
   end
 
@@ -84,11 +84,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     # Check to see if the HP-UX box is running in trusted compute mode
     # UID for root should always be 0
     trusted_sys = exec_getprpw('root', '-m uid')
-    if trusted_sys.chomp == "uid=0"
-      return true
-    else
-      return false
-    end
+    trusted_sys.chomp == "uid=0"
   end
 
   def exec_getprpw(user, opts)

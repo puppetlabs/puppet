@@ -505,7 +505,7 @@ class Puppet::Configurer
       true
     rescue => detail
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
-      return nil
+      nil
     ensure
       execute_postrun_command or return nil # rubocop:disable Lint/EnsureReturn
     end
@@ -675,12 +675,12 @@ class Puppet::Configurer
 
     puppet.put_facts(facts.name, facts: facts, environment: Puppet.lookup(:current_environment).name.to_s)
 
-    return true
+    true
   rescue => detail
     Puppet.log_exception(detail, _("Failed to submit facts: %{detail}") %
                                  { detail: detail })
 
-    return false
+    false
   end
 
   private
@@ -722,7 +722,7 @@ class Puppet::Configurer
     result
   rescue => detail
     Puppet.log_exception(detail, _("Could not retrieve catalog from cache: %{detail}") % { detail: detail })
-    return nil
+    nil
   end
 
   def retrieve_new_catalog(facts, query_options)
@@ -744,7 +744,7 @@ class Puppet::Configurer
     result
   rescue StandardError => detail
     Puppet.log_exception(detail, _("Could not retrieve catalog from remote server: %{detail}") % { detail: detail })
-    return nil
+    nil
   end
 
   def download_plugins(remote_environment_for_plugins)

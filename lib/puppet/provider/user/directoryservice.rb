@@ -87,7 +87,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # display its output.
   def self.instances
     get_all_users.collect do |user|
-      self.new(generate_attribute_hash(user))
+      new(generate_attribute_hash(user))
     end
   end
 

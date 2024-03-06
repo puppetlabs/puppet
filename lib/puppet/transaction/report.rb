@@ -144,7 +144,7 @@ class Puppet::Transaction::Report
   TOTAL = "total"
 
   def self.from_data_hash(data)
-    obj = self.allocate
+    obj = allocate
     obj.initialize_from_hash(data)
     obj
   end

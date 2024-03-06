@@ -36,7 +36,7 @@ module Puppet
     def mklink
       raise Puppet::Error, "Cannot symlink on this platform version" unless provider.feature?(:manages_symlinks)
 
-      target = self.should
+      target = should
 
       # Clean up any existing objects.  The argument is just for logging,
       # it doesn't determine what's removed.
@@ -63,12 +63,12 @@ module Puppet
     end
 
     def insync?(currentvalue)
-      if [:nochange, :notlink].include?(self.should) or @resource.recurse?
-        return true
+      if [:nochange, :notlink].include?(should) or @resource.recurse?
+        true
       elsif !@resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
-        return true
+        true
       else
-        return super(currentvalue)
+        super(currentvalue)
       end
     end
 
@@ -76,12 +76,12 @@ module Puppet
       stat = @resource.stat
       if stat
         if stat.ftype == "link"
-          return Puppet::FileSystem.readlink(@resource[:path])
+          Puppet::FileSystem.readlink(@resource[:path])
         else
-          return :notlink
+          :notlink
         end
       else
-        return :absent
+        :absent
       end
     end
   end

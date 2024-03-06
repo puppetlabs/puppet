@@ -329,7 +329,7 @@ class Puppet::Graph::RbTreeMap
         node.right, result = delete_recursive(node.right, key)
       end
     end
-    return node.fixup, result
+    [node.fixup, result]
   end
 
   def delete_min_recursive(node)
@@ -342,7 +342,7 @@ class Puppet::Graph::RbTreeMap
     end
     node.left, result = delete_min_recursive(node.left)
 
-    return node.fixup, result
+    [node.fixup, result]
   end
 
   def delete_max_recursive(node)
@@ -356,16 +356,16 @@ class Puppet::Graph::RbTreeMap
     end
     node.right, result = delete_max_recursive(node.right)
 
-    return node.fixup, result
+    [node.fixup, result]
   end
 
   def get_recursive(node, key)
     return nil if node.nil?
 
     case key <=> node.key
-    when 0 then return node
-    when -1 then return get_recursive(node.left, key)
-    when  1 then return get_recursive(node.right, key)
+    when 0 then node
+    when -1 then get_recursive(node.left, key)
+    when  1 then get_recursive(node.right, key)
     end
   end
 

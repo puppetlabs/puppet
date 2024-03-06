@@ -69,7 +69,7 @@ module Puppet
 
   # @return [String] containing the puppet version to minor specificity, e.g. "3.0"
   def self.minor_version
-    self.version.split('.')[0..1].join('.')
+    version.split('.')[0..1].join('.')
   end
 
   def self.version=(version)

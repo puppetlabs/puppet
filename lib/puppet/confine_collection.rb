@@ -22,7 +22,7 @@ class Puppet::ConfineCollection
         confine.name = test
         @confines << confine
       end
-      @confines[-1].label = self.label
+      @confines[-1].label = label
     end
   end
 

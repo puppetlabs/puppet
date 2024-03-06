@@ -58,7 +58,7 @@ module Puppet
     end
 
     def load_external(value)
-      ::Facter.load_external(value) if self.load_external?
+      ::Facter.load_external(value) if load_external?
     end
 
     private

@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
       # so even though pkginfo passed, we have to check the actual output
       raise Puppet::Error, _("Unable to get information about package %{name} because of: %{errmsg}") % { name: @resource[:name], errmsg: errmsg }
     rescue Puppet::ExecutionFailure
-      return { :ensure => :absent }
+      { :ensure => :absent }
     end
   end
 
@@ -115,8 +115,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   # Remove the old package, and install the new one.  This will probably
   # often fail.
   def update
-    self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
-    self.install
+    uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
+    install
   end
 
   def prepare_cmd(opt)

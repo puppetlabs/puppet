@@ -182,7 +182,7 @@ module Adaptable
     # Returns the name of the class, or the name of the type if the class represents an Object type
     # @return [String] the name of the class or type
     def self.type_name
-      self.name
+      name
     end
 
     # Returns a suitable instance variable name for the _name_ of this instance. The name is created by calling

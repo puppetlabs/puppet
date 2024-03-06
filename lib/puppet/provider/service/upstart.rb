@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   has_feature :enableable
 
   def self.instances
-    self.get_services(self.excludes) # Take exclude list from init provider
+    get_services(excludes) # Take exclude list from init provider
   end
 
   def self.excludes
@@ -117,7 +117,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
           return fqname
         end
 
-        self.debug("Could not find #{name}#{suffix} in #{path}")
+        debug("Could not find #{name}#{suffix} in #{path}")
       end
     end
 
@@ -186,9 +186,9 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
     output = status_exec(@resource[:name].split)
     if output =~ %r{start/}
-      return :running
+      :running
     else
-      return :stopped
+      :stopped
     end
   end
 
@@ -213,9 +213,9 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def enabled_pre_0_6_7?(script_text)
     # Upstart version < 0.6.7 means no manual stanza.
     if script_text.match(START_ON)
-      return :true
+      :true
     else
-      return :false
+      :false
     end
   end
 

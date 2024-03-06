@@ -74,7 +74,7 @@ class Puppet::FileServing::Configuration
       path = path.gsub(%r{/+}, "/")
     end
 
-    return mount, path
+    [mount, path]
   end
 
   def umount(name)

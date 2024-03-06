@@ -21,7 +21,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
         match = regex.match(line)
         if match
           fields.zip(match.captures) { |field, value| hash[field] = value }
-          hash[:provider] = self.name
+          hash[:provider] = name
           packages << new(hash)
           hash = {}
         else
@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     end
     packages
   rescue Puppet::ExecutionFailure
-    return nil
+    nil
   end
 
   def latest
@@ -57,7 +57,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
   end
 
   def update
-    self.install
+    install
   end
 
   def query
@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
 
     nil
   rescue Puppet::ExecutionFailure
-    return {
+    {
       :ensure => :purged,
       :status => 'missing',
       :name => @resource[:name],

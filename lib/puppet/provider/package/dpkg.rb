@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[field] = value
       end
 
-      hash[:provider] = self.name
+      hash[:provider] = name
 
       if hash[:status] == 'not-installed'
         hash[:ensure] = :purged
@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
 
-    return hash
+    hash
   end
 
   public
@@ -101,16 +101,16 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
     args << '-i' << file
 
-    self.unhold if self.properties[:mark] == :hold
+    unhold if properties[:mark] == :hold
     begin
       dpkg(*args)
     ensure
-      self.hold if @resource[:mark] == :hold
+      hold if @resource[:mark] == :hold
     end
   end
 
   def update
-    self.install
+    install
   end
 
   # Return the version from the package.

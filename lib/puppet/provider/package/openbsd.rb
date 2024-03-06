@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
               hash[field] = value
             }
 
-            hash[:provider] = self.name
+            hash[:provider] = name
 
             packages << new(hash)
             hash = {}
@@ -56,9 +56,9 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         }
       end
 
-      return packages
+      packages
     rescue Puppet::ExecutionFailure
-      return nil
+      nil
     end
   end
 
@@ -95,7 +95,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     if output =~ /^#{resource[:name]}-(\d[^-]*)-?(\w*) \(installed\)$/
       debug "Package is already the latest available"
-      return version
+      version
     else
       match = /^(.*)-(\d[^-]*)-?(\w*)$/.match(output)
       debug "Latest available for #{resource[:name]}: #{match[2]}"
@@ -109,15 +109,15 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
         debug "Package #{resource[:name]} #{version} newer then available #{match[2]}"
-        return version
+        version
       else
-        return match[2]
+        match[2]
       end
     end
   end
 
   def update
-    self.install(true)
+    install(true)
   end
 
   def parse_pkgconf
@@ -222,15 +222,15 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
     end
   rescue Puppet::ExecutionFailure
-    return nil
+    nil
   end
 
   def query
     # Search for the version info
     if pkginfo(@resource[:name]) =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
-      return { :ensure => Regexp.last_match(2) }
+      { :ensure => Regexp.last_match(2) }
     else
-      return nil
+      nil
     end
   end
 

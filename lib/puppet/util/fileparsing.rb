@@ -230,9 +230,9 @@ module Puppet::Util::FileParsing
 
     if ret
       ret[:record_type] = record.name
-      return ret
+      ret
     else
-      return nil
+      nil
     end
   end
 
@@ -246,7 +246,7 @@ module Puppet::Util::FileParsing
   def lines(text)
     # NOTE: We do not have to remove trailing separators because split will ignore
     # them by default (unless you pass -1 as a second parameter)
-    text.split(self.line_separator)
+    text.split(line_separator)
   end
 
   # Split a bunch of text into lines and then parse them individually.
@@ -346,7 +346,7 @@ module Puppet::Util::FileParsing
     end
 
     case record.type
-    when :text; return details[:line]
+    when :text; details[:line]
     else
       return record.to_line(details) if record.respond_to?(:to_line)
 
@@ -358,9 +358,9 @@ module Puppet::Util::FileParsing
         if regex == true
           regex = /\s+$/
         end
-        return line.sub(regex, '')
+        line.sub(regex, '')
       else
-        return line
+        line
       end
     end
   end
@@ -368,9 +368,9 @@ module Puppet::Util::FileParsing
   # Whether to add a trailing separator to the file.  Defaults to true
   def trailing_separator
     if defined?(@trailing_separator)
-      return @trailing_separator
+      @trailing_separator
     else
-      return true
+      true
     end
   end
 
@@ -378,11 +378,9 @@ module Puppet::Util::FileParsing
     type = type.intern
     record = record_type(type)
     if record && record.fields.include?(attr.intern)
-      return true
-    elsif attr.intern == :ensure
-      return true
+      true
     else
-      false
+      attr.intern == :ensure
     end
   end
 

@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       install_from_repo
     end
 
-    unless self.query
+    unless query
       fail(_("Could not find package '%{name}'") % { name: @resource[:name] })
     end
   end
@@ -125,7 +125,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # should always result in the newest release.
   def update
     # Install in pacman can be used for update, too
-    self.install
+    install
   end
 
   # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed
@@ -141,7 +141,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       if pacman_check
         output = pacman "-Sp", "--print-format", "%v", resource_name
-        return output.chomp
+        output.chomp
       else
         output = yaourt "-Qma", resource_name
         output.split("\n").each do |line|

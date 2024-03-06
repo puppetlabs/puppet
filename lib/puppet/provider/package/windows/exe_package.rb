@@ -80,7 +80,7 @@ class Puppet::Provider::Package::Windows
         rescue => detail
           raise Puppet::Error.new(_("Error when installing %{package}: %{detail}") % { package: resource[:name], detail: detail.message }, detail)
         ensure
-          self.register(tempfile.path)
+          register(tempfile.path)
           tempfile.close()
           file_location = tempfile.path
         end

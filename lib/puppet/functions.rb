@@ -569,7 +569,7 @@ module Puppet::Functions
       @block_name = nil
       @return_type = nil
       @argument_mismatch_hander = argument_mismatch_handler
-      self.instance_eval(&block)
+      instance_eval(&block)
       callable_t = create_callable(@types, @block_type, @return_type, @min, @max)
       @dispatcher.add(Puppet::Pops::Functions::Dispatch.new(callable_t, meth_name, @names, @max == :default, @block_name, @injections, @weaving, @argument_mismatch_hander))
     end
@@ -748,7 +748,7 @@ module Puppet::Functions
             # this is the scope.function_xxx(...) call
             return scope.send(self.class.method3x, mapped_args)
           end
-          return result.value
+          result.value
         rescue Puppet::Pops::Evaluator::Next => jumper
           begin
             throw :next, jumper.value

@@ -141,7 +141,7 @@ module Puppet::Util::RpmCompare
       version = full_version
       release = nil
     end
-    return { :epoch => epoch, :version => version, :release => release, :arch => architecture }
+    { :epoch => epoch, :version => version, :release => release, :arch => architecture }
   end
 
   # this method is a native implementation of the
@@ -152,7 +152,7 @@ module Puppet::Util::RpmCompare
     return 1 if !s1.nil? && s2.nil?
     return -1 if s1.nil? && !s2.nil?
 
-    return rpmvercmp(s1, s2)
+    rpmvercmp(s1, s2)
   end
 
   # how rpm compares two package versions:
@@ -190,8 +190,6 @@ module Puppet::Util::RpmCompare
     # This should NOT be triggered if we're trying to ensure latest.
     return 0 if should_hash[:release].nil?
 
-    rc = compare_values(should_hash[:release], is_hash[:release])
-
-    return rc
+    compare_values(should_hash[:release], is_hash[:release])
   end
 end

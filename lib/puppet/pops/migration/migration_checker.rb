@@ -9,7 +9,7 @@ class Puppet::Pops::Migration::MigrationChecker
 
   # rubocop:disable Naming/MemoizedInstanceVariableName
   def self.singleton
-    @null_checker ||= self.new
+    @null_checker ||= new
   end
   # rubocop:enable Naming/MemoizedInstanceVariableName
 

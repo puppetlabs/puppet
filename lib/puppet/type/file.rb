@@ -264,7 +264,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       unless value.is_a?(Array) or value.is_a?(String) or value == false
-        self.devfail "Ignore must be a string or an Array"
+        devfail "Ignore must be a string or an Array"
       end
     end
   end
@@ -442,7 +442,7 @@ Puppet::Type.newtype(:file) do
       self.fail _("You cannot specify content when using checksum '%{checksum_type}'") % { checksum_type: checksum_type } if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
-    self.warning _("Possible error: recurselimit is set but not recurse, no recursion will happen") if !self[:recurse] && self[:recurselimit]
+    warning _("Possible error: recurselimit is set but not recurse, no recursion will happen") if !self[:recurse] && self[:recurselimit]
 
     if @parameters[:content] && @parameters[:content].actual_content
       # Now that we know the checksum, update content (in case it was created before checksum was known).
@@ -453,7 +453,7 @@ Puppet::Type.newtype(:file) do
       self.fail _("Checksum value '%{value}' is not a valid checksum type %{checksum}") % { value: self[:checksum_value], checksum: self[:checksum] }
     end
 
-    self.warning _("Checksum value is ignored unless content or source are specified") if self[:checksum_value] && !self[:content] && !self[:source]
+    warning _("Checksum value is ignored unless content or source are specified") if self[:checksum_value] && !self[:content] && !self[:source]
 
     provider.validate if provider.respond_to?(:validate)
   end
@@ -465,7 +465,7 @@ Puppet::Type.newtype(:file) do
   end
 
   def self.instances
-    return []
+    []
   end
 
   # Determine the user to write files as.
@@ -531,7 +531,7 @@ Puppet::Type.newtype(:file) do
 
   # Create any children via recursion or whatever.
   def eval_generate
-    return [] unless self.recurse?
+    return [] unless recurse?
 
     recurse
   end
@@ -616,12 +616,12 @@ Puppet::Type.newtype(:file) do
         # Remove the parent file name
         list = parent.pathbuilder
         list.pop # remove the parent's path info
-        return list << self.ref
+        list << ref
       else
-        return super
+        super
       end
     else
-      return [self.ref]
+      [ref]
     end
   end
 
@@ -639,7 +639,7 @@ Puppet::Type.newtype(:file) do
 
     # If we're purging resources, then delete any resource that isn't on the
     # remote system.
-    mark_children_for_purging(children) if self.purge?
+    mark_children_for_purging(children) if purge?
 
     result = children.values.sort_by { |a| a[:path] }
     remove_less_specific_files(result)
@@ -800,7 +800,7 @@ Puppet::Type.newtype(:file) do
       if can_backup?(current_type)
         backup_existing
       else
-        self.warning _("Could not back up file of type %{current_type}") % { current_type: current_type }
+        warning _("Could not back up file of type %{current_type}") % { current_type: current_type }
       end
     end
 
@@ -810,9 +810,9 @@ Puppet::Type.newtype(:file) do
 
     case current_type
     when "directory"
-      return remove_directory(wanted_type)
+      remove_directory(wanted_type)
     when "link", "file", "fifo", "socket"
-      return remove_file(current_type, wanted_type)
+      remove_file(current_type, wanted_type)
     else
       # Including: “blockSpecial”, “characterSpecial”, “unknown”
       self.fail _("Could not remove files of type %{current_type}") % { current_type: current_type }
@@ -833,7 +833,7 @@ Puppet::Type.newtype(:file) do
         self.fail err_msg
       else
         # Warn if use source permissions is specified on Windows
-        self.warning err_msg
+        warning err_msg
       end
     end
 
@@ -898,7 +898,7 @@ Puppet::Type.newtype(:file) do
     method = :stat
 
     # Files are the only types that support links
-    if self.instance_of?(Puppet::Type::File) and self[:links] != :follow
+    if instance_of?(Puppet::Type::File) and self[:links] != :follow
       method = :lstat
     end
 
@@ -937,7 +937,7 @@ Puppet::Type.newtype(:file) do
         validate_callback = proc { |path|
           output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], path), :failonfail => true, :combine => true)
           output.split(/\n/).each { |line|
-            self.debug(line)
+            debug(line)
           }
         }
       end

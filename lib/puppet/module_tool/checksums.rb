@@ -19,7 +19,7 @@ module Puppet::ModuleTool
 
     # Return checksum for the +Pathname+.
     def checksum(pathname)
-      return Digest::MD5.hexdigest(Puppet::FileSystem.binread(pathname))
+      Digest::MD5.hexdigest(Puppet::FileSystem.binread(pathname))
     end
 
     # Return checksums for object's +Pathname+, generate if it's needed.
@@ -36,7 +36,7 @@ module Puppet::ModuleTool
           end
         end
       end
-      return @data
+      @data
     end
 
     alias :to_data_hash :data

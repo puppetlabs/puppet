@@ -394,7 +394,7 @@ class Puppet::Transaction
 
   # Is the resource currently scheduled?
   def scheduled?(resource)
-    self.ignoreschedules || resource_harness.scheduled?(resource)
+    ignoreschedules || resource_harness.scheduled?(resource)
   end
 
   # Should this resource be skipped?

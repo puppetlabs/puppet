@@ -32,7 +32,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
   def self.provider_command
     # Ensure pip can upgrade pip, which usually puts pip into a new path /usr/local/bin/pip (compared to /usr/bin/pip)
-    self.cmd.map { |c| which(c) }.find { |c| !c.nil? }
+    cmd.map { |c| which(c) }.find { |c| !c.nil? }
   end
 
   def self.cmd
@@ -65,7 +65,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def self.instances(target_command = nil)
     if target_command
       command = target_command
-      self.validate_command(command)
+      validate_command(command)
     else
       command = provider_command
     end
@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     return packages unless command
 
     command_options = ['freeze']
-    command_version = self.pip_version(command)
+    command_version = pip_version(command)
     if compare_pip_versions(command_version, '8.1.0') >= 0
       command_options << '--all'
     end
@@ -116,7 +116,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.instances(command).each do |pkg|
       return pkg.properties if @resource[:name].casecmp(pkg.name).zero?
     end
-    return nil
+    nil
   end
 
   # Return latest version available for current package
@@ -180,7 +180,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.validate_command(command)
 
     Dir.mktmpdir("puppet_pip") do |dir|
-      command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}", '-d', "#{dir}", '-v']
+      command_and_options = [self.class.quote(command), 'install', (@resource[:name]).to_s, '-d', dir.to_s, '-v']
       command_and_options << install_options if @resource[:install_options]
       execpipe command_and_options do |process|
         process.collect do |line|

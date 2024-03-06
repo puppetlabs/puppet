@@ -161,7 +161,7 @@ class Puppet::Settings::EnvironmentConf
       valid = false
     end
 
-    return valid
+    valid
   end
   private_class_method :validate
 

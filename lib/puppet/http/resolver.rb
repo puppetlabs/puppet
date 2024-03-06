@@ -42,9 +42,9 @@ class Puppet::HTTP::Resolver
   # @api public
   def check_connection?(session, service, ssl_context: nil)
     service.connect(ssl_context: ssl_context)
-    return true
+    true
   rescue Puppet::HTTP::ConnectionError => e
     Puppet.log_exception(e, "Connection to #{service.url} failed, trying next route: #{e.message}")
-    return false
+    false
   end
 end

@@ -69,7 +69,7 @@ class Puppet::Forge
     # repository at +release+ (e.g. "myuser-mymodule").
     def retrieve(release)
       path = @host.chomp('/') + release
-      return cache.retrieve(path)
+      cache.retrieve(path)
     end
 
     # Return the URI string for this repository.
@@ -80,7 +80,7 @@ class Puppet::Forge
     # Return the cache key for this repository, this a hashed string based on
     # the URI.
     def cache_key
-      return @cache_key ||= [
+      @cache_key ||= [
         @host.to_s.gsub(/[^[:alnum:]]+/, '_').sub(/_$/, ''),
         Digest::SHA1.hexdigest(@host.to_s)
       ].join('-').freeze

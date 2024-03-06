@@ -110,9 +110,9 @@ module Puppet
         # ok, some 'convention' if the keyvalue property is named properties, provider should implement a properties method
         key_hash = provider.send(name) if provider
         if key_hash && key_hash != :absent
-          return key_hash
+          key_hash
         else
-          return :absent
+          :absent
         end
       end
 
@@ -121,7 +121,7 @@ module Puppet
       def insync?(is)
         return true unless is
 
-        (is == self.should)
+        (is == should)
       end
 
       # We only accept an array of key/value pairs (strings), a single
@@ -135,7 +135,7 @@ module Puppet
 
         next if value.is_a?(Hash)
 
-        unless value.include?("#{separator}")
+        unless value.include?(separator.to_s)
           raise ArgumentError, _("Key/value pairs must be separated by '%{separator}'") % { separator: separator }
         end
       end

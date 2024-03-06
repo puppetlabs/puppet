@@ -648,7 +648,7 @@ class Factory
     return false unless expr.instance_of?(self) && expr.model_class <= AbstractResource
 
     expr['form'] = form
-    return true
+    true
   end
 
   # Returns symbolic information about an expected shape of a resource expression given the LHS of a resource expr.
@@ -1061,7 +1061,7 @@ class Factory
 
   def interpolate_LiteralInteger(c)
     # convert number to a variable
-    self.var
+    var
   end
 
   def interpolate_Object(c)
@@ -1069,7 +1069,7 @@ class Factory
   end
 
   def interpolate_QualifiedName(c)
-    self.var
+    var
   end
 
   # rewrite left expression to variable if it is name, number, and recurse if it is an access expression

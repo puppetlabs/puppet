@@ -258,8 +258,8 @@ class Puppet::Interface
       self.copyright_owner = owner unless owner.nil?
       self.copyright_years = years unless years.nil?
 
-      if self.copyright_years or self.copyright_owner then
-        "Copyright #{self.copyright_years} by #{self.copyright_owner}"
+      if copyright_years or copyright_owner then
+        "Copyright #{copyright_years} by #{copyright_owner}"
       else
         "Unknown copyright owner and years."
       end

@@ -38,7 +38,7 @@ class Puppet::Forge
 
     # Return contents of file at the given URI's +uri+.
     def read_retrieve(uri)
-      return uri.read
+      uri.read
     end
 
     # Return Pathname for repository's cache directory, create it if needed.

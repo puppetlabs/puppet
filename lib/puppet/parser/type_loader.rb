@@ -78,14 +78,14 @@ class Puppet::Parser::TypeLoader
       # preserves existing behaviours.
     end
     # Nothing found.
-    return nil
+    nil
   end
 
   def parse_file(file)
     Puppet.debug { "importing '#{file}' in environment #{environment}" }
     parser = Puppet::Parser::ParserFactory.parser
     parser.file = file
-    return parser.parse
+    parser.parse
   end
 
   private

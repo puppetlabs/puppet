@@ -48,7 +48,7 @@ class Puppet::Node
       'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
-    serialized_params = self.serializable_parameters
+    serialized_params = serializable_parameters
     result['parameters'] = serialized_params unless serialized_params.empty?
     result
   end
@@ -174,7 +174,7 @@ class Puppet::Node
 
   def add_server_facts(facts)
     # Append the current environment to the list of server facts
-    @server_facts = facts.merge({ "environment" => self.environment.name.to_s })
+    @server_facts = facts.merge({ "environment" => environment.name.to_s })
 
     # Merge the server facts into the parameters for the node
     merge(facts)

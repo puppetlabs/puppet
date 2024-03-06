@@ -42,7 +42,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     # 106 is the exit status when the policy layer supplies a fallback action
     # See x-man-page://invoke-rc.d
     if [104, 106].include?(status.exitstatus)
-      return :true
+      :true
     elsif [101, 105].include?(status.exitstatus)
       # 101 is action not allowed, which means we have to do the check manually.
       # 105 is unknown, which generally means the initscript does not support query
@@ -50,12 +50,12 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
       # For those that do not, perform the checks manually
       # http://www.debian.org/doc/debian-policy/ch-opersys.html
       if get_start_link_count >= 4
-        return :true
+        :true
       else
-        return :false
+        :false
       end
     else
-      return :false
+      :false
     end
   end
 

@@ -58,7 +58,7 @@ class Puppet::Interface
     def define(name, version, &block)
       face = Puppet::Interface::FaceCollection[name, version]
       if face.nil? then
-        face = self.new(name, version)
+        face = new(name, version)
         Puppet::Interface::FaceCollection.register(face)
         # REVISIT: Shouldn't this be delayed until *after* we evaluate the
         # current block, not done before? --daniel 2011-04-07
@@ -67,7 +67,7 @@ class Puppet::Interface
 
       face.instance_eval(&block) if block_given?
 
-      return face
+      face
     end
 
     # Retrieves a face by name and version. Use `:current` for the
@@ -126,7 +126,7 @@ class Puppet::Interface
   # @return [String] usage synopsis
   # @api private
   def synopsis
-    build_synopsis self.name, '<action>'
+    build_synopsis name, '<action>'
   end
 
   ########################################################################
@@ -219,7 +219,7 @@ class Puppet::Interface
     # Exceptions here should propagate up; this implements a hook we can use
     # reasonably for option validation.
     methods.each do |hook|
-      respond_to? hook and self.__send__(hook, action, passed_args, passed_options)
+      respond_to? hook and __send__(hook, action, passed_args, passed_options)
     end
   end
 

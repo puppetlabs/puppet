@@ -204,11 +204,11 @@ class Puppet::Property < Puppet::Parameter
   #
   def change_to_s(current_value, newvalue)
     if current_value == :absent
-      return "defined '#{name}' as #{should_to_s(newvalue)}"
+      "defined '#{name}' as #{should_to_s(newvalue)}"
     elsif newvalue == :absent or newvalue == [:absent]
-      return "undefined '#{name}' from #{is_to_s(current_value)}"
+      "undefined '#{name}' from #{is_to_s(current_value)}"
     else
-      return "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
+      "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
     end
   rescue Puppet::Error
     raise
@@ -225,17 +225,17 @@ class Puppet::Property < Puppet::Parameter
   # @return [String] the name of the event that describes the change
   #
   def event_name
-    value = self.should
+    value = should
 
     event_name = self.class.value_option(value, :event) and return event_name
 
     name == :ensure or return (name.to_s + "_changed").to_sym
 
-    return (resource.type.to_s + case value
-                                 when :present; "_created"
-                                 when :absent;  "_removed"
-                                 else           "_changed"
-                                 end).to_sym
+    (resource.type.to_s + case value
+                          when :present; "_created"
+                          when :absent;  "_removed"
+                          else "_changed"
+                          end).to_sym
   end
 
   # Produces an event describing a change of this property.
@@ -306,7 +306,7 @@ class Puppet::Property < Puppet::Parameter
   # @api public
   #
   def insync?(is)
-    self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+    devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
     # an empty array is analogous to no should values
     return true if @should.empty?
@@ -331,14 +331,14 @@ class Puppet::Property < Puppet::Parameter
       #
       # This does mean that property equality is not commutative, and will not
       # work unless the `is` value is carefully arranged to match the should.
-      return (is == @should or is == @should.map(&:to_s))
+      (is == @should or is == @should.map(&:to_s))
 
       # When we stop being idiots about this, and actually have meaningful
       # semantics, this version is the thing we actually want to do.
       #
       # return is.zip(@should).all? {|a, b| property_matches?(a, b) }
     else
-      return @should.any? { |want| property_matches?(is, want) }
+      @should.any? { |want| property_matches?(is, want) }
     end
   end
 
@@ -369,7 +369,7 @@ class Puppet::Property < Puppet::Parameter
       # avoid it
       # TRANSLATORS 'insync_values?' should not be translated
       msg = _("Unknown failure using insync_values? on type: %{type} / property: %{name} to compare values %{should} and %{is}") %
-            { type: self.resource.ref, name: self.name, should: should, is: is }
+            { type: resource.ref, name: name, should: should, is: is }
       Puppet.info(msg)
 
       # Return nil, ie. unknown
@@ -484,9 +484,9 @@ class Puppet::Property < Puppet::Parameter
     # Set a name for looking up associated options like the event.
     name = self.class.value_name(value)
     method = self.class.value_option(name, :method)
-    if method && self.respond_to?(method)
+    if method && respond_to?(method)
       begin
-        self.send(method)
+        send(method)
       rescue Puppet::Error
         raise
       rescue => detail
@@ -501,7 +501,7 @@ class Puppet::Property < Puppet::Parameter
       if block
         # FIXME It'd be better here to define a method, so that
         # the blocks could return values.
-        self.instance_eval(&block)
+        instance_eval(&block)
       else
         call_provider(value)
       end
@@ -524,12 +524,12 @@ class Puppet::Property < Puppet::Parameter
   def should
     return nil unless defined?(@should)
 
-    self.devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
+    devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
 
     if match_all?
-      return @should.collect { |val| self.unmunge(val) }
+      @should.collect { |val| unmunge(val) }
     else
-      return self.unmunge(@should[0])
+      unmunge(@should[0])
     end
   end
 
@@ -547,7 +547,7 @@ class Puppet::Property < Puppet::Parameter
     @shouldorig = values
 
     values.each { |val| validate(val) }
-    @should = values.collect { |val| self.munge(val) }
+    @should = values.collect { |val| munge(val) }
   end
 
   # Produces a pretty printing string for the given value.
@@ -600,7 +600,7 @@ class Puppet::Property < Puppet::Parameter
 
   # @return [Object, nil] Returns the wanted _(should)_ value of this property.
   def value
-    self.should
+    should
   end
 
   # (see #should=)

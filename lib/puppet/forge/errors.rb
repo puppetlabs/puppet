@@ -13,7 +13,7 @@ module Puppet::Forge::Errors
     #
     # @return [String] the multiline version of the error message
     def multiline
-      self.message
+      message
     end
   end
 

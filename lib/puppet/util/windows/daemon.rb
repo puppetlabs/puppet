@@ -209,7 +209,7 @@ module Puppet::Util::Windows
     # This is a shortcut for Daemon.new + Daemon#mainloop.
     #
     def self.mainloop
-      self.new.mainloop
+      new.mainloop
     end
 
     # This is the method that actually puts your code into a loop and allows it

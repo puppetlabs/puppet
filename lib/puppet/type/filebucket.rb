@@ -113,11 +113,11 @@ module Puppet
         @bucket = Puppet::FileBucket::Dipper.new(args)
       rescue => detail
         message = _("Could not create %{type} filebucket: %{detail}") % { type: type, detail: detail }
-        self.log_exception(detail, message)
+        log_exception(detail, message)
         self.fail(message)
       end
 
-      @bucket.name = self.name
+      @bucket.name = name
     end
   end
 end

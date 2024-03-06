@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         # populate the actual :name field from the :portorigin
         # Set :provider to this object name
         hash[:name] = hash[:portorigin]
-        hash[:provider] = self.name
+        hash[:provider] = name
 
         # Add to the full packages listing
         packages << new(hash)
@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     }
 
     # return the packages array of hashes
-    return packages
+    packages
   end
 
   ######## Installation sub command
@@ -97,7 +97,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     end
 
     # No return code required, so do nil to be clean
-    return nil
+    nil
   end
 
   ######## Latest subcommand (returns the latest version available, or current version if installed is latest)
@@ -126,24 +126,24 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       case comparison
       when "=", ">"
         Puppet.debug "portupgrade.latest() - Installed package is latest (#{installedversion})"
-        return installedversion
+        installedversion
       when "<"
         # "portpkg-1.7_5 < needs updating (port has 1.14)"
         # "portpkg-1.7_5 < needs updating (port has 1.14) (=> 'newport/pkg')
         if otherdata =~ /\(port has (\S+)\)/
           newversion = Regexp.last_match(1)
           Puppet.debug "portupgrade.latest() - Installed version needs updating to (#{newversion})"
-          return newversion
+          newversion
         else
           Puppet.debug "portupgrade.latest() - Unable to determine new version from (#{otherdata})"
-          return installedversion
+          installedversion
         end
       when "?", "!", "#"
         Puppet.debug "portupgrade.latest() - Comparison Error reported from portversion (#{output})"
-        return installedversion
+        installedversion
       else
         Puppet.debug "portupgrade.latest() - Unknown code from portversion output (#{output})"
-        return installedversion
+        installedversion
       end
 
     elsif output =~ /^\*\* No matching package /
@@ -174,17 +174,17 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     if output =~ /^(\S+)-([^-\s]+)/
       # Fill in the details
       hash = Hash.new
-      hash[:portorigin] = self.name
+      hash[:portorigin] = name
       hash[:portname]   = Regexp.last_match(1)
       hash[:ensure]     = Regexp.last_match(2)
 
       # If more details are required, then we can do another pkg_info
       # query here and parse out that output and add to the hash
       # return the hash to the caller
-      return hash
+      hash
     else
       Puppet.debug "portupgrade.query() - package (#{@resource[:name]}) not installed"
-      return nil
+      nil
     end
   end
 

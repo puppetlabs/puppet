@@ -401,7 +401,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
     super
     if @resource.forcelocal?
-      set(:groups, @resource[:groups]) if self.groups?
+      set(:groups, @resource[:groups]) if groups?
       set(:expiry, @resource[:expiry]) if @resource[:expiry]
     end
     set(:password, @resource[:password]) if @resource[:password]

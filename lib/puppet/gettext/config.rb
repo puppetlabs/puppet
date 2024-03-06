@@ -43,9 +43,9 @@ module Puppet::GettextConfig
   # @return [String] the active locale
   def self.current_locale
     if gettext_loaded?
-      return FastGettext.default_locale
+      FastGettext.default_locale
     else
-      return 'en'
+      'en'
     end
   end
 
@@ -55,7 +55,7 @@ module Puppet::GettextConfig
   def self.loaded_text_domains
     return [] if @gettext_disabled || !gettext_loaded?
 
-    return FastGettext.translation_repositories.keys
+    FastGettext.translation_repositories.keys
   end
 
   # @api private
@@ -191,11 +191,11 @@ module Puppet::GettextConfig
   # @return [String] path to the config, or nil if not found
   def self.puppet_locale_path
     if Puppet::FileSystem.exist?(LOCAL_PATH)
-      return LOCAL_PATH
+      LOCAL_PATH
     elsif Puppet::Util::Platform.windows? && Puppet::FileSystem.exist?(WINDOWS_PATH)
-      return WINDOWS_PATH
+      WINDOWS_PATH
     elsif !Puppet::Util::Platform.windows? && Puppet::FileSystem.exist?(POSIX_PATH)
-      return POSIX_PATH
+      POSIX_PATH
     else
       nil
     end
@@ -207,9 +207,9 @@ module Puppet::GettextConfig
   # @return [Symbol] :mo if in a package structure, :po otherwise
   def self.translation_mode(conf_path)
     if WINDOWS_PATH == conf_path || POSIX_PATH == conf_path
-      return :mo
+      :mo
     else
-      return :po
+      :po
     end
   end
 
@@ -239,7 +239,7 @@ module Puppet::GettextConfig
     end
 
     add_repository_to_domain(project_name, locale_dir, file_format, text_domain)
-    return true
+    true
   end
 
   # @api private

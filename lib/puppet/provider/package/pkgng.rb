@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   def self.instances
     packages = []
     begin
-      info = self.get_query
+      info = get_query
       get_version_list
 
       unless info
@@ -76,9 +76,9 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
         packages << new(hash)
       end
 
-      return packages
+      packages
     rescue Puppet::ExecutionFailure
-      return []
+      []
     end
   end
 

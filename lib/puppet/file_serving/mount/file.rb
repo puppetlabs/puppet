@@ -40,9 +40,9 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   # Return the path as appropriate, expanding as necessary.
   def path(node = nil)
     if expandable?
-      return expand(@path, node)
+      expand(@path, node)
     else
-      return @path
+      @path
     end
   end
 

@@ -119,7 +119,7 @@ module Puppet
         # Because yum always exits with a 0 exit code, there's a retrieve
         # in the "install" method.  So, check the current state now,
         # to compare against later.
-        current = self.retrieve
+        current = retrieve
         begin
           provider.update
         rescue => detail
@@ -140,7 +140,7 @@ module Puppet
           self.fail Puppet::Error, _("Could not update: %{detail}") % { detail: detail }, detail
         end
 
-        if self.retrieve == :absent
+        if retrieve == :absent
           :package_installed
         else
           :package_changed
@@ -188,7 +188,7 @@ module Puppet
               # that can't query versions.
               return true
             else
-              self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
+              debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
             end
 
           when :absent
