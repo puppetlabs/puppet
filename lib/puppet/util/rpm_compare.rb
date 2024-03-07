@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'English'
 module Puppet::Util::RpmCompare
   ARCH_LIST = %w[
     noarch i386 i686 ppc ppc64 armv3l armv4b armv4l armv4tl armv5tel
@@ -52,14 +53,14 @@ module Puppet::Util::RpmCompare
       # if the first char of str1 is a digit, grab the chunk of continuous digits from each string
       if str1 =~ /^[0-9]+/
         if str1 =~ /^[0-9]+/
-          segment1 = $~.to_s
-          str1 = $~.post_match
+          segment1 = $LAST_MATCH_INFO.to_s
+          str1 = $LAST_MATCH_INFO.post_match
         else
           segment1 = ''
         end
         if str2 =~ /^[0-9]+/
-          segment2 = $~.to_s
-          str2 = $~.post_match
+          segment2 = $LAST_MATCH_INFO.to_s
+          str2 = $LAST_MATCH_INFO.post_match
         else
           segment2 = ''
         end
@@ -67,14 +68,14 @@ module Puppet::Util::RpmCompare
       # else grab the chunk of continuous alphas from each string (which may be '')
       else
         if str1 =~ /^[A-Za-z]+/
-          segment1 = $~.to_s
-          str1 = $~.post_match
+          segment1 = $LAST_MATCH_INFO.to_s
+          str1 = $LAST_MATCH_INFO.post_match
         else
           segment1 = ''
         end
         if str2 =~ /^[A-Za-z]+/
-          segment2 = $~.to_s
-          str2 = $~.post_match
+          segment2 = $LAST_MATCH_INFO.to_s
+          str2 = $LAST_MATCH_INFO.post_match
         else
           segment2 = ''
         end

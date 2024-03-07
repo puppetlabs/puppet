@@ -207,6 +207,6 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   WindowsDaemon.mainloop
 end

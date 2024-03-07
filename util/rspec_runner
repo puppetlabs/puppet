@@ -54,7 +54,7 @@ def print_usage
   puts 'usage: rspec_runner <spec_list_file> [<rspec_options_string>]'
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   if ARGV.length < 1
     print_usage
   elsif ARGV.length == 1

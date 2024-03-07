@@ -155,8 +155,8 @@ module Puppet
               sleep try_sleep
             end
           end
-        rescue Timeout::Error
-          self.fail Puppet::Error, _("Command exceeded timeout"), $!
+        rescue Timeout::Error => e
+          self.fail Puppet::Error, _("Command exceeded timeout"), e
         end
 
         log = @resource[:logoutput]
@@ -336,8 +336,8 @@ module Puppet
         value = value.shift if value.is_a?(Array)
         begin
           value = Float(value)
-        rescue ArgumentError
-          raise ArgumentError, _("The timeout must be a number."), $!.backtrace
+        rescue ArgumentError => e
+          raise ArgumentError, _("The timeout must be a number."), e.backtrace
         end
         [value, 0.0].max
       end

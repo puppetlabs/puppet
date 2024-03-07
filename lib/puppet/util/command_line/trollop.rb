@@ -459,8 +459,8 @@ class CommandLine
         # chronic is not available
       end
       time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
-    rescue ArgumentError
-      raise CommandlineError, _("option '%{arg}' needs a date") % { arg: arg }, $!.backtrace
+    rescue ArgumentError => e
+      raise CommandlineError, _("option '%{arg}' needs a date") % { arg: arg }, e.backtrace
     end
 
     ## Print the help message to +stream+.

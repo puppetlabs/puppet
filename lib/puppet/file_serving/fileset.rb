@@ -104,8 +104,8 @@ class Puppet::FileServing::Fileset
       method = option.to_s + "="
       begin
         send(method, value)
-      rescue NoMethodError
-        raise ArgumentError, _("Invalid option '%{option}'") % { option: option }, $!.backtrace
+      rescue NoMethodError => e
+        raise ArgumentError, _("Invalid option '%{option}'") % { option: option }, e.backtrace
       end
     end
   end

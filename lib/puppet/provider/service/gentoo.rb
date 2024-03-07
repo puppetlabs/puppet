@@ -16,8 +16,8 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
   def disable
     output = update :del, @resource[:name], :default
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{name}: #{output}", $!.backtrace
+  rescue Puppet::ExecutionFailure => e
+    raise Puppet::Error, "Could not disable #{name}: #{output}", e.backtrace
   end
 
   def enabled?
@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
   def enable
     output = update :add, @resource[:name], :default
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not enable #{name}: #{output}", $!.backtrace
+  rescue Puppet::ExecutionFailure => e
+    raise Puppet::Error, "Could not enable #{name}: #{output}", e.backtrace
   end
 end

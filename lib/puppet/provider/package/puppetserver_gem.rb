@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'English'
 unless Puppet::Util::Platform.jruby_fips?
   require 'rubygems/commands/list_command'
 end
@@ -158,7 +159,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
       gem_env['GEM_HOME'] = puppetserver_conf['jruby-puppet'].key?('gem-home') ? puppetserver_conf['jruby-puppet']['gem-home'] : puppetserver_default_gem_home
       gem_env['GEM_PATH'] = puppetserver_conf['jruby-puppet'].key?('gem-path') ? puppetserver_conf['jruby-puppet']['gem-path'].join(':') : puppetserver_default_gem_path
     end
-    gem_env['GEM_SPEC_CACHE'] = "/tmp/#{$$}"
+    gem_env['GEM_SPEC_CACHE'] = "/tmp/#{$PROCESS_ID}"
 
     # Remove the 'gem' from the command_options
     command_options.shift

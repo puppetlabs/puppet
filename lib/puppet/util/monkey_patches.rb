@@ -17,7 +17,7 @@ module RDoc
   def self.caller(skip = nil)
     in_gem_wrapper = false
     Kernel.caller.reject { |call|
-      in_gem_wrapper ||= call =~ /#{Regexp.escape $0}:\d+:in `load'/
+      in_gem_wrapper ||= call =~ /#{Regexp.escape $PROGRAM_NAME}:\d+:in `load'/
     }
   end
 end
