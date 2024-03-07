@@ -646,12 +646,6 @@ Style/NumericPredicate:
 Style/OptionalBooleanParameter:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: short, verbose
-Style/PreferredHashMethods:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: implicit, explicit
