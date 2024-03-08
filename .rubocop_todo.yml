@@ -763,12 +763,6 @@ Style/TrivialAccessors:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/VariableInterpolation:
-  Exclude:
-    - 'lib/puppet/util/command_line/trollop.rb'
-    - 'lib/puppet/util/rdoc/generators/puppet_generator.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/WhenThen:
   Enabled: false
 

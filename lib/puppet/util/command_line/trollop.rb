@@ -491,7 +491,7 @@ class CommandLine
       rightcol_start = leftcol_width + 6 # spaces
 
       unless @order.size > 0 && @order.first.first == :text
-        stream.puts "#@version\n" if @version
+        stream.puts "#{@version}\n" if @version
         stream.puts _("Options:")
       end
 
