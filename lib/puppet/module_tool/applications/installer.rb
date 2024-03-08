@@ -218,7 +218,7 @@ module Puppet::ModuleTool
           end
 
           Puppet.info _("Preparing to install ...")
-          releases.each { |release| release.prepare }
+          releases.each(&:prepare)
 
           Puppet.notice _('Installing -- do not interrupt ...')
           releases.each do |release|

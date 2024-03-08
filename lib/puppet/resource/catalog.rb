@@ -272,7 +272,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def clear(remove_resources = true)
     super()
     # We have to do this so that the resources clean themselves up.
-    @resource_table.values.each { |resource| resource.remove } if remove_resources
+    @resource_table.values.each(&:remove) if remove_resources
     @resource_table.clear
     @resources = []
 
@@ -304,7 +304,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def finalize
     make_default_resources
 
-    @resource_table.values.each { |resource| resource.finish }
+    @resource_table.values.each(&:finish)
 
     write_graph(:resources)
   end
@@ -467,10 +467,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def to_data_hash
-    metadata_hash = metadata.transform_values { |v| v.to_data_hash; }
+    metadata_hash = metadata.transform_values(&:to_data_hash)
     recursive_metadata_hash = recursive_metadata.transform_values do |source_to_meta_hash|
       source_to_meta_hash.transform_values do |metas|
-        metas.map { |meta| meta.to_data_hash }
+        metas.map(&:to_data_hash)
       end
     end
 
@@ -483,7 +483,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       'catalog_format' => catalog_format,
       'environment' => environment.to_s,
       'resources' => @resources.map { |v| @resource_table[v].to_data_hash },
-      'edges' => edges.map { |e| e.to_data_hash },
+      'edges' => edges.map(&:to_data_hash),
       'classes' => classes,
     }.merge(metadata_hash.empty? ?
       {} : { 'metadata' => metadata_hash }).merge(recursive_metadata_hash.empty? ?

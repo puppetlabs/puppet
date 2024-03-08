@@ -344,8 +344,8 @@ class Puppet::Transaction::Report
       'noop' => @noop,
       'noop_pending' => @noop_pending,
       'environment' => @environment,
-      'logs' => @logs.map { |log| log.to_data_hash },
-      'metrics' => @metrics.transform_values { |metric| metric.to_data_hash },
+      'logs' => @logs.map(&:to_data_hash),
+      'metrics' => @metrics.transform_values(&:to_data_hash),
       'resource_statuses' => calculate_resource_statuses,
       'corrective_change' => @corrective_change,
     }

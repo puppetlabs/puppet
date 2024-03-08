@@ -287,7 +287,7 @@ module Types
       if e.is_a?(Array)
         if report_detailed?(e, a)
           a = detailed_actual_to_s(e, a)
-          e = e.map { |t| t.to_alias_expanded_s }
+          e = e.map(&:to_alias_expanded_s)
         else
           e = e.map { |t| short_name(t) }.uniq
           a = short_name(a)
@@ -535,7 +535,7 @@ module Types
       when 1
         raise Puppet::ParseError, "#{subject}:#{errors[0].format}"
       else
-        errors_str = errors.map { |error| error.format }.join("\n ")
+        errors_str = errors.map(&:format).join("\n ")
         raise Puppet::ParseError, "#{subject}:\n #{errors_str}"
       end
     end
@@ -556,7 +556,7 @@ module Types
       when 1
         errors[0].format.strip
       else
-        errors.map { |error| error.format }.join("\n ")
+        errors.map(&:format).join("\n ")
       end
     end
 
@@ -576,7 +576,7 @@ module Types
         when 1
           raise Puppet::ParseError, "#{subject}:#{errors[0].format}"
         else
-          errors_str = errors.map { |error| error.format }.join("\n ")
+          errors_str = errors.map(&:format).join("\n ")
           raise Puppet::ParseError, "#{subject}:\n #{errors_str}"
         end
       end

@@ -26,7 +26,7 @@ class Puppet::Indirector::Indirection
   # Return a list of all known indirections.  Used to generate the
   # reference.
   def self.instances
-    @@indirections.collect { |i| i.name }
+    @@indirections.collect(&:name)
   end
 
   # Find an indirected model by name.  This is provided so that Terminus classes

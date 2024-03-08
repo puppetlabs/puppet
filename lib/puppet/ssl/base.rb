@@ -17,7 +17,7 @@ class Puppet::SSL::Base
   end
 
   def self.to_multiple_s(instances)
-    instances.collect { |inst| inst.to_s }.join(SEPARATOR)
+    instances.collect(&:to_s).join(SEPARATOR)
   end
 
   def self.wraps(klass)

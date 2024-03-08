@@ -17,7 +17,7 @@ class Puppet::FileServing::Mount::Locales < Puppet::FileServing::Mount
   def search(relative_path, request)
     # We currently only support one kind of search on locales - return
     # them all.
-    paths = request.environment.modules.find_all { |mod| mod.locales? }.collect { |mod| mod.locale_directory }
+    paths = request.environment.modules.find_all(&:locales?).collect(&:locale_directory)
     if paths.empty?
       # If the modulepath is valid then we still need to return a valid root
       # directory for the search, but make sure nothing inside it is

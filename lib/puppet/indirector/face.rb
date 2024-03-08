@@ -32,11 +32,11 @@ class Puppet::Indirector::Face < Puppet::Face
   end
 
   def self.indirections
-    Puppet::Indirector::Indirection.instances.collect { |t| t.to_s }.sort
+    Puppet::Indirector::Indirection.instances.collect(&:to_s).sort
   end
 
   def self.terminus_classes(indirection)
-    Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
+    Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect(&:to_s).sort
   end
 
   def call_indirection_method(method, key, options)

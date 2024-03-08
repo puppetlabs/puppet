@@ -33,7 +33,7 @@ class Puppet::Parser::Compiler
       raise(Puppet::Error, errmsg.join(' '))
     end
 
-    new(node, :code_id => code_id).compile { |resulting_catalog| resulting_catalog.to_resource }
+    new(node, :code_id => code_id).compile(&:to_resource)
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name
     Puppet.log_exception(detail)

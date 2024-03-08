@@ -24,7 +24,7 @@ class StaticLoader < Loader
     Whit
   ].freeze
 
-  BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
+  BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map(&:downcase)).freeze
 
   BUILTIN_ALIASES = {
     'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]',

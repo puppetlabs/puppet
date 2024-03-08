@@ -4,7 +4,7 @@ require_relative '../../puppet/confine'
 
 class Puppet::Confine::Feature < Puppet::Confine
   def self.summarize(confines)
-    confines.collect { |c| c.values }.flatten.uniq.find_all { |value| !confines[0].pass?(value) }
+    confines.collect(&:values).flatten.uniq.find_all { |value| !confines[0].pass?(value) }
   end
 
   # Is the named feature available?

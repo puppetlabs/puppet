@@ -106,7 +106,7 @@ module RDoc::PuppetParserCore
     %w[README README.rdoc].each do |rfile|
       readme = File.join(File.dirname(File.dirname(@input_file_name)), rfile)
       # module README should be UTF-8, not default system encoding
-      comment = File.open(readme, "r:UTF-8") { |f| f.read } if FileTest.readable?(readme)
+      comment = File.open(readme, "r:UTF-8", &:read) if FileTest.readable?(readme)
     end
     look_for_directives_in(container, comment) unless comment.empty?
 

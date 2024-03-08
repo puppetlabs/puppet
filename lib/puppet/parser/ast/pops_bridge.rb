@@ -152,7 +152,7 @@ class Puppet::Parser::AST::PopsBridge
       return result unless definition.parameters.size > 0
 
       # No need to do anything if there are no typed parameters
-      typed_parameters = definition.parameters.select { |p| p.type_expr }
+      typed_parameters = definition.parameters.select(&:type_expr)
       return result if typed_parameters.empty?
 
       # If there are typed parameters, they need to be evaluated to produce the corresponding type

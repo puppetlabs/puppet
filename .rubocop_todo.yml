@@ -728,12 +728,6 @@ Style/StringLiterals:
 Style/SymbolArray:
   Enabled: false
 
-# This cop supports unsafe auto-correction (--auto-correct-all).
-# Configuration parameters: AllowMethodsWithArguments, IgnoredMethods, AllowComments.
-# IgnoredMethods: respond_to, define_method
-Style/SymbolProc:
-  Enabled: false
-
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, AllowSafeAssignment.
 # SupportedStyles: require_parentheses, require_no_parentheses, require_parentheses_when_complex

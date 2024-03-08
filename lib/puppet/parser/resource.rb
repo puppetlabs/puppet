@@ -21,7 +21,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   # Determine whether the provided parameter name is a relationship parameter.
   def self.relationship_parameter?(name)
-    @relationship_names ||= Puppet::Type.relationship_params.collect { |p| p.name }
+    @relationship_names ||= Puppet::Type.relationship_params.collect(&:name)
     @relationship_names.include?(name)
   end
 

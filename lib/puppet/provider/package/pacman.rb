@@ -133,7 +133,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     resource_name = @resource[:name]
 
     # If target is a group, construct the group version
-    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map { |line| line.chomp }.sort.join(', ') if self.class.group?(resource_name)
+    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map(&:chomp).sort.join(', ') if self.class.group?(resource_name)
 
     # Start by querying with pacman first
     # If that fails, retry using yaourt against the AUR

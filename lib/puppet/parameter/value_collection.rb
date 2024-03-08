@@ -208,6 +208,6 @@ class Puppet::Parameter::ValueCollection
   # @api private
   #
   def values
-    @strings.collect { |s| s.name }
+    @strings.collect(&:name)
   end
 end

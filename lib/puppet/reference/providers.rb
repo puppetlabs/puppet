@@ -30,7 +30,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
     ret << "\n" # add a trailing newline
 
     # Now build up a table of provider suitability.
-    headers = %w[Provider Suitable?] + features.collect { |f| f.to_s }.sort
+    headers = %w[Provider Suitable?] + features.collect(&:to_s).sort
 
     table_data = {}
 
@@ -71,7 +71,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
           when :false
             details << _("  - Got %{values} false tests that should have been true\n") % { values: values }
           when :feature
-            details << _("  - Missing features %{values}\n") % { values: values.collect { |f| f.to_s }.join(",") }
+            details << _("  - Missing features %{values}\n") % { values: values.collect(&:to_s).join(",") }
           end
         end
         notes << details

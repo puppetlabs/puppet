@@ -260,7 +260,7 @@ class Puppet::Parser::Scope
     end
 
     def to_hash
-      @params.select { |_, access| access.assigned? }.transform_values { |access| access.value }
+      @params.select { |_, access| access.assigned? }.transform_values(&:value)
     end
   end
 

@@ -200,9 +200,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     def tmpfile
-      @file ||= Tempfile.new(name, Puppet::Forge::Cache.base_path).tap do |f|
-        f.binmode
-      end
+      @file ||= Tempfile.new(name, Puppet::Forge::Cache.base_path).tap(&:binmode)
     end
     # rubocop:enable Naming/MemoizedInstanceVariableName
 

@@ -1124,7 +1124,7 @@ Generated on #{Time.now}.
   # you can 'use' a section as many times as you want.
   def use(*sections)
     if Puppet[:settings_catalog]
-      sections = sections.collect { |s| s.to_sym }
+      sections = sections.collect(&:to_sym)
       sections = sections.reject { |s| @used.include?(s) }
 
       Puppet.warning(":master section deprecated in favor of :server section") if sections.include?(:master)
@@ -1132,7 +1132,7 @@ Generated on #{Time.now}.
       # add :server if sections include :master or :master if sections include :server
       sections |= [:master, :server] if (sections & [:master, :server]).any?
 
-      sections = sections.collect { |s| s.to_sym }
+      sections = sections.collect(&:to_sym)
       sections = sections.reject { |s| @used.include?(s) }
 
       return if sections.empty?
@@ -1149,7 +1149,7 @@ Generated on #{Time.now}.
       catalog.apply do |transaction|
         if transaction.any_failed?
           report = transaction.report
-          status_failures = report.resource_statuses.values.select { |r| r.failed? }
+          status_failures = report.resource_statuses.values.select(&:failed?)
           status_fail_msg = status_failures
                             .collect(&:events)
                             .flatten
@@ -1271,7 +1271,7 @@ Generated on #{Time.now}.
   def screen_non_puppet_conf_settings(puppet_conf)
     puppet_conf.sections.values.each do |section|
       forbidden = section.settings.select { |setting| Puppet::Settings::EnvironmentConf::ENVIRONMENT_CONF_ONLY_SETTINGS.include?(setting.name) }
-      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(', ')} settings in puppet.conf") unless forbidden.empty?
+      raise(SettingsError, "Cannot set #{forbidden.map(&:name).join(', ')} settings in puppet.conf") unless forbidden.empty?
     end
   end
 

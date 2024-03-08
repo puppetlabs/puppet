@@ -313,7 +313,7 @@ module Puppet::Environments
     end
 
     def clear_all
-      @loaders.each { |loader| loader.clear_all }
+      @loaders.each(&:clear_all)
     end
   end
 

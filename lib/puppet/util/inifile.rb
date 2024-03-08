@@ -275,9 +275,7 @@ module Puppet::Util::IniConfig
     end
 
     def store
-      @files.values.each do |file|
-        file.store
-      end
+      @files.values.each(&:store)
     end
 
     def each_section(&block)

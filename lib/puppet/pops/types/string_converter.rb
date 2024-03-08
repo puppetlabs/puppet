@@ -830,7 +830,7 @@ class StringConverter
       f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('c', 's'), c_val)
 
     when :C
-      c_val = val.split('::').map { |s| s.capitalize }.join('::')
+      c_val = val.split('::').map(&:capitalize).join('::')
       f.alt? ? apply_string_flags(f, puppet_quote(c_val)) : Kernel.format(f.orig_fmt.tr('C', 's'), c_val)
 
     when :u

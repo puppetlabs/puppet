@@ -48,7 +48,7 @@ class Puppet::Util::Ldap::Connection
 
   # Create a per-connection unique name.
   def name
-    [host, port, user, password, ssl].collect { |p| p.to_s }.join("/")
+    [host, port, user, password, ssl].collect(&:to_s).join("/")
   end
 
   # Should we reset the connection?

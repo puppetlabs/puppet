@@ -310,7 +310,7 @@ class Puppet::Transaction::ResourceHarness
       ResourceApplicationContext.new(resource,
                                      resource.retrieve_resource.to_hash,
                                      Puppet::Util::Storage.cache(resource).dup,
-                                     (resource[:audit] || []).map { |p| p.to_sym },
+                                     (resource[:audit] || []).map(&:to_sym),
                                      [],
                                      status,
                                      resource.parameters.select { |_n, p| p.is_a?(Puppet::Property) && !p.sensitive })

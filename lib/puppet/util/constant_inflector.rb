@@ -12,7 +12,7 @@ module Puppet
   module Util
     module ConstantInflector
       def file2constant(file)
-        file.split("/").collect { |name| name.capitalize }.join("::").gsub(/_+(.)/) { |_term| ::Regexp.last_match(1).capitalize }
+        file.split("/").collect(&:capitalize).join("::").gsub(/_+(.)/) { |_term| ::Regexp.last_match(1).capitalize }
       end
       module_function :file2constant
 

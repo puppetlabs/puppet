@@ -172,7 +172,7 @@ module Puppet::ModuleTool
 
           unless forced?
             if child.version == results[:installed_version]
-              versions = graph.dependencies[name].map { |r| r.version }
+              versions = graph.dependencies[name].map(&:version)
               newer_versions = versions.select { |v| v > results[:installed_version] }
 
               raise VersionAlreadyInstalledError,
@@ -190,7 +190,7 @@ module Puppet::ModuleTool
           end
 
           Puppet.info _("Preparing to upgrade ...")
-          releases.each { |release| release.prepare }
+          releases.each(&:prepare)
 
           Puppet.notice _('Upgrading -- do not interrupt ...')
           releases.each do |release|

@@ -51,7 +51,7 @@ module Pal
       return true if errors.empty?
 
       if block_given?
-        yield errors.map { |e| e.format }.join("\n")
+        yield errors.map(&:format).join("\n")
       end
       false
     end

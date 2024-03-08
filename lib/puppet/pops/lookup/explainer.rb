@@ -15,7 +15,7 @@ module Lookup
 
     def to_hash
       hash = {}
-      hash[:branches] = @branches.map { |b| b.to_hash } unless @branches.nil? || @branches.empty?
+      hash[:branches] = @branches.map(&:to_hash) unless @branches.nil? || @branches.empty?
       hash
     end
 

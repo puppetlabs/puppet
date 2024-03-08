@@ -901,7 +901,7 @@ class PObjectType < PMetaType
       tc = TypeCalculator.singleton
       constants, others = @attributes.partition do |_, a|
         a.kind == ATTRIBUTE_KIND_CONSTANT && a.type == tc.infer(a.value).generalize
-      end.map { |ha| ha.to_h }
+      end.map(&:to_h)
 
       result[KEY_ATTRIBUTES] = compressed_members_hash(others) unless others.empty?
       unless constants.empty?

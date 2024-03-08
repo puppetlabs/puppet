@@ -121,7 +121,7 @@ class Puppet::Parameter
 
         features = required_features
         if features
-          @doc << "\n\nRequires features #{features.flatten.collect { |f| f.to_s }.join(' ')}."
+          @doc << "\n\nRequires features #{features.flatten.collect(&:to_s).join(' ')}."
         end
         @addeddocvals = true
       end

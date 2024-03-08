@@ -1820,7 +1820,7 @@ class PPatternType < PScalarDataType
       else
         # the string in String type must match one of the patterns in Pattern type,
         # or Pattern represents all Patterns == all Strings
-        regexps = @patterns.map { |p| p.regexp }
+        regexps = @patterns.map(&:regexp)
         regexps.empty? || regexps.any? { |re| re.match(v) }
       end
     when PEnumType
@@ -1831,7 +1831,7 @@ class PPatternType < PScalarDataType
       else
         # all strings in String/Enum type must match one of the patterns in Pattern type,
         # or Pattern represents all Patterns == all Strings
-        regexps = @patterns.map { |p| p.regexp }
+        regexps = @patterns.map(&:regexp)
         regexps.empty? || o.values.all? { |s| regexps.any? { |re| re.match(s) } }
       end
     when PPatternType
@@ -2049,8 +2049,8 @@ class PStructType < PAnyType
     else
       PIterableType.new(
         PTupleType.new([
-                         PVariantType.maybe_create(@elements.map { |se| se.key_type }),
-                         PVariantType.maybe_create(@elements.map { |se| se.value_type })
+                         PVariantType.maybe_create(@elements.map(&:key_type)),
+                         PVariantType.maybe_create(@elements.map(&:value_type))
                        ],
                        PHashType::KEY_PAIR_TUPLE_SIZE)
       )
@@ -3058,7 +3058,7 @@ class PVariantType < PAnyType
       not_undefs = parts[0]
       if not_undefs.size > 1
         others = parts[1]
-        others << PNotUndefType.new(PVariantType.maybe_create(not_undefs.map { |not_undef| not_undef.type }).normalize)
+        others << PNotUndefType.new(PVariantType.maybe_create(not_undefs.map(&:type)).normalize)
         array = others
       end
     end
@@ -3101,7 +3101,7 @@ class PVariantType < PAnyType
       patterns = parts[0]
       if patterns.size > 1
         others = parts[1]
-        others << PPatternType.new(patterns.map { |pattern| pattern.patterns }.flatten.uniq)
+        others << PPatternType.new(patterns.map(&:patterns).flatten.uniq)
         array = others
       end
     end

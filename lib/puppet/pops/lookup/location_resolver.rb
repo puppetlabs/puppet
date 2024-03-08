@@ -43,7 +43,7 @@ module Lookup
     def expand_globs(datadir, declared_globs, lookup_invocation)
       declared_globs.map do |declared_glob|
         glob = datadir + interpolate(declared_glob, lookup_invocation, false)
-        Pathname.glob(glob).reject { |path| path.directory? }.map { |path| ResolvedLocation.new(glob.to_s, path, true) }
+        Pathname.glob(glob).reject(&:directory?).map { |path| ResolvedLocation.new(glob.to_s, path, true) }
       end.flatten
     end
 

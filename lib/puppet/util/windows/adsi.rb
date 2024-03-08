@@ -377,12 +377,12 @@ module Puppet::Util::Windows::ADSI
     alias remove_from_group remove_from_groups
 
     def add_group_sids(*sids)
-      group_names = sids.map { |s| s.domain_account }
+      group_names = sids.map(&:domain_account)
       add_to_groups(*group_names)
     end
 
     def remove_group_sids(*sids)
-      group_names = sids.map { |s| s.domain_account }
+      group_names = sids.map(&:domain_account)
       remove_from_groups(*group_names)
     end
 

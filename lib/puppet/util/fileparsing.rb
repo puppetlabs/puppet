@@ -121,9 +121,7 @@ module Puppet::Util::FileParsing
 
     # Customize this so we can do a bit of validation.
     def optional=(optional)
-      @optional = optional.collect do |field|
-        field.intern
-      end
+      @optional = optional.collect(&:intern)
     end
 
     # Create a hook that modifies the hash resulting from parsing.

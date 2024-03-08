@@ -218,7 +218,7 @@ class Puppet::Transaction
 
   # Find all of the changed resources.
   def changed?
-    report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
+    report.resource_statuses.values.find_all(&:changed).collect { |status| catalog.resource(status.resource) }
   end
 
   def relationship_graph

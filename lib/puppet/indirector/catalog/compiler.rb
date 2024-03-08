@@ -89,7 +89,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   # filter-out a catalog to remove exported resources
   def filter(catalog)
-    return catalog.filter { |r| r.virtual? } if catalog.respond_to?(:filter)
+    return catalog.filter(&:virtual?) if catalog.respond_to?(:filter)
 
     catalog
   end
@@ -139,7 +139,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # If no match is found, return nil.
   def common_checksum_type(agent_checksum_type)
     if agent_checksum_type
-      agent_checksum_types = agent_checksum_type.split('.').map { |type| type.to_sym }
+      agent_checksum_types = agent_checksum_type.split('.').map(&:to_sym)
       checksum_type = agent_checksum_types.drop_while do |type|
         !known_checksum_types.include? type
       end.first

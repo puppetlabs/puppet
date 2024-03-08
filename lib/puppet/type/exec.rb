@@ -85,9 +85,7 @@ module Puppet
 
     newproperty(:returns, :array_matching => :all, :event => :executed_command) do |_property|
       include Puppet::Util::Execution
-      munge do |value|
-        value.to_s
-      end
+      munge(&:to_s)
 
       def event_name
         :executed_command

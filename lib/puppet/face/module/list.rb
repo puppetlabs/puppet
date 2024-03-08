@@ -117,7 +117,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     # Prepare the unmet dependencies for display on the console.
-    environment.modules.sort_by { |mod| mod.name }.each do |mod|
+    environment.modules.sort_by(&:name).each do |mod|
       unmet_grouped = Hash.new { |h, k| h[k] = [] }
       unmet_grouped = mod.unmet_dependencies.each_with_object(unmet_grouped) do |dep, acc|
         acc[dep[:reason]] << dep
