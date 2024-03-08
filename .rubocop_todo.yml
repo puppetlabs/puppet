@@ -763,18 +763,6 @@ Style/TrivialAccessors:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/UnlessElse:
-  Exclude:
-    - 'lib/puppet/application/lookup.rb'
-    - 'lib/puppet/pops/evaluator/evaluator_impl.rb'
-    - 'lib/puppet/pops/types/type_mismatch_describer.rb'
-    - 'lib/puppet/provider/package/aix.rb'
-    - 'lib/puppet/provider/package/yum.rb'
-    - 'lib/puppet/ssl/openssl_loader.rb'
-    - 'lib/puppet/type/exec.rb'
-    - 'lib/puppet/util/command_line/trollop.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/UnpackFirst:
   Exclude:
     - 'lib/puppet/file_serving/http_metadata.rb'

@@ -954,9 +954,7 @@ module Types
           if param_errors.empty?
             this_return_t = expected.return_type || PAnyType::DEFAULT
             that_return_t = actual.return_type || PAnyType::DEFAULT
-            unless this_return_t.assignable?(that_return_t)
-              [TypeMismatch.new(path + [ReturnTypeElement.new], this_return_t, that_return_t)]
-            else
+            if this_return_t.assignable?(that_return_t)
               # names are ignored, they are just information
               # Blocks must be compatible
               this_block_t = expected.block_type || PUndefType::DEFAULT
@@ -966,6 +964,8 @@ module Types
               else
                 [TypeMismatch.new(path + [BlockPathElement.new], this_block_t, that_block_t)]
               end
+            else
+              [TypeMismatch.new(path + [ReturnTypeElement.new], this_return_t, that_return_t)]
             end
           else
             param_errors

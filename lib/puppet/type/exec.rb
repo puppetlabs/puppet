@@ -163,10 +163,10 @@ module Puppet
           when :true
             log = @resource[:loglevel]
           when :on_failure
-            unless should.include?(@status.exitstatus.to_s)
-              log = @resource[:loglevel]
-            else
+            if should.include?(@status.exitstatus.to_s)
               log = :false
+            else
+              log = @resource[:loglevel]
             end
           end
           unless log == :false

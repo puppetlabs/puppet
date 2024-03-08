@@ -425,13 +425,13 @@ class CommandLine
         end
 
         if SINGLE_ARG_TYPES.include?(opts[:type])
-          unless opts[:multi]       # single parameter
-            vals[sym] = vals[sym][0][0]
-          else                      # multiple options, each with a single parameter
+          if opts[:multi] # multiple options, each with a single parameter
             vals[sym] = vals[sym].map { |p| p[0] }
+          else # single parameter
+            vals[sym] = vals[sym][0][0]
           end
         elsif MULTI_ARG_TYPES.include?(opts[:type]) && !opts[:multi]
-          vals[sym] = vals[sym][0]  # single option, with multiple parameters
+          vals[sym] = vals[sym][0] # single option, with multiple parameters
         end
         # else: multiple options, with multiple parameters
 
@@ -584,7 +584,10 @@ class CommandLine
           i += 1
         when /^--(\S+)$/ # long argument
           params = collect_argument_parameters(args, i + 1)
-          unless params.empty?
+          if params.empty? # long argument no parameter
+            yield args[i], nil
+            i += 1
+          else
             num_params_taken = yield args[i], params
             unless num_params_taken
               if @stop_on_unknown
@@ -595,16 +598,16 @@ class CommandLine
               end
             end
             i += 1 + num_params_taken
-          else # long argument no parameter
-            yield args[i], nil
-            i += 1
           end
         when /^-(\S+)$/ # one or more short arguments
           shortargs = ::Regexp.last_match(1).split(//)
           shortargs.each_with_index do |a, j|
             if j == (shortargs.length - 1)
               params = collect_argument_parameters(args, i + 1)
-              unless params.empty?
+              if params.empty? # argument no parameter
+                yield "-#{a}", nil
+                i += 1
+              else
                 num_params_taken = yield "-#{a}", params
                 unless num_params_taken
                   if @stop_on_unknown
@@ -615,9 +618,6 @@ class CommandLine
                   end
                 end
                 i += 1 + num_params_taken
-              else # argument no parameter
-                yield "-#{a}", nil
-                i += 1
               end
             else
               yield "-#{a}", nil

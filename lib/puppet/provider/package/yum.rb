@@ -333,17 +333,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # What's the latest package version available?
   def latest
     upd = self.class.latest_package_version(@resource[:name], disablerepo, enablerepo, disableexcludes)
-    unless upd.nil?
-      # FIXME: there could be more than one update for a package
-      # because of multiarch
-      "#{upd[:epoch]}:#{upd[:version]}-#{upd[:release]}"
-    else
+    if upd.nil?
       # Yum didn't find updates, pretend the current version is the latest
       debug "Yum didn't find updates, current version (#{properties[:ensure]}) is the latest"
       version = properties[:ensure]
       raise Puppet::DevError, _("Tried to get latest on a missing package") if version == :absent || version == :purged
 
       version
+    else
+      # FIXME: there could be more than one update for a package
+      # because of multiarch
+      "#{upd[:epoch]}:#{upd[:version]}-#{upd[:release]}"
     end
   end
 

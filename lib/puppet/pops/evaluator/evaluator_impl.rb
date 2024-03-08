@@ -1064,10 +1064,10 @@ class EvaluatorImpl
   # Evaluates Puppet DSL `unless`
   def eval_UnlessExpression o, scope
     scope.with_guarded_scope do
-      unless is_true?(evaluate(o.test, scope), o.test)
-        evaluate(o.then_expr, scope)
-      else
+      if is_true?(evaluate(o.test, scope), o.test)
         evaluate(o.else_expr, scope)
+      else
+        evaluate(o.then_expr, scope)
       end
     end
   end
