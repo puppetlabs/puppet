@@ -101,7 +101,7 @@
 # @since 3.8.1 type specific requests with future parser
 # @since 4.0.0
 #
-Puppet::Functions.create_function(:'defined', Puppet::Functions::InternalFunction) do
+Puppet::Functions.create_function(:defined, Puppet::Functions::InternalFunction) do
   dispatch :is_defined do
     scope_param
     required_repeated_param 'Variant[String, Type[CatalogEntry], Type[Type[CatalogEntry]]]', :vals
