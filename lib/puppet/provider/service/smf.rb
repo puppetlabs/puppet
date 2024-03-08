@@ -262,7 +262,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     fmri = service_fmri
 
     # Useful constants for operations involving multiple states
-    stopped = ['offline', 'disabled', 'uninitialized']
+    stopped = %w[offline disabled uninitialized]
 
     # Get the current state of the service.
     cur_state = status

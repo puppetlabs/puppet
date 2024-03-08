@@ -37,6 +37,6 @@ module Puppet::Coercion
   # @raise
   # @api private
   def self.boolean_values
-    ['true', 'false', 'yes', 'no']
+    %w[true false yes no]
   end
 end

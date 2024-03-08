@@ -448,7 +448,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   # In the event that the user doesn't HAVE a value for the attribute, the
   # provider should use the -create option with dscl to add the attribute value
   # for the user record
-  ['home', 'uid', 'gid', 'comment', 'shell'].each do |setter_method|
+  %w[home uid gid comment shell].each do |setter_method|
     define_method("#{setter_method}=") do |value|
       if @property_hash[setter_method.intern]
         if %w[home uid].include?(setter_method)

@@ -13,7 +13,7 @@ module Puppet::Network::HTTP::Handler
 
   # These shouldn't be allowed to be set by clients
   # in the query string, for security reasons.
-  DISALLOWED_KEYS = ["node", "ip"]
+  DISALLOWED_KEYS = %w[node ip]
 
   def register(routes)
     # There's got to be a simpler way to do this, right?

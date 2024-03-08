@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   end
 
   def self.gemlist(options)
-    command_options = ['gem', 'list']
+    command_options = %w[gem list]
 
     if options[:local]
       command_options << '--local'
@@ -82,7 +82,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   end
 
   def install(useversion = true)
-    command_options = ['gem', 'install']
+    command_options = %w[gem install]
     command_options += install_options if resource[:install_options]
 
     command_options << '-v' << resource[:ensure] if (!resource[:ensure].is_a? Symbol) && useversion
@@ -119,7 +119,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   end
 
   def uninstall
-    command_options = ['gem', 'uninstall']
+    command_options = %w[gem uninstall]
     command_options << '--executables' << '--all' << resource[:name]
     command_options += uninstall_options if resource[:uninstall_options]
 

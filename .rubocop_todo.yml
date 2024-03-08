@@ -776,12 +776,6 @@ Style/WhileUntilModifier:
     - 'lib/puppet/pops/types/p_object_type.rb'
     - 'lib/puppet/util/windows/process.rb'
 
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyle, MinSize, WordRegex.
-# SupportedStyles: percent, brackets
-Style/WordArray:
-  Enabled: false
-
 # This cop supports unsafe auto-correction (--auto-correct-all).
 # Configuration parameters: EnforcedStyle.
 # SupportedStyles: forbid_for_all_comparison_operators, forbid_for_equality_operators_only, require_for_all_comparison_operators, require_for_equality_operators_only

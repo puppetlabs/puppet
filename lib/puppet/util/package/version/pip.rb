@@ -100,9 +100,9 @@ module Puppet::Util::Package::Version
           letter = "a"
         elsif letter == "beta"
           letter = "b"
-        elsif ["c", "pre", "preview"].include?(letter)
+        elsif %w[c pre preview].include?(letter)
           letter = "rc"
-        elsif ["rev", "r"].include?(letter)
+        elsif %w[rev r].include?(letter)
           letter = "post"
         end
 

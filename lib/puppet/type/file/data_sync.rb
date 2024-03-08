@@ -83,7 +83,7 @@ module Puppet
 
       ftype = stat.ftype
       # Don't even try to manage the content on directories or links
-      return nil if ['directory', 'link', 'fifo', 'socket'].include?(ftype)
+      return nil if %w[directory link fifo socket].include?(ftype)
 
       begin
         resource.parameter(:checksum).sum_file(resource[:path])

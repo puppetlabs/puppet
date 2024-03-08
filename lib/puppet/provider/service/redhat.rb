@@ -10,9 +10,9 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
   commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
 
-  defaultfor 'os.name' => :amazon, 'os.release.major' => ["2017", "2018"]
+  defaultfor 'os.name' => :amazon, 'os.release.major' => %w[2017 2018]
   defaultfor 'os.name' => :redhat, 'os.release.major' => (4..6).to_a
-  defaultfor 'os.family' => :suse, 'os.release.major' => ["10", "11"]
+  defaultfor 'os.family' => :suse, 'os.release.major' => %w[10 11]
 
   # Remove the symlinks
   def disable

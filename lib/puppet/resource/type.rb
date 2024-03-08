@@ -189,7 +189,7 @@ class Puppet::Resource::Type
       parent_type(scope).ensure_in_catalog(scope)
     end
 
-    if ['Class', 'Node'].include? resource.type
+    if %w[Class Node].include? resource.type
       scope.catalog.merge_tags_from(resource)
     end
   end

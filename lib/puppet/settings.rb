@@ -50,7 +50,7 @@ class Puppet::Settings
   REQUIRED_APP_SETTINGS = [:logdir, :confdir, :vardir, :codedir]
 
   # The acceptable sections of the puppet.conf configuration file.
-  ALLOWED_SECTION_NAMES = ['main', 'server', 'master', 'agent', 'user'].freeze
+  ALLOWED_SECTION_NAMES = %w[main server master agent user].freeze
 
   NONE = 'none'
 
