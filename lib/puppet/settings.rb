@@ -841,7 +841,7 @@ class Puppet::Settings
     use(*new)
   end
 
-  class SearchPathElement < Struct.new(:name, :type); end
+  SearchPathElement = Struct.new(:name, :type)
 
   # The order in which to search for values, without defaults.
   #

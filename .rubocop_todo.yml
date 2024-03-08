@@ -729,11 +729,6 @@ Style/StringLiteralsInInterpolation:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/StructInheritance:
-  Exclude:
-    - 'lib/puppet/settings.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle, MinSize.
 # SupportedStyles: percent, brackets
 Style/SymbolArray:
