@@ -737,26 +737,6 @@ Style/TernaryParentheses:
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyleForMultiline.
 # SupportedStylesForMultiline: comma, consistent_comma, no_comma
-Style/TrailingCommaInArrayLiteral:
-  Exclude:
-    - 'ext/windows/service/daemon.rb'
-    - 'lib/puppet/functions.rb'
-    - 'lib/puppet/parser/compiler.rb'
-    - 'lib/puppet/pops/types/p_uri_type.rb'
-    - 'lib/puppet/pops/types/string_converter.rb'
-    - 'lib/puppet/pops/types/types.rb'
-    - 'lib/puppet/provider/package/windows/exe_package.rb'
-    - 'lib/puppet/provider/service/upstart.rb'
-    - 'lib/puppet/settings.rb'
-    - 'lib/puppet/ssl/certificate_request.rb'
-    - 'lib/puppet/ssl/oids.rb'
-    - 'lib/puppet/transaction/persistence.rb'
-    - 'lib/puppet/util/at_fork/solaris.rb'
-    - 'lib/puppet/util/windows/registry.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyleForMultiline.
-# SupportedStylesForMultiline: comma, consistent_comma, no_comma
 Style/TrailingCommaInHashLiteral:
   Enabled: false
 

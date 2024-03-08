@@ -197,7 +197,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
     ENV['Path'] = [
       File.join(base_dir, 'puppet', 'bin'),
-      File.join(base_dir, 'bin'),
+      File.join(base_dir, 'bin')
     ].join(';').tr('/', '\\') + ';' + ENV.fetch('Path', nil)
 
     # ENV that uses forward slashes

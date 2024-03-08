@@ -21,7 +21,7 @@ class Puppet::Transaction::Persistence
       Puppet::Pops::Time::Timestamp,
       Puppet::Pops::Time::TimeData,
       Puppet::Pops::Time::Timespan,
-      Puppet::Pops::Types::PBinaryType::Binary,
+      Puppet::Pops::Types::PBinaryType::Binary
       # Puppet::Pops::Types::PSensitiveType::Sensitive values are excluded from
       # the persistence store, ignore it.
     ].freeze

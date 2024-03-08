@@ -89,7 +89,7 @@ class StringConverter
 
     FMT_PATTERN_STR = '^%([\s\[+#0{<(|-]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])$'
     FMT_PATTERN = Regexp.compile(FMT_PATTERN_STR)
-    DELIMITERS  = ['[', '{', '(', '<', '|',]
+    DELIMITERS  = ['[', '{', '(', '<', '|']
     DELIMITER_MAP = {
       '[' => ['[', ']'],
       '{' => ['{', '}'],

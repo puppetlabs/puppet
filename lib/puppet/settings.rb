@@ -852,7 +852,7 @@ class Puppet::Settings
   def configsearchpath(environment = nil, run_mode = preferred_run_mode)
     searchpath = [
       SearchPathElement.new(:memory, :values),
-      SearchPathElement.new(:cli, :values),
+      SearchPathElement.new(:cli, :values)
     ]
     searchpath << SearchPathElement.new(environment.intern, :environment) if environment
 

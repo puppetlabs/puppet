@@ -209,7 +209,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   # we need to prevent that field from being written to directly.
   PRIVATE_CSR_ATTRIBUTES = [
     'extReq',   '1.2.840.113549.1.9.14',
-    'msExtReq', '1.3.6.1.4.1.311.2.1.14',
+    'msExtReq', '1.3.6.1.4.1.311.2.1.14'
   ]
 
   def add_csr_attributes(csr, csr_attributes)
@@ -229,7 +229,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   end
 
   PRIVATE_EXTENSIONS = [
-    'subjectAltName', '2.5.29.17',
+    'subjectAltName', '2.5.29.17'
   ]
 
   # @api private

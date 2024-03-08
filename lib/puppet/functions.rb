@@ -688,7 +688,7 @@ module Puppet::Functions
       ['p0', 'p1'].freeze,
       ['p0', 'p1', 'p2'].freeze,
       ['p0', 'p1', 'p2', 'p3'].freeze,
-      ['p0', 'p1', 'p2', 'p3', 'p4'].freeze,
+      ['p0', 'p1', 'p2', 'p3', 'p4'].freeze
     ]
 
     # Creates an anonymous Function3x class that wraps a 3x function

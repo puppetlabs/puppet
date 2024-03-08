@@ -46,7 +46,7 @@ class PURIType < PAnyType
                TypeFactory.type_type(PPatternType::DEFAULT),
                TypeFactory.type_type(PEnumType::DEFAULT),
                TypeFactory.type_type(PNotUndefType::DEFAULT),
-               TypeFactory.type_type(PUndefType::DEFAULT),
+               TypeFactory.type_type(PUndefType::DEFAULT)
              ]))
 
   TYPE_INTEGER_PARAM =
@@ -55,7 +55,7 @@ class PURIType < PAnyType
         .new([
                PIntegerType.new(0),
                TypeFactory.type_type(PNotUndefType::DEFAULT),
-               TypeFactory.type_type(PUndefType::DEFAULT),
+               TypeFactory.type_type(PUndefType::DEFAULT)
              ]))
 
   TYPE_URI_PARAM_HASH_TYPE = TypeFactory.struct(

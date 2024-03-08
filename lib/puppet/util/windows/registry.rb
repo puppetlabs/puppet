@@ -203,7 +203,7 @@ module Puppet::Util::Windows
           result = [
             # Unicode characters *not* including trailing NULL
             max_subkey_name_length_ptr.read_dword + 1,
-            max_value_name_length_ptr.read_dword + 1,
+            max_value_name_length_ptr.read_dword + 1
           ]
         end
       end
