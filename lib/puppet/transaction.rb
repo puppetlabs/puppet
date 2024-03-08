@@ -400,9 +400,9 @@ class Puppet::Transaction
   # Should this resource be skipped?
   def skip?(resource)
     if skip_tags?(resource)
-      resource.debug "Skipping with skip tags #{skip_tags.join(", ")}"
+      resource.debug "Skipping with skip tags #{skip_tags.join(', ')}"
     elsif missing_tags?(resource)
-      resource.debug "Not tagged with #{tags.join(", ")}"
+      resource.debug "Not tagged with #{tags.join(', ')}"
     elsif !scheduled?(resource)
       resource.debug "Not scheduled"
     elsif failed_dependencies?(resource)

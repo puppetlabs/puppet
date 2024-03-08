@@ -254,7 +254,7 @@ class Puppet::Interface::Action
     file    = __FILE__ + "+eval[wrapper]"
     line    = __LINE__ + 2 # <== points to the same line as 'def' in the wrapper.
     wrapper = <<~WRAPPER
-      def #{@name}(#{decl.join(", ")})
+      def #{@name}(#{decl.join(', ')})
         #{optn}
         args    = #{args}
         action  = get_action(#{name.inspect})

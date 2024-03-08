@@ -59,7 +59,7 @@ module Puppet::Util::Package::Version
       parts.push(@pre_data.join)              if @pre_data
       parts.push(".post#{@post_data[1]}")     if @post_data
       parts.push(".dev#{@dev_data[1]}")       if @dev_data
-      parts.push("+#{@local_data.join(".")}") if @local_data
+      parts.push("+#{@local_data.join('.')}") if @local_data
 
       parts.join
     end

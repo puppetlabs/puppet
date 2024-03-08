@@ -1271,7 +1271,7 @@ Generated on #{Time.now}.
   def screen_non_puppet_conf_settings(puppet_conf)
     puppet_conf.sections.values.each do |section|
       forbidden = section.settings.select { |setting| Puppet::Settings::EnvironmentConf::ENVIRONMENT_CONF_ONLY_SETTINGS.include?(setting.name) }
-      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(", ")} settings in puppet.conf") unless forbidden.empty?
+      raise(SettingsError, "Cannot set #{forbidden.map { |s| s.name }.join(', ')} settings in puppet.conf") unless forbidden.empty?
     end
   end
 

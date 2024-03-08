@@ -45,7 +45,7 @@ class Puppet::Provider::Exec < Puppet::Provider
 
     checkexe(command)
 
-    debug "Executing#{check ? " check" : ""} '#{sensitive ? '[redacted]' : command}'"
+    debug "Executing#{check ? ' check' : ''} '#{sensitive ? '[redacted]' : command}'"
 
     # Ruby 2.1 and later interrupt execution in a way that bypasses error
     # handling by default. Passing Timeout::Error causes an exception to be

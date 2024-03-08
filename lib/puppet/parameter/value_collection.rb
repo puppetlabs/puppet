@@ -37,7 +37,7 @@ class Puppet::Parameter::ValueCollection
         @doc << @strings.collect do |value|
           aliases = value.aliases
           if aliases && !aliases.empty?
-            "`#{value.name}` (also called `#{aliases.join(", ")}`)"
+            "`#{value.name}` (also called `#{aliases.join(', ')}`)"
           else
             "`#{value.name}`"
           end
@@ -45,7 +45,7 @@ class Puppet::Parameter::ValueCollection
       end
 
       unless regexes.empty?
-        @doc << "Values can match `#{regexes.join("`, `")}`."
+        @doc << "Values can match `#{regexes.join('`, `')}`."
       end
     end
 

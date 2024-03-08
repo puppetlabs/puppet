@@ -242,7 +242,7 @@ module Generators
         gen_composite_index(
           file,
           RDoc::Page::COMBO_INDEX,
-          "#{MODULE_DIR}/fr_#{file["file"].context.module_name}.html"
+          "#{MODULE_DIR}/fr_#{file['file'].context.module_name}.html"
         )
       end
     end

@@ -205,7 +205,7 @@ module Puppet
       rescue => detail
         self.fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
       end
-      self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
+      self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(', ')}" unless @metadata
       @metadata
     end
 
