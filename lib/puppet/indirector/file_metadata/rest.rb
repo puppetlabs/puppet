@@ -46,7 +46,7 @@ class Puppet::Indirector::FileMetadata::Rest < Puppet::Indirector::REST
       ignore: request.options[:ignore],
       links: request.options[:links],
       checksum_type: request.options[:checksum_type],
-      source_permissions: request.options[:source_permissions],
+      source_permissions: request.options[:source_permissions]
     )
     file_metadatas
   rescue Puppet::HTTP::ResponseError => e

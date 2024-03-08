@@ -737,23 +737,6 @@ Style/TernaryParentheses:
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyleForMultiline.
 # SupportedStylesForMultiline: comma, consistent_comma, no_comma
-Style/TrailingCommaInArguments:
-  Exclude:
-    - 'lib/puppet/defaults.rb'
-    - 'lib/puppet/ffi/windows/functions.rb'
-    - 'lib/puppet/ffi/windows/structs.rb'
-    - 'lib/puppet/http/service/compiler.rb'
-    - 'lib/puppet/http/service/report.rb'
-    - 'lib/puppet/indirector/file_bucket_file/rest.rb'
-    - 'lib/puppet/indirector/file_content/rest.rb'
-    - 'lib/puppet/indirector/file_metadata/rest.rb'
-    - 'lib/puppet/pops/types/p_uri_type.rb'
-    - 'lib/puppet/util/windows/adsi.rb'
-    - 'lib/puppet/util/windows/service.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
-# Configuration parameters: EnforcedStyleForMultiline.
-# SupportedStylesForMultiline: comma, consistent_comma, no_comma
 Style/TrailingCommaInArrayLiteral:
   Exclude:
     - 'ext/windows/service/daemon.rb'

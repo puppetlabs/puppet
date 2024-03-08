@@ -1298,7 +1298,7 @@ EOT
       :sourceaddress => {
         :default    => nil,
         :desc       => "The address the agent should use to initiate requests.",
-      },
+      }
     )
 
   settings.define_settings(:environment,

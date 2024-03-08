@@ -118,7 +118,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       body,
       headers: headers,
       # for legacy reasons we always send environment as a query parameter too
-      params: { environment: environment },
+      params: { environment: environment }
     )
 
     if (compiler = response['X-Puppet-Compiler-Name'])
@@ -248,7 +248,7 @@ class Puppet::HTTP::Service::Compiler < Puppet::HTTP::Service
       with_base_url("/facts/#{name}"),
       serialize(formatter, facts),
       headers: headers,
-      params: { environment: environment },
+      params: { environment: environment }
     )
 
     process_response(response)
