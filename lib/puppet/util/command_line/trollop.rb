@@ -665,7 +665,7 @@ class CommandLine
     def collect_argument_parameters args, start_at
       params = []
       pos = start_at
-      while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos]) do
+      while args[pos] && args[pos] !~ PARAM_RE && !@stop_words.member?(args[pos])
         params << args[pos]
         pos += 1
       end

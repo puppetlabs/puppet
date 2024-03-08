@@ -361,7 +361,7 @@ class Puppet::Settings
 
     # remove run_mode options from the arguments so that later parses don't think
     # it is an unknown option.
-    while option_index = args.index('--run_mode') do # rubocop:disable Lint/AssignmentInCondition
+    while option_index = args.index('--run_mode') # rubocop:disable Lint/AssignmentInCondition
       args.delete_at option_index
       args.delete_at option_index
     end

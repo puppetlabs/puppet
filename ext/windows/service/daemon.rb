@@ -75,7 +75,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
     service = self
     @run_thread = Thread.new do
-      while service.running? do
+      while service.running?
         runinterval = service.parse_runinterval(ruby_puppet_cmd)
 
         if service.state == RUNNING or service.state == IDLE

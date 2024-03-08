@@ -714,7 +714,7 @@ class Lexer2
     scn.skip(PATTERN_WS)
 
     # This is the lexer's main loop
-    until queue.empty? && scn.eos? do
+    until queue.empty? && scn.eos?
       token = queue.shift || selector[scn.peek(1)].call
       if token
         ctx[:after] = token[0]

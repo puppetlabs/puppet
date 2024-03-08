@@ -8,7 +8,7 @@ class TasksChecker < Checker4_0
   def in_ApplyExpression?
     top = container(0)
     step = -1
-    until container(step) == top do
+    until container(step) == top
       return true if container(step).is_a? Puppet::Pops::Model::ApplyBlockExpression
 
       step -= 1

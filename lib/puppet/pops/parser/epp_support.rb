@@ -44,7 +44,7 @@ module EppSupport
     interpolate_epp
 
     # This is the lexer's main loop
-    until queue.empty? && scn.eos? do
+    until queue.empty? && scn.eos?
       token = queue.shift || lex_token
       if token
         yield [ctx[:after] = token[0], token[1]]

@@ -141,7 +141,7 @@ class Locator
       satisfied = false
       v = nil
 
-      while low < high do
+      while low < high
         mid = low + ((high - low) / 2)
         v = (ary[mid] > value)
         if v == true
