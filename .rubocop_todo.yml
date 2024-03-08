@@ -763,13 +763,6 @@ Style/TrivialAccessors:
   Enabled: false
 
 # This cop supports safe auto-correction (--auto-correct).
-Style/UnpackFirst:
-  Exclude:
-    - 'lib/puppet/file_serving/http_metadata.rb'
-    - 'lib/puppet/provider/nameservice/directoryservice.rb'
-    - 'lib/puppet/provider/user/directoryservice.rb'
-
-# This cop supports safe auto-correction (--auto-correct).
 Style/VariableInterpolation:
   Exclude:
     - 'lib/puppet/util/command_line/trollop.rb'

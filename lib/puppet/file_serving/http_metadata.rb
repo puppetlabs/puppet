@@ -20,7 +20,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
     checksum = http_response['content-md5']
     if checksum
       # convert base64 digest to hex
-      checksum = checksum.unpack("m").first.unpack("H*").first
+      checksum = checksum.unpack1("m").unpack1("H*")
       @checksums[:md5] = "{md5}#{checksum}"
     end
 
