@@ -254,7 +254,7 @@ describe Puppet::SSL::SSLProvider do
       }.to raise_error(ArgumentError, /CA certs are missing/)
     end
 
-    it 'raises if CRLs are are missing' do
+    it 'raises if CRLs are missing' do
       expect {
         subject.create_context(**config.merge(crls: nil))
       }.to raise_error(ArgumentError, /CRLs are missing/)

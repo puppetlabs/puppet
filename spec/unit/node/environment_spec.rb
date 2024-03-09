@@ -518,7 +518,7 @@ describe Puppet::Node::Environment do
         expect(krt.find_definition('foo')).to be_kind_of(Puppet::Resource::Type)
       end
 
-      it "parses from the the environment's manifests if Puppet[:code] is not set" do
+      it "parses from the environment's manifests if Puppet[:code] is not set" do
         filename = tmpfile('a_manifest.pp')
         File.open(filename, 'w') do |f|
           f.puts("define from_manifest {}")

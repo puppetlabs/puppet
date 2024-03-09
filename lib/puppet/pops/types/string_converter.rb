@@ -790,7 +790,7 @@ class StringConverter
       Kernel.format(f.orig_fmt.gsub('s', substitute), val_to_convert)
 
     when :p
-      # width & precision applied to string, not the the name of the type
+      # width & precision applied to string, not the name of the type
       "Binary(\"#{Kernel.format(f.orig_fmt.tr('p', 's'), val.to_s)}\")"
 
     when :b
