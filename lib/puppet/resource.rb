@@ -432,7 +432,7 @@ class Puppet::Resource
     name = h[namevar] || h[:name] || self.name
     h[namevar] ||= name
     h[:name]   ||= name
-    h.values_at(*key_attributes.sort_by { |k| k.to_s })
+    h.values_at(*key_attributes.sort_by(&:to_s))
   end
 
   def key_attributes

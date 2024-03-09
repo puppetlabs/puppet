@@ -116,7 +116,7 @@ module PN
     end
 
     def to_data
-      { '^' => [@name] + @elements.map { |e| e.to_data } }
+      { '^' => [@name] + @elements.map(&:to_data) }
     end
   end
 
@@ -166,7 +166,7 @@ module PN
     end
 
     def to_data
-      @elements.map { |e| e.to_data }
+      @elements.map(&:to_data)
     end
   end
 

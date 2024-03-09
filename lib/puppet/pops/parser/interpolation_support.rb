@@ -194,7 +194,7 @@ module Puppet::Pops::Parser::InterpolationSupport
 
     scn.skip(self.class::PATTERN_WS)
     queue_size = queue.size
-    until scn.eos? do
+    until scn.eos?
       token = lex_token
       if token
         if token.equal?(queue_base)
@@ -242,7 +242,7 @@ module Puppet::Pops::Parser::InterpolationSupport
   def interpolate_uq_to(lexer)
     interpolate_uq
     queue = @token_queue
-    until queue.empty? do
+    until queue.empty?
       lexer.enqueue(queue.shift)
     end
   end

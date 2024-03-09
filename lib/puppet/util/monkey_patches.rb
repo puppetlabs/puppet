@@ -17,7 +17,7 @@ module RDoc
   def self.caller(skip = nil)
     in_gem_wrapper = false
     Kernel.caller.reject { |call|
-      in_gem_wrapper ||= call =~ /#{Regexp.escape $0}:\d+:in `load'/
+      in_gem_wrapper ||= call =~ /#{Regexp.escape $PROGRAM_NAME}:\d+:in `load'/
     }
   end
 end
@@ -82,7 +82,7 @@ if Puppet::Util::Platform.windows?
       unless @puppet_certs_loaded
         @puppet_certs_loaded = true
 
-        Puppet::Util::Windows::RootCerts.instance.to_a.uniq { |cert| cert.to_der }.each do |x509|
+        Puppet::Util::Windows::RootCerts.instance.to_a.uniq(&:to_der).each do |x509|
           add_cert(x509)
         rescue OpenSSL::X509::StoreError
           warn "Failed to add #{x509.subject.to_utf8}"

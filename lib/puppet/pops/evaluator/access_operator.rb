@@ -67,7 +67,7 @@ class AccessOperator
                k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
                # if k1 is outside, adjust to first position, and adjust length
                if k1 < 0
-                 k2 = k2 + k1
+                 k2 += k1
                  k1 = 0
                end
                o[k1, k2]
@@ -116,7 +116,7 @@ class AccessOperator
       k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
       # if k1 is outside, adjust to first position, and adjust length
       if k1 < 0
-        k2 = k2 + k1
+        k2 += k1
         k1 = 0
       end
       # Help ruby always return empty array when asking for a sub array

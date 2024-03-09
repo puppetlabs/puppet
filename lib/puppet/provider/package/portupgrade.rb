@@ -46,8 +46,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     cmdline = ["-aoQ"]
     begin
       output = portinfo(*cmdline)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output, $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new(output, e)
     end
 
     # split output and match it and populate temp hash
@@ -88,8 +88,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     # FIXME: it's possible that portinstall prompts for data so locks up.
     begin
       output = portinstall(*cmdline)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output, $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new(output, e)
     end
 
     if output =~ /\*\* No such /
@@ -111,8 +111,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
     begin
       output = portversion(*cmdline)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output, $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new(output, e)
     end
 
     # Check: output format.
@@ -166,8 +166,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     cmdline = ["-qO", @resource[:name]]
     begin
       output = portinfo(*cmdline)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output, $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new(output, e)
     end
 
     # Check: if output isn't in the right format, return nil
@@ -196,8 +196,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     cmdline = ["-qO", @resource[:name]]
     begin
       output = portinfo(*cmdline)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output, $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new(output, e)
     end
 
     if output =~ /^(\S+)/
@@ -214,8 +214,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     cmdline = ["-qO", @resource[:name]]
     begin
       output = portinfo(*cmdline)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output, $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new(output, e)
     end
 
     if output =~ /^(\S+)/
@@ -223,8 +223,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       cmdline = ["-M BATCH=yes", Regexp.last_match(1)]
       begin
         output = portupgrade(*cmdline)
-      rescue Puppet::ExecutionFailure
-        raise Puppet::Error.new(output, $!)
+      rescue Puppet::ExecutionFailure => e
+        raise Puppet::Error.new(output, e)
       end
     end
   end

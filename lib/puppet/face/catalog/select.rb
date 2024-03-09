@@ -44,7 +44,7 @@ Puppet::Face.define(:catalog, '0.0.1') do
       if value.nil? then
         _("no matching resources found")
       else
-        value.map { |x| x.to_s }.join("\n")
+        value.map(&:to_s).join("\n")
       end
     end
   end

@@ -15,11 +15,11 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     Puppet.runtime[:facter].value('os.name') == 'Ubuntu',
     (Puppet.runtime[:facter].value('os.family') == 'RedHat' and Puppet.runtime[:facter].value('os.release.full') =~ /^6\./),
     (Puppet.runtime[:facter].value('os.name') == 'Amazon' and Puppet.runtime[:facter].value('os.release.major') =~ /\d{4}/),
-    Puppet.runtime[:facter].value('os.name') == 'LinuxMint',
+    Puppet.runtime[:facter].value('os.name') == 'LinuxMint'
   ]
 
   defaultfor 'os.name' => :ubuntu, 'os.release.major' => ["10.04", "12.04", "14.04", "14.10"]
-  defaultfor 'os.name' => :LinuxMint, 'os.release.major' => ["10", "11", "12", "13", "14", "15", "16", "17"]
+  defaultfor 'os.name' => :LinuxMint, 'os.release.major' => %w[10 11 12 13 14 15 16 17]
 
   commands :start => "/sbin/start",
            :stop => "/sbin/stop",

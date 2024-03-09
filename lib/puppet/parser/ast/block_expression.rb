@@ -12,6 +12,6 @@ class Puppet::Parser::AST::BlockExpression < Puppet::Parser::AST::Branch
   end
 
   def to_s
-    "[" + @children.collect { |c| c.to_s }.join(', ') + "]"
+    "[" + @children.collect(&:to_s).join(', ') + "]"
   end
 end

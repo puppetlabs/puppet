@@ -196,7 +196,7 @@ class PNParser
   end
 
   def consume_identifier(s)
-    while @char_types[peek_cp] >= TYPE_IDENTIFIER do
+    while @char_types[peek_cp] >= TYPE_IDENTIFIER
       @pos += 1
     end
     id = @text[s...@pos]
@@ -287,7 +287,7 @@ class PNParser
       c = peek_cp
     end
 
-    while @char_types[c] == TYPE_DIGIT do
+    while @char_types[c] == TYPE_DIGIT
       @pos += 1
       c = peek_cp
       count += 1
@@ -296,7 +296,7 @@ class PNParser
   end
 
   def skip_white
-    while @char_types[peek_cp] == TYPE_WS do
+    while @char_types[peek_cp] == TYPE_WS
       @pos += 1
     end
   end

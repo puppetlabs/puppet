@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'English'
 require_relative '../../puppet/file_system'
 require 'delegate'
 require 'tmpdir'
@@ -110,7 +111,7 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       raise ArgumentError, _("unexpected prefix_suffix: %{value}") % { value: prefix_suffix.inspect }
     end
     t = Time.now.strftime("%Y%m%d")
-    path = "#{prefix}#{t}-#{$$}-#{rand(0x100000000).to_s(36)}"
+    path = "#{prefix}#{t}-#{$PROCESS_ID}-#{rand(0x100000000).to_s(36)}"
     path << "-#{n}" if n
     path << suffix
   end

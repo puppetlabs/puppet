@@ -31,7 +31,7 @@ class Puppet::Util::Ldap::Manager
     attributes = attributes.dup
 
     # Add the objectclasses
-    attributes["objectClass"] = objectclasses.collect { |o| o.to_s }
+    attributes["objectClass"] = objectclasses.collect(&:to_s)
     attributes["objectClass"] << "top" unless attributes["objectClass"].include?("top")
 
     attributes[rdn.to_s] = [name]
@@ -151,7 +151,7 @@ class Puppet::Util::Ldap::Manager
       end
 
       result = [result] unless result.is_a?(Array)
-      result = result.collect { |r| r.to_s }
+      result = result.collect(&:to_s)
 
       values[generator.name] = result
     end
@@ -276,7 +276,7 @@ class Puppet::Util::Ldap::Manager
   # getting rid of :ensure and making sure everything's an array of strings.
   def ldap_convert(attributes)
     attributes.reject { |param, value| value == :absent or param == :ensure }.each_with_object({}) do |ary, result|
-      value = (ary[1].is_a?(Array) ? ary[1] : [ary[1]]).collect { |v| v.to_s }
+      value = (ary[1].is_a?(Array) ? ary[1] : [ary[1]]).collect(&:to_s)
       result[ldap_name(ary[0])] = value
     end
   end

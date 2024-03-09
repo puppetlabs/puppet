@@ -71,8 +71,8 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         # now turn each returned line into a package object
         nevra_to_multiversion_hash(process).each { |hash| packages << new(hash) }
       }
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error, _("Failed to list packages"), $!.backtrace
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error, _("Failed to list packages"), e.backtrace
     end
 
     packages

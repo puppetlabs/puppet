@@ -218,7 +218,7 @@ class Puppet::Transaction
 
   # Find all of the changed resources.
   def changed?
-    report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
+    report.resource_statuses.values.find_all(&:changed).collect { |status| catalog.resource(status.resource) }
   end
 
   def relationship_graph
@@ -400,9 +400,9 @@ class Puppet::Transaction
   # Should this resource be skipped?
   def skip?(resource)
     if skip_tags?(resource)
-      resource.debug "Skipping with skip tags #{skip_tags.join(", ")}"
+      resource.debug "Skipping with skip tags #{skip_tags.join(', ')}"
     elsif missing_tags?(resource)
-      resource.debug "Not tagged with #{tags.join(", ")}"
+      resource.debug "Not tagged with #{tags.join(', ')}"
     elsif !scheduled?(resource)
       resource.debug "Not scheduled"
     elsif failed_dependencies?(resource)

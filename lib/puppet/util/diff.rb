@@ -32,8 +32,8 @@ module Puppet::Util::Diff
       Puppet.warning _("Cannot provide diff without the diff/lcs Ruby library")
       return ""
     end
-    data_old = data_old.split(/\n/).map! { |e| e.chomp }
-    data_new = data_new.split(/\n/).map! { |e| e.chomp }
+    data_old = data_old.split(/\n/).map!(&:chomp)
+    data_new = data_new.split(/\n/).map!(&:chomp)
 
     output = ''.dup
 

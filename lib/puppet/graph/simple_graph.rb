@@ -106,7 +106,7 @@ class Puppet::Graph::SimpleGraph
     # decent Ruby stack.
     recur = [{ :node => root }]
 
-    until recur.empty? do
+    until recur.empty?
       frame = recur.last
       vertex = frame[:node]
 
@@ -186,9 +186,7 @@ class Puppet::Graph::SimpleGraph
     # time-scale.
     state[:scc].select do |component|
       multi_vertex_component?(component) || single_vertex_referring_to_self?(component)
-    end.map do |component|
-      component.sort
-    end.sort
+    end.map(&:sort).sort
   end
 
   # Perform a BFS on the sub graph representing the cycle, with a view to
@@ -212,7 +210,7 @@ class Puppet::Graph::SimpleGraph
 
     # frame struct is vertex, [path]
     stack = [[cycle.first, []]]
-    while frame = stack.shift do # rubocop:disable Lint/AssignmentInCondition
+    while frame = stack.shift # rubocop:disable Lint/AssignmentInCondition
       if frame[1].member?(frame[0]) then
         found << frame[1] + [frame[0]]
         break if found.length >= max_paths
@@ -330,7 +328,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   def edges
-    @in_to.values.collect { |x| x.values }.flatten
+    @in_to.values.collect(&:values).flatten
   end
 
   def each_edge

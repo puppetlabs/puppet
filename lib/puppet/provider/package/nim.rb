@@ -202,7 +202,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   # leading or trailing whitespace (including newlines) from the resulting
   # strings and then returns them as an array.
   def split_into_paragraphs(showres_output)
-    showres_output.split(/^\s*$/).map { |p| p.strip! }
+    showres_output.split(/^\s*$/).map(&:strip!)
   end
 
   def parse_showres_header_line(line)

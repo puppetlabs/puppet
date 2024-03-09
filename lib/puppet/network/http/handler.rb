@@ -13,7 +13,7 @@ module Puppet::Network::HTTP::Handler
 
   # These shouldn't be allowed to be set by clients
   # in the query string, for security reasons.
-  DISALLOWED_KEYS = ["node", "ip"]
+  DISALLOWED_KEYS = %w[node ip]
 
   def register(routes)
     # There's got to be a simpler way to do this, right?
@@ -21,7 +21,7 @@ module Puppet::Network::HTTP::Handler
     routes.each { |r| dupes[r.path_matcher] = (dupes[r.path_matcher] || 0) + 1 }
     dupes = dupes.filter_map { |pm, count| pm if count > 1 }
     if dupes.count > 0
-      raise ArgumentError, _("Given multiple routes with identical path regexes: %{regexes}") % { regexes: dupes.map { |rgx| rgx.inspect }.join(', ') }
+      raise ArgumentError, _("Given multiple routes with identical path regexes: %{regexes}") % { regexes: dupes.map(&:inspect).join(', ') }
     end
 
     @routes = routes

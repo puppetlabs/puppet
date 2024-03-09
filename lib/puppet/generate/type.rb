@@ -135,7 +135,7 @@ module Puppet
         end
 
         # Sort the inputs by path
-        inputs.sort_by! { |input| input.path }
+        inputs.sort_by!(&:path)
       end
 
       def self.bad_input?
@@ -155,7 +155,7 @@ module Puppet
       def self.generate(inputs, outputdir = nil, force = false)
         # remove files for non existing inputs
         unless outputdir.nil?
-          filenames_to_keep = inputs.map { |i| i.output_name }
+          filenames_to_keep = inputs.map(&:output_name)
           existing_files = Puppet::FileSystem.children(outputdir).map { |f| Puppet::FileSystem.basename(f) }
           files_to_remove = existing_files - filenames_to_keep
           files_to_remove.each do |f|

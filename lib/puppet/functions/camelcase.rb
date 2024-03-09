@@ -49,7 +49,7 @@ Puppet::Functions.create_function(:camelcase) do
   end
 
   def on_string(s)
-    s.split('_').map { |x| x.capitalize }.join('')
+    s.split('_').map(&:capitalize).join('')
   end
 
   def on_iterable(a)

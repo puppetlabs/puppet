@@ -17,7 +17,7 @@ class Puppet::Parser::Scope
   extend Forwardable
 
   # Variables that always exist with nil value even if not set
-  BUILT_IN_VARS = ['module_name', 'caller_module_name'].freeze
+  BUILT_IN_VARS = %w[module_name caller_module_name].freeze
   EMPTY_HASH = {}.freeze
 
   Puppet::Util.logmethods(self)
@@ -260,7 +260,7 @@ class Puppet::Parser::Scope
     end
 
     def to_hash
-      @params.select { |_, access| access.assigned? }.transform_values { |access| access.value }
+      @params.select { |_, access| access.assigned? }.transform_values(&:value)
     end
   end
 

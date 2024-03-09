@@ -100,17 +100,17 @@ module DOT
 
   # options for graph declaration
 
-  GRAPH_OPTS = [
-    'bgcolor',
-    'center', 'clusterrank', 'color', 'concentrate',
-    'fontcolor', 'fontname', 'fontsize',
-    'label', 'layerseq',
-    'margin', 'mclimit',
-    'nodesep', 'nslimit',
-    'ordering', 'orientation',
-    'page',
-    'rank', 'rankdir', 'ranksep', 'ratio',
-    'size'
+  GRAPH_OPTS = %w[
+    bgcolor
+    center clusterrank color concentrate
+    fontcolor fontname fontsize
+    label layerseq
+    margin mclimit
+    nodesep nslimit
+    ordering orientation
+    page
+    rank rankdir ranksep ratio
+    size
   ]
 
   # a root class for any element in dot notation

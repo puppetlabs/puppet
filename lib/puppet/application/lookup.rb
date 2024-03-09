@@ -8,7 +8,7 @@ require_relative '../../puppet/parser/compiler'
 class Puppet::Application::Lookup < Puppet::Application
   RUN_HELP = _("Run 'puppet lookup --help' for more details").freeze
   DEEP_MERGE_OPTIONS = '--knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays'
-  TRUSTED_INFORMATION_FACTS = ["hostname", "domain", "fqdn", "clientcert"].freeze
+  TRUSTED_INFORMATION_FACTS = %w[hostname domain fqdn clientcert].freeze
 
   run_mode :server
 
@@ -369,7 +369,9 @@ class Puppet::Application::Lookup < Puppet::Application
       end
     end
 
-    unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+    if node.is_a?(Puppet::Node)
+      node.add_extra_facts(given_facts) if given_facts
+    else # to allow unit tests to pass a node instance
       facts = retrieve_node_facts(node, given_facts)
       ni = Puppet::Node.indirection
       tc = ni.terminus_class
@@ -399,8 +401,6 @@ class Puppet::Application::Lookup < Puppet::Application
         node = ni.find(node, facts: facts, environment: Puppet[:environment])
         ni.terminus_class = tc
       end
-    else
-      node.add_extra_facts(given_facts) if given_facts
     end
     node.environment = Puppet[:environment] if Puppet.settings.set_by_cli?(:environment)
     Puppet[:code] = 'undef' unless options[:compile]

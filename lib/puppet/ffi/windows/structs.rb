@@ -198,7 +198,7 @@ module Puppet::FFI::Windows
         :dwWin32ExitCode, :dword,
         :dwServiceSpecificExitCode, :dword,
         :dwCheckPoint, :dword,
-        :dwWaitHint, :dword,
+        :dwWaitHint, :dword
       )
     end
 
@@ -223,7 +223,7 @@ module Puppet::FFI::Windows
         :dwTagId, :dword,
         :lpDependencies, :pointer,
         :lpServiceStartName, :pointer,
-        :lpDisplayName, :pointer,
+        :lpDisplayName, :pointer
       )
     end
 

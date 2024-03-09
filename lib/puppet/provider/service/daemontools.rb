@@ -159,8 +159,8 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         Puppet::FileSystem.symlink(daemon, service)
       end
     end
-  rescue Puppet::ExecutionFailure
-    raise Puppet::Error.new("No daemon directory found for #{service}", $!)
+  rescue Puppet::ExecutionFailure => e
+    raise Puppet::Error.new("No daemon directory found for #{service}", e)
   end
 
   def disable
@@ -175,8 +175,8 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
           Puppet::FileSystem.unlink(service)
         end
       end
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("No daemon directory found for #{service}", $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new("No daemon directory found for #{service}", e)
     end
     stop
   end

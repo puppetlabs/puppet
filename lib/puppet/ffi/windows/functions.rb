@@ -287,7 +287,7 @@ module Puppet::FFI::Windows
     #   LPDWORD        pcbBytesNeeded
     # );
     SC_STATUS_TYPE = enum(
-      :SC_STATUS_PROCESS_INFO, 0,
+      :SC_STATUS_PROCESS_INFO, 0
     )
     ffi_lib :advapi32
     attach_function_private :QueryServiceStatusEx,
@@ -425,7 +425,7 @@ module Puppet::FFI::Windows
     #   LPCWSTR      pszGroupName
     # );
     SC_ENUM_TYPE = enum(
-      :SC_ENUM_PROCESS_INFO, 0,
+      :SC_ENUM_PROCESS_INFO, 0
     )
     ffi_lib :advapi32
     attach_function_private :EnumServicesStatusExW,

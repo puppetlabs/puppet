@@ -18,7 +18,7 @@ Puppet::Type.newtype(:resources) do
       raise ArgumentError, _("Could not find resource type '%{name}'") % { name: name } unless Puppet::Type.type(name)
     end
 
-    munge { |v| v.to_s }
+    munge(&:to_s)
   end
 
   newparam(:purge, :boolean => true, :parent => Puppet::Parameter::Boolean) do

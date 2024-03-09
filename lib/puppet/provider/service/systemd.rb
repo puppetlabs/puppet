@@ -22,15 +22,15 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor 'os.family' => :suse
   defaultfor 'os.family' => :coreos
   defaultfor 'os.family' => :gentoo
-  notdefaultfor 'os.name' => :amazon, 'os.release.major' => ["2017", "2018"]
-  defaultfor 'os.name' => :amazon, 'os.release.major' => ["2", "2023"]
+  notdefaultfor 'os.name' => :amazon, 'os.release.major' => %w[2017 2018]
+  defaultfor 'os.name' => :amazon, 'os.release.major' => %w[2 2023]
   defaultfor 'os.name' => :debian
-  notdefaultfor 'os.name' => :debian, 'os.release.major' => ["5", "6", "7"] # These are using the "debian" method
+  notdefaultfor 'os.name' => :debian, 'os.release.major' => %w[5 6 7] # These are using the "debian" method
   defaultfor 'os.name' => :LinuxMint
-  notdefaultfor 'os.name' => :LinuxMint, 'os.release.major' => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
+  notdefaultfor 'os.name' => :LinuxMint, 'os.release.major' => %w[10 11 12 13 14 15 16 17] # These are using upstart
   defaultfor 'os.name' => :ubuntu
   notdefaultfor 'os.name' => :ubuntu, 'os.release.major' => ["10.04", "12.04", "14.04", "14.10"] # These are using upstart
-  defaultfor 'os.name' => :cumuluslinux, 'os.release.major' => ["3", "4"]
+  defaultfor 'os.name' => :cumuluslinux, 'os.release.major' => %w[3 4]
 
   def self.instances
     i = []
@@ -72,8 +72,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   # @param action [String,Symbol] One of 'enable', 'disable', 'mask' or 'unmask'
   def systemctl_change_enable(action)
     output = systemctl(action, '--', @resource[:name])
-  rescue
-    raise Puppet::Error, "Could not #{action} #{name}: #{output}", $!.backtrace
+  rescue => e
+    raise Puppet::Error, "Could not #{action} #{name}: #{output}", e.backtrace
   ensure
     @cached_enabled = nil
   end

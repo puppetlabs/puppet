@@ -152,12 +152,12 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   def latest
     upd = latest_info
 
-    unless upd.nil?
-      (upd[:version]).to_s
-    else
+    if upd.nil?
       raise Puppet::DevError, _("Tried to get latest on a missing package") if properties[:ensure] == :absent
 
       properties[:ensure]
+    else
+      (upd[:version]).to_s
     end
   end
 

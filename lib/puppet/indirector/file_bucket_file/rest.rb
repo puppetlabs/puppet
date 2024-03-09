@@ -13,7 +13,7 @@ module Puppet::FileBucketFile
       api.head_filebucket_file(
         request.key,
         environment: request.environment.to_s,
-        bucket_path: request.options[:bucket_path],
+        bucket_path: request.options[:bucket_path]
       )
     rescue Puppet::HTTP::ResponseError => e
       return nil if e.response.code == 404
@@ -31,7 +31,7 @@ module Puppet::FileBucketFile
         diff_with: request.options[:diff_with],
         list_all: request.options[:list_all],
         fromdate: request.options[:fromdate],
-        todate: request.options[:todate],
+        todate: request.options[:todate]
       )
       filebucket_file
     rescue Puppet::HTTP::ResponseError => e
@@ -44,7 +44,7 @@ module Puppet::FileBucketFile
       api.put_filebucket_file(
         request.key,
         body: request.instance.render,
-        environment: request.environment.to_s,
+        environment: request.environment.to_s
       )
     rescue Puppet::HTTP::ResponseError => e
       raise convert_to_http_error(e.response)

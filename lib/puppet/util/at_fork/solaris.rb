@@ -36,7 +36,7 @@ class Puppet::Util::AtFork::Solaris
       [:ct_status_read,          Fiddle::TYPE_INT,  Fiddle::TYPE_INT, Fiddle::TYPE_INT, Fiddle::TYPE_VOIDP],
 
       [:ct_status_get_id,        Fiddle::TYPE_INT,  Fiddle::TYPE_VOIDP],
-      [:ct_status_free,          Fiddle::TYPE_VOID, Fiddle::TYPE_VOIDP],
+      [:ct_status_free,          Fiddle::TYPE_VOID, Fiddle::TYPE_VOIDP]
     ],
   }.each do |library, functions|
     libhandle = Fiddle::Handle.new(library)

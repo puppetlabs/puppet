@@ -365,7 +365,7 @@ class Puppet::HTTP::Client
     response = nil
     done = false
 
-    until done do
+    until done
       connect(request.uri, options: options) do |http|
         apply_auth(request, basic_auth) if redirects.zero?
 

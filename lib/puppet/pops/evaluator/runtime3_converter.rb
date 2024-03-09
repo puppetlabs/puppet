@@ -70,7 +70,7 @@ class Runtime3Converter
     return o unless o < MIN_INTEGER || o > MAX_INTEGER
 
     range_end = o > MAX_INTEGER ? 'max' : 'min'
-    raise Puppet::Error, "Use of a Ruby Integer outside of Puppet Integer #{range_end} range, got '#{"0x%x" % o}'"
+    raise Puppet::Error, "Use of a Ruby Integer outside of Puppet Integer #{range_end} range, got '#{'0x%x' % o}'"
   end
 
   def convert_BigDecimal(o, scope, undef_value)

@@ -264,7 +264,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         # string. The password_hash provided as a resource attribute is a
         # hex value. We need to convert the Base64 encoded string to a
         # hex value and provide it back to Puppet.
-        converted_hash_plist['SALTED-SHA512'].unpack("H*")[0]
+        converted_hash_plist['SALTED-SHA512'].unpack1("H*")
 
       end
     end

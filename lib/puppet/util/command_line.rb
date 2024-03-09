@@ -31,7 +31,7 @@ module Puppet
       # @param zero [String] the name of the executable
       # @param argv [Array<String>] the arguments passed on the command line
       # @param stdin [IO] (unused)
-      def initialize(zero = $0, argv = ARGV, stdin = STDIN)
+      def initialize(zero = $PROGRAM_NAME, argv = ARGV, stdin = STDIN)
         @command = File.basename(zero, '.rb')
         @argv = argv
       end

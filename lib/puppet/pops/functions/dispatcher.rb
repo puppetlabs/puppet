@@ -62,15 +62,15 @@ class Puppet::Pops::Functions::Dispatcher
     # make a copy to make sure it can be contained by someone else (even if it is not contained here, it
     # should be treated as immutable).
     #
-    callables = dispatchers.map { |dispatch| dispatch.type }
+    callables = dispatchers.map(&:type)
 
     # multiple signatures, produce a Variant type of Callable1-n (must copy them)
     # single signature, produce single Callable
-    callables.size > 1 ?  Puppet::Pops::Types::TypeFactory.variant(*callables) : callables.pop
+    callables.size > 1 ? Puppet::Pops::Types::TypeFactory.variant(*callables) : callables.pop
   end
 
   # @api private
   def signatures
-    @dispatchers.reject { |dispatcher| dispatcher.argument_mismatch_handler? }
+    @dispatchers.reject(&:argument_mismatch_handler?)
   end
 end

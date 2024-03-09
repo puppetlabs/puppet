@@ -78,7 +78,7 @@ class Puppet::Reports
     instance_loader(:report).loadall(Puppet.lookup(:current_environment))
     loaded_instances(:report).sort_by(&:to_s).each do |name|
       mod = report(name)
-      docs << "#{name}\n#{"-" * name.to_s.length}\n"
+      docs << "#{name}\n#{'-' * name.to_s.length}\n"
 
       docs << Puppet::Util::Docs.scrub(mod.doc) << "\n\n"
     end

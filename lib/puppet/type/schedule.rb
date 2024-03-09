@@ -116,7 +116,7 @@ module Puppet
           # Split each range value into a hour, minute, second triad
           value.split(/\s*-\s*/).each { |val|
             # Add the values as an array.
-            range << val.split(":").collect { |n| n.to_i }
+            range << val.split(":").collect(&:to_i)
           }
 
           self.fail _("Invalid range %{value}") % { value: value } if range.length != 2

@@ -208,9 +208,9 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       # use that for the state comparison.
       states = service_states
       state = states[:next] || states[:current]
-    rescue Puppet::ExecutionFailure
+    rescue Puppet::ExecutionFailure => e
       # TODO (PUP-8957): Should this be set back to INFO ?
-      debug "Could not get status on service #{name} #{$!}"
+      debug "Could not get status on service #{name} #{e}"
       return :stopped
     end
 
@@ -262,7 +262,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     fmri = service_fmri
 
     # Useful constants for operations involving multiple states
-    stopped = ['offline', 'disabled', 'uninitialized']
+    stopped = %w[offline disabled uninitialized]
 
     # Get the current state of the service.
     cur_state = status

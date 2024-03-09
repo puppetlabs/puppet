@@ -46,7 +46,7 @@ class RecursionGuard
   def with_this(instance)
     if (@state & SELF_RECURSION_IN_THIS) == 0
       tc = this_count
-      @state = @state | SELF_RECURSION_IN_THIS if this_put(instance)
+      @state |= SELF_RECURSION_IN_THIS if this_put(instance)
       if tc < this_count
         # recursive state detected
         result = yield(@state)
@@ -66,7 +66,7 @@ class RecursionGuard
   def with_that(instance)
     if (@state & SELF_RECURSION_IN_THAT) == 0
       tc = that_count
-      @state = @state | SELF_RECURSION_IN_THAT if that_put(instance)
+      @state |= SELF_RECURSION_IN_THAT if that_put(instance)
       if tc < that_count
         # recursive state detected
         result = yield(@state)
@@ -85,7 +85,7 @@ class RecursionGuard
   # @return [Integer] the resulting state
   def add_this(instance)
     if (@state & SELF_RECURSION_IN_THIS) == 0
-      @state = @state | SELF_RECURSION_IN_THIS if this_put(instance)
+      @state |= SELF_RECURSION_IN_THIS if this_put(instance)
     end
     @state
   end
@@ -95,7 +95,7 @@ class RecursionGuard
   # @return [Integer] the resulting state
   def add_that(instance)
     if (@state & SELF_RECURSION_IN_THAT) == 0
-      @state = @state | SELF_RECURSION_IN_THAT if that_put(instance)
+      @state |= SELF_RECURSION_IN_THAT if that_put(instance)
     end
     @state
   end

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'English'
 unless Puppet::Util::Platform.jruby_fips?
   require 'rubygems/commands/list_command'
 end
@@ -37,7 +38,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   end
 
   def self.gemlist(options)
-    command_options = ['gem', 'list']
+    command_options = %w[gem list]
 
     if options[:local]
       command_options << '--local'
@@ -81,7 +82,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   end
 
   def install(useversion = true)
-    command_options = ['gem', 'install']
+    command_options = %w[gem install]
     command_options += install_options if resource[:install_options]
 
     command_options << '-v' << resource[:ensure] if (!resource[:ensure].is_a? Symbol) && useversion
@@ -118,7 +119,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
   end
 
   def uninstall
-    command_options = ['gem', 'uninstall']
+    command_options = %w[gem uninstall]
     command_options << '--executables' << '--all' << resource[:name]
     command_options += uninstall_options if resource[:uninstall_options]
 
@@ -158,7 +159,7 @@ Puppet::Type.type(:package).provide :puppetserver_gem, :parent => :gem do
       gem_env['GEM_HOME'] = puppetserver_conf['jruby-puppet'].key?('gem-home') ? puppetserver_conf['jruby-puppet']['gem-home'] : puppetserver_default_gem_home
       gem_env['GEM_PATH'] = puppetserver_conf['jruby-puppet'].key?('gem-path') ? puppetserver_conf['jruby-puppet']['gem-path'].join(':') : puppetserver_default_gem_path
     end
-    gem_env['GEM_SPEC_CACHE'] = "/tmp/#{$$}"
+    gem_env['GEM_SPEC_CACHE'] = "/tmp/#{$PROCESS_ID}"
 
     # Remove the 'gem' from the command_options
     command_options.shift

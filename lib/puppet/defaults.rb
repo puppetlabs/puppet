@@ -132,7 +132,7 @@ module Puppet
     :log_level => {
       :default    => 'notice',
       :type       => :enum,
-      :values     => ["debug","info","notice","warning","err","alert","emerg","crit"],
+      :values     => %w[debug info notice warning err alert emerg crit],
       :desc       => "Default logging level for messages from Puppet. Allowed values are:
 
         * debug
@@ -1298,7 +1298,7 @@ EOT
       :sourceaddress => {
         :default    => nil,
         :desc       => "The address the agent should use to initiate requests.",
-      },
+      }
     )
 
   settings.define_settings(:environment,

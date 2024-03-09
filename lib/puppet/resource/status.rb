@@ -222,7 +222,7 @@ module Puppet
           'skipped' => @skipped,
           'change_count' => @change_count,
           'out_of_sync_count' => @out_of_sync_count,
-          'events' => @events.map { |event| event.to_data_hash },
+          'events' => @events.map(&:to_data_hash),
           'corrective_change' => @corrective_change,
         }
       end

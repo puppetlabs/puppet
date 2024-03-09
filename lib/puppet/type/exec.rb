@@ -85,9 +85,7 @@ module Puppet
 
     newproperty(:returns, :array_matching => :all, :event => :executed_command) do |_property|
       include Puppet::Util::Execution
-      munge do |value|
-        value.to_s
-      end
+      munge(&:to_s)
 
       def event_name
         :executed_command
@@ -155,8 +153,8 @@ module Puppet
               sleep try_sleep
             end
           end
-        rescue Timeout::Error
-          self.fail Puppet::Error, _("Command exceeded timeout"), $!
+        rescue Timeout::Error => e
+          self.fail Puppet::Error, _("Command exceeded timeout"), e
         end
 
         log = @resource[:logoutput]
@@ -165,10 +163,10 @@ module Puppet
           when :true
             log = @resource[:loglevel]
           when :on_failure
-            unless should.include?(@status.exitstatus.to_s)
-              log = @resource[:loglevel]
-            else
+            if should.include?(@status.exitstatus.to_s)
               log = :false
+            else
+              log = @resource[:loglevel]
             end
           end
           unless log == :false
@@ -336,8 +334,8 @@ module Puppet
         value = value.shift if value.is_a?(Array)
         begin
           value = Float(value)
-        rescue ArgumentError
-          raise ArgumentError, _("The timeout must be a number."), $!.backtrace
+        rescue ArgumentError => e
+          raise ArgumentError, _("The timeout must be a number."), e.backtrace
         end
         [value, 0.0].max
       end

@@ -242,7 +242,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       tries = 1
       # pkg install exits with code 7 when the image is currently in use by another process and cannot be modified
       r = exec_cmd(command(:pkg), command, *args, name)
-      while r[:exit] == 7 do
+      while r[:exit] == 7
         if tries > 4
           raise Puppet::Error, _("Pkg could not install %{name} after %{tries} tries. Aborting run") % { name: name, tries: tries }
         end

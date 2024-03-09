@@ -17,7 +17,7 @@ module Puppet
           # tricky trick
           # Preserve all the current items in the list
           # but move them to the back of the line
-          should = should + (current - should)
+          should += (current - should)
         end
         should
       end

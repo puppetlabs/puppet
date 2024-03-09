@@ -192,8 +192,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       output.split("\n").each do |line|
         @job_list[line.split(/\s/).last] = :running
       end
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}", $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}", e)
     end
     @job_list
   end
@@ -287,8 +287,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     cmds << job_path
     begin
       execute(cmds)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}", $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}", e)
     end
     # As load -w clears the Disabled flag, we need to add it in after
     disable if did_enable_job and resource[:enable] == :false
@@ -310,8 +310,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     cmds << job_path
     begin
       execute(cmds)
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}", $!)
+    rescue Puppet::ExecutionFailure => e
+      raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}", e)
     end
     # As unload -w sets the Disabled flag, we need to add it in after
     enable if did_disable_job and resource[:enable] == :true

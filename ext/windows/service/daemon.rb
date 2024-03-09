@@ -75,7 +75,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
 
     service = self
     @run_thread = Thread.new do
-      while service.running? do
+      while service.running?
         runinterval = service.parse_runinterval(ruby_puppet_cmd)
 
         if service.state == RUNNING or service.state == IDLE
@@ -197,7 +197,7 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     ENV['SSL_CERT_FILE'] = File.join(base_dir, 'puppet', 'ssl', 'cert.pem').tr('/', '\\')
     ENV['Path'] = [
       File.join(base_dir, 'puppet', 'bin'),
-      File.join(base_dir, 'bin'),
+      File.join(base_dir, 'bin')
     ].join(';').tr('/', '\\') + ';' + ENV.fetch('Path', nil)
 
     # ENV that uses forward slashes
@@ -207,6 +207,6 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
   end
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   WindowsDaemon.mainloop
 end

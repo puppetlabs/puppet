@@ -16,7 +16,7 @@ class Puppet::Provider::Package::Windows
       'Security Update',
       'Update Rollup',
       'Hotfix',
-      'WindowsInstaller',
+      'WindowsInstaller'
     ]
 
     def self.register(path)

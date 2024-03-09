@@ -34,7 +34,7 @@ class PURIType < PAnyType
     TypeFactory.optional(PATH) => PStringType::NON_EMPTY,
     TypeFactory.optional(QUERY) => PStringType::NON_EMPTY,
     TypeFactory.optional(FRAGMENT) => PStringType::NON_EMPTY,
-    TypeFactory.optional(OPAQUE) => PStringType::NON_EMPTY,
+    TypeFactory.optional(OPAQUE) => PStringType::NON_EMPTY
   )
 
   TYPE_STRING_PARAM =
@@ -46,7 +46,7 @@ class PURIType < PAnyType
                TypeFactory.type_type(PPatternType::DEFAULT),
                TypeFactory.type_type(PEnumType::DEFAULT),
                TypeFactory.type_type(PNotUndefType::DEFAULT),
-               TypeFactory.type_type(PUndefType::DEFAULT),
+               TypeFactory.type_type(PUndefType::DEFAULT)
              ]))
 
   TYPE_INTEGER_PARAM =
@@ -55,7 +55,7 @@ class PURIType < PAnyType
         .new([
                PIntegerType.new(0),
                TypeFactory.type_type(PNotUndefType::DEFAULT),
-               TypeFactory.type_type(PUndefType::DEFAULT),
+               TypeFactory.type_type(PUndefType::DEFAULT)
              ]))
 
   TYPE_URI_PARAM_HASH_TYPE = TypeFactory.struct(
@@ -66,7 +66,7 @@ class PURIType < PAnyType
     TypeFactory.optional(PATH) => TYPE_STRING_PARAM,
     TypeFactory.optional(QUERY) => TYPE_STRING_PARAM,
     TypeFactory.optional(FRAGMENT) => TYPE_STRING_PARAM,
-    TypeFactory.optional(OPAQUE) => TYPE_STRING_PARAM,
+    TypeFactory.optional(OPAQUE) => TYPE_STRING_PARAM
   )
 
   TYPE_URI_PARAM_TYPE = PVariantType.new([PStringType::NON_EMPTY, TYPE_URI_PARAM_HASH_TYPE])

@@ -220,7 +220,7 @@ class RubyGenerator < TypeFormatter
     end
 
     init_params = others.reject { |a| a.kind == PObjectType::ATTRIBUTE_KIND_DERIVED }
-    opt, non_opt = init_params.partition { |ip| ip.value? }
+    opt, non_opt = init_params.partition(&:value?)
     derived_attrs, obj_attrs = others.select { |a| a.container.equal?(obj) }.partition { |ip| ip.kind == PObjectType::ATTRIBUTE_KIND_DERIVED }
 
     include_type = obj.equality_include_type? && !(obj.parent.is_a?(PObjectType) && obj.parent.equality_include_type?)

@@ -37,7 +37,7 @@ module Pal
                 else
                   tm.describe_struct_signature(params_type, args_hash)
                     .flatten
-                    .map { |e| e.format }
+                    .map(&:format)
                     .join("\n")
                 end
         yield "Task #{@task.name}:\n#{error}"

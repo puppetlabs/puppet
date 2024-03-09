@@ -83,7 +83,7 @@ class Puppet::Daemon
   def reexec
     raise Puppet::DevError, _("Cannot reexec unless ARGV arguments are set") unless argv
 
-    command = $0 + " " + argv.join(" ")
+    command = $PROGRAM_NAME + " " + argv.join(" ")
     Puppet.notice "Restarting with '#{command}'"
     stop(:exit => false)
     exec(command)

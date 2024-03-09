@@ -69,7 +69,7 @@ def print_usage
   puts 'usage: rspec_grouper <group_size>'
 end
 
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   if ARGV.length != 1
     print_usage
   else

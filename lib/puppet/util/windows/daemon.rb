@@ -176,11 +176,11 @@ module Puppet::Util::Windows
       SetEvent(@@hStartEvent)
 
       # Main loop for the service.
-      while WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0 do
+      while WaitForSingleObject(@@hStopEvent, 1000) != WAIT_OBJECT_0
       end
 
       # Main loop for the service.
-      while WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0 do
+      while WaitForSingleObject(@@hStopCompletedEvent, 1000) != WAIT_OBJECT_0
       end
     ensure
       # Stop the service.
@@ -265,7 +265,7 @@ module Puppet::Util::Windows
       events.put_pointer(0, FFI::Pointer.new(hThread))
       events.put_pointer(FFI::Pointer.size, FFI::Pointer.new(@@hStartEvent))
 
-      while (index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT do
+      while (index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT
       end
 
       if index == WAIT_FAILED

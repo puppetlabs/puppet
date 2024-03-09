@@ -901,7 +901,7 @@ class PObjectType < PMetaType
       tc = TypeCalculator.singleton
       constants, others = @attributes.partition do |_, a|
         a.kind == ATTRIBUTE_KIND_CONSTANT && a.type == tc.infer(a.value).generalize
-      end.map { |ha| ha.to_h }
+      end.map(&:to_h)
 
       result[KEY_ATTRIBUTES] = compressed_members_hash(others) unless others.empty?
       unless constants.empty?
@@ -1111,7 +1111,7 @@ class PObjectType < PMetaType
   # @return [PObjectType] the topmost parent who's #equality_attributes include the given _attr_
   def find_equality_definer_of(attr)
     type = self
-    until type.nil? do
+    until type.nil?
       p = type.resolved_parent
       return type unless p.is_a?(PObjectType)
       return type unless p.equality_attributes.include?(attr.name)

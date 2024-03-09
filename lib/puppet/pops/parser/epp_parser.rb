@@ -14,7 +14,7 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
   def parse_file(file)
     unless FileTest.exist?(file)
       unless file =~ /\.epp$/
-        file = file + ".epp"
+        file += ".epp"
       end
     end
     @lexer.file = file

@@ -123,7 +123,7 @@ class Type
   # @return [Array<String>] all type attribute names in a defined order.
   #
   def self.allattrs
-    key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
+    key_attributes | (parameters & [:provider]) | properties.collect(&:name) | parameters | metaparams
   end
 
   # Returns the class associated with the given attribute name.
@@ -304,7 +304,7 @@ class Type
   # @return [Array<String>] all meta-parameter names
   #
   def self.metaparams
-    @@metaparams.collect { |param| param.name }
+    @@metaparams.collect(&:name)
   end
 
   # Returns the documentation for a given meta-parameter of this type.
@@ -389,7 +389,7 @@ class Type
   def self.key_attributes
     # This is a cache miss around 0.05 percent of the time. --daniel 2012-07-17
     # rubocop:disable Naming/MemoizedInstanceVariableName
-    @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
+    @key_attributes_cache ||= key_attribute_parameters.collect(&:name)
     # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
@@ -443,7 +443,7 @@ class Type
   # @return [Object] an object that is a _uniqueness_key_ for this object
   #
   def uniqueness_key
-    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map { |attribute_name| self[attribute_name] }
+    self.class.key_attributes.sort_by(&:to_s).map { |attribute_name| self[attribute_name] }
   end
 
   # Creates a new parameter.
@@ -553,7 +553,7 @@ class Type
   def self.parameters
     return [] unless defined?(@parameters)
 
-    @parameters.collect { |klass| klass.name }
+    @parameters.collect(&:name)
   end
 
   # @return [Puppet::Parameter] Returns the parameter class associated with the given parameter name.
@@ -1309,7 +1309,7 @@ class Type
       and the second run will log the edit made by Puppet.)"
 
     validate do |list|
-      list = Array(list).collect { |p| p.to_sym }
+      list = Array(list).collect(&:to_sym)
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)
@@ -1330,16 +1330,14 @@ class Type
     def all_properties
       resource.class.properties.find_all do |property|
         resource.provider.nil? or resource.provider.class.supports_parameter?(property)
-      end.collect do |property|
-        property.name
-      end
+      end.collect(&:name)
     end
 
     def properties_to_audit(list)
       if !list.is_a?(Array) && list.to_sym == :all
         all_properties
       else
-        Array(list).collect { |p| p.to_sym }
+        Array(list).collect(&:to_sym)
       end
     end
   end
@@ -1711,11 +1709,11 @@ class Type
     suitable = suitableprovider
 
     # Find which providers are a default for this system.
-    defaults = suitable.find_all { |provider| provider.default? }
+    defaults = suitable.find_all(&:default?)
 
     # If we don't have any default we use suitable providers
     defaults = suitable if defaults.empty?
-    max = defaults.collect { |provider| provider.specificity }.max
+    max = defaults.collect(&:specificity).max
     defaults = defaults.find_all { |provider| provider.specificity == max }
 
     if defaults.length > 1

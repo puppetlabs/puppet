@@ -74,7 +74,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # non-option word to use as the action.
     action_name = nil
     index       = -1
-    until action_name or (index += 1) >= command_line.args.length do
+    until action_name or (index += 1) >= command_line.args.length
       item = command_line.args[index]
       if item =~ /^-/
         option = @face.options.find do |name|

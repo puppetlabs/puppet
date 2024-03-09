@@ -59,7 +59,7 @@ module Puppet::Util::Package::Version
       parts.push(@pre_data.join)              if @pre_data
       parts.push(".post#{@post_data[1]}")     if @post_data
       parts.push(".dev#{@dev_data[1]}")       if @dev_data
-      parts.push("+#{@local_data.join(".")}") if @local_data
+      parts.push("+#{@local_data.join('.')}") if @local_data
 
       parts.join
     end
@@ -100,9 +100,9 @@ module Puppet::Util::Package::Version
           letter = "a"
         elsif letter == "beta"
           letter = "b"
-        elsif ["c", "pre", "preview"].include?(letter)
+        elsif %w[c pre preview].include?(letter)
           letter = "rc"
-        elsif ["rev", "r"].include?(letter)
+        elsif %w[rev r].include?(letter)
           letter = "post"
         end
 

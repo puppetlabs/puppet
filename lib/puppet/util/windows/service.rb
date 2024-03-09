@@ -541,7 +541,7 @@ module Puppet::Util::Windows
           success = ChangeServiceConfig2W(
             service,
             change, # dwInfoLevel
-            value,  # lpInfo
+            value # lpInfo
           )
           if success == FFI::WIN32_FALSE
             raise Puppet::Util.windows::Error, _("Failed to update service %{change} configuration") % { change: change }

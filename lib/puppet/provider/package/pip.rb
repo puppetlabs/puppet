@@ -39,7 +39,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     if Puppet::Util::Platform.windows?
       ["pip.exe"]
     else
-      ["pip", "pip-python", "pip2", "pip-2"]
+      %w[pip pip-python pip2 pip-2]
     end
   end
 

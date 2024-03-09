@@ -14,7 +14,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
   def find(request)
     # find by name
     res   = type(request).instances.find { |o| o.name == resource_name(request) }
-    res ||= type(request).new(:name => resource_name(request), :audit => type(request).properties.collect { |s| s.name })
+    res ||= type(request).new(:name => resource_name(request), :audit => type(request).properties.collect(&:name))
 
     res.to_resource
   end
@@ -23,9 +23,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
     conditions = request.options.dup
     conditions[:name] = resource_name(request) if resource_name(request)
 
-    type(request).instances.map do |res|
-      res.to_resource
-    end.find_all do |res|
+    type(request).instances.map(&:to_resource).find_all do |res|
       conditions.all? do |property, value|
         # even though `res` is an instance of Puppet::Resource, calling
         # `res[:name]` on it returns nil, and for some reason it is necessary

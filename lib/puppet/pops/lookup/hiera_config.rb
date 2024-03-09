@@ -723,7 +723,7 @@ class HieraConfigV5 < HieraConfig
     @config.include?(KEY_DEFAULT_HIERARCHY)
   end
 
-  RESERVED_OPTION_KEYS = ['path', 'uri'].freeze
+  RESERVED_OPTION_KEYS = %w[path uri].freeze
 
   DEFAULT_CONFIG_HASH = {
     KEY_VERSION => 5,

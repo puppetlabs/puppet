@@ -51,6 +51,12 @@ Style/RedundantSelfAssignment:
   Exclude:
     - 'lib/puppet/context.rb'
 
+# Enabling this cop causes failures in rb_tree_map_spec relating to important
+# function slike being unable to delete nodes and returning nil when the key
+# cannot be found
+Style/PreferredHashMethods:
+  Enabled: false
+
 # Explicitly enables this cop new in 1.7
 Layout/SpaceBeforeBrackets:
   Enabled: true
