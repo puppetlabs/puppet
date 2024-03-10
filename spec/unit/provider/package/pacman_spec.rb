@@ -168,6 +168,14 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
   end
 
+  describe "when purging" do
+    it "should call pacman to remove the right package and configs quietly" do
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", "--nosave", resource[:name]]
+      expect(executor).to receive(:execute).with(args, no_extra_options).and_return("")
+      provider.purge
+    end
+  end
+
   describe "when uninstalling" do
     it "should call pacman to remove the right package quietly" do
       args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", resource[:name]]
