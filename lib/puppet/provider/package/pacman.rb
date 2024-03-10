@@ -23,6 +23,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   has_feature :uninstall_options
   has_feature :upgradeable
   has_feature :virtual_packages
+  has_feature :purgeable
 
   # Checks if a given name is a group
   def self.group?(name)
@@ -193,6 +194,16 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # Removes a package from the system.
   def uninstall
+    remove_package(false)
+  end
+
+  def purge
+    remove_package(true)
+  end
+
+  private
+
+  def remove_package(purge_configs = false)
     resource_name = @resource[:name]
 
     is_group = self.class.group?(resource_name)
@@ -203,6 +214,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd += uninstall_options if @resource[:uninstall_options]
     cmd << "-R"
     cmd << '-s' if is_group
+    cmd << '--nosave' if purge_configs
     cmd << resource_name
 
     if self.class.yaourt?
@@ -211,8 +223,6 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       pacman(*cmd)
     end
   end
-
-  private
 
   def install_options
     join_options(@resource[:install_options])
