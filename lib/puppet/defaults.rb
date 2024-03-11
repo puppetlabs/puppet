@@ -172,6 +172,12 @@ module Puppet
         end
       end
     },
+    :skip_logging_catalog_request_destination => {
+      :default => false,
+      :type    => :boolean,
+      :desc    => "If you wish to suppress the notice of which compiler supplied the
+        catalog",
+    },
     :merge_dependency_warnings => {
       :default => false,
       :type    => :boolean,
