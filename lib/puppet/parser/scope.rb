@@ -425,7 +425,7 @@ class Puppet::Parser::Scope
   # additive -- it collects all of the defaults, with defaults
   # in closer scopes overriding those in later scopes.
   #
-  # The lookupdefaults searches in the the order:
+  # The lookupdefaults searches in the order:
   #
   #   * inherited
   #   * contained (recursive)

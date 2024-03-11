@@ -1904,7 +1904,7 @@ class Type
 
   # Returns a list of suitable providers for the given type.
   # A call to this method will load all providers if not already loaded and ask each if it is
-  # suitable - those that are are included in the result.
+  # suitable - those that are included in the result.
   # @note This method also does some special processing which rejects a provider named `:fake` (for testing purposes).
   # @return [Array<Puppet::Provider>] Returns an array of all suitable providers.
   #

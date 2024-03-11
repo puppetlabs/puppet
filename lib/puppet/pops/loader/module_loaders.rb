@@ -347,7 +347,7 @@ module ModuleLoaders
     end
 
     # Answers `true` if the loader used by this instance is rooted beneath 'lib'. This is
-    # typically true for the the system_loader. It will have a path relative to the parent
+    # typically true for the system_loader. It will have a path relative to the parent
     # of 'puppet' instead of the parent of 'lib/puppet' since the 'lib' directory of puppet
     # is renamed during install. This is significant for loaders that load ruby code.
     #

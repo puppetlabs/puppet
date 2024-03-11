@@ -82,7 +82,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     end
 
     # filter out all qualified names and set them in qualified_variables
-    # only pass unqualified (filtered) variable names to the the template
+    # only pass unqualified (filtered) variable names to the template
     filtered_args = {}
     template_args.each_pair do |k, v|
       if k =~ /::/

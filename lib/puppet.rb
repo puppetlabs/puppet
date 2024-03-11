@@ -259,7 +259,7 @@ module Puppet
     @context.push(overrides, description)
   end
 
-  # Push something onto the the context and make it global across threads. This
+  # Push something onto the context and make it global across threads. This
   # has the potential to convert threadlocal overrides earlier on the stack into
   # global overrides.
   # @api private
