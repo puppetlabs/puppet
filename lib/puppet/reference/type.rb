@@ -50,7 +50,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
   Resource types define features they can use, and providers can be tested to see
   which features they provide.
 
-  }
+  }.dup
 
   types.sort_by(&:to_s).each { |name, type|
     str << "

@@ -13,7 +13,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
   command_line = Puppet::Util::CommandLine.new
   types.reject! { |type| !command_line.args.include?(type.name.to_s) } unless command_line.args.empty?
 
-  ret = "Details about this host:\n\n"
+  ret = "Details about this host:\n\n".dup
 
   # Throw some facts in there, so we know where the report is from.
   ret << option('Ruby Version', Facter.value('ruby.version'))

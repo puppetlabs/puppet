@@ -15,6 +15,9 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
     text << Puppet::Util::Docs.scrub(ind.doc) + "\n\n"
 
     Puppet::Indirector::Terminus.terminus_classes(ind.name).sort_by(&:to_s).each do |terminus|
+      # this is an "abstract" terminus, ignore it
+      next if ind.name == :resource && terminus == :validator
+
       terminus_name = terminus.to_s
       term_class = Puppet::Indirector::Terminus.terminus_class(ind.name, terminus)
       if term_class

@@ -14,11 +14,21 @@ describe Puppet::Application::Doc do
      .and output(/configuration - A reference for all settings/).to_stdout
   end
 
-  it 'generates markdown' do
-    app.command_line.args = ['-r', 'report']
-    expect {
-      app.run
-    }.to exit_with(0)
-     .and output(/# Report Reference/).to_stdout
+  {
+    'configuration' => /# Configuration Reference/,
+    'function'      => /# Function Reference/,
+    'indirection'   => /# Indirection Reference/,
+    'metaparameter' => /# Metaparameter Reference/,
+    'providers'     => /# Provider Suitability Report/,
+    'report'        => /# Report Reference/,
+    'type'          => /# Type Reference/
+  }.each_pair do |type, expected|
+    it "generates #{type} reference" do
+      app.command_line.args = ['-r', type]
+      expect {
+        app.run
+      }.to exit_with(0)
+       .and output(expected).to_stdout
+    end
   end
 end
