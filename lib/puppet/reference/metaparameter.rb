@@ -14,7 +14,7 @@ etc.), prevent Puppet from making changes (`noop`), and change logging verbosity
 
 ## Available Metaparameters
 
-}
+  }.dup
   begin
     params = []
     Puppet::Type.eachmetaparam { |param|
