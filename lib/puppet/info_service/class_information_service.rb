@@ -74,7 +74,7 @@ class Puppet::InfoService::ClassInformationService
 
   def extract_type(structure, p)
     return structure if p.type_expr.nil?
-    structure[:type] = typeexpr_to_string(p.type_expr)
+    structure[:type] = typeexpr_to_string(p.name, p.type_expr)
     structure
   end
 
@@ -87,12 +87,11 @@ class Puppet::InfoService::ClassInformationService
     structure
   end
 
-  def typeexpr_to_string(type_expr)
+  def typeexpr_to_string(name, type_expr)
     begin
       type_parser.interpret_any(type_expr, nil).to_s
-    rescue Puppet::ParseError
-      # type is to complex - contains expressions that are not literal
-      nil
+    rescue Puppet::ParseError => e
+      raise Puppet::Error, "The parameter '$#{name}' is invalid: #{e.message}", e.backtrace
     end
   end
 
