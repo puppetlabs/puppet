@@ -21,9 +21,9 @@ describe "Puppet::Pops::Evaluator::LiteralEvaluator" do
     'Integer[-1]' => [-1],
     'Integer[-5, -1]' => [-5, -1],
     'Integer[-5, 5]'  => [-5, 5],
-    # we can't actually represent MIN_INTEGER because it's glexed as
+    # we can't actually represent MIN_INTEGER below, because it's lexed as
     # UnaryMinusExpression containing a positive LiteralInteger and the integer
-    # must be <= MAX_INTEGER
+    # must be <= MAX_INTEGER. Therefore, the effective minimum is one greater.
     "Integer[#{Puppet::Pops::MIN_INTEGER + 1}]" => [-0x7FFFFFFFFFFFFFFF],
     "Integer[0, #{Puppet::Pops::MAX_INTEGER}]"  => [0, 0x7FFFFFFFFFFFFFFF],
     'Integer[0, default]'         => [0, :default],
