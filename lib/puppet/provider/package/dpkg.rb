@@ -95,7 +95,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     args = []
 
     if @resource[:install_options]
-      args << @resource[:install_options]
+      args += @resource[:install_options]
     end
 
     if @resource[:configfiles] == :keep
