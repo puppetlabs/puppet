@@ -172,11 +172,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def uninstall
-    flags = "-r"
+    args = ["-r"]
     if @resource[:uninstall_options]
-      flags += @resource[:uninstall_options]
+      args += @resource[:uninstall_options]
     end
-    dpkg *flags, @resource[:name]
+    dpkg *args, @resource[:name]
   end
 
   def purge
