@@ -62,10 +62,21 @@ module Puppet
       end
     end
 
+    def exist?
+      if resource[:links] == :manage
+        # When managing links directly, test to see if the link itself
+        # exists.
+        Puppet::FileSystem.exist_nofollow?(@resource[:path])
+      else
+        # Otherwise, allow links to be followed.
+        Puppet::FileSystem.exist?(@resource[:path])
+      end
+    end
+
     def insync?(currentvalue)
       if [:nochange, :notlink].include?(should) or @resource.recurse?
         true
-      elsif !@resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
+      elsif !@resource.replace? and exist?
         true
       else
         super(currentvalue)
