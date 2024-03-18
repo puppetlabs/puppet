@@ -160,6 +160,10 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         warning(_("Implicit version %{should} has %{n} possible matches") % { should: should, n: n })
       end
       potential_matches.each { |p|
+        # If the version that we match is installed then we don't need
+        # to check if it's installed (or installable), just return true
+        return true if is != :absent && p[:status] == 'installed'
+
         command = is == :absent ? 'install' : 'update'
         options = ['-n']
         options.concat(join_options(@resource[:install_options])) if @resource[:install_options]
