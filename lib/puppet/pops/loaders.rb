@@ -192,13 +192,15 @@ class Loaders
   # @return [Loader] the found loader
   # @raise [Puppet::ParserError] if no loader is found
   def [](loader_name)
-    loader = @loaders_by_name[loader_name]
-    if loader.nil?
+    environment.lock.synchronize do
+      loader = @loaders_by_name[loader_name]
+      if loader.nil?
       # Unable to find the module private loader. Try resolving the module
-      loader = private_loader_for_module(loader_name[0..-9]) if loader_name.end_with?(' private')
-      raise Puppet::ParseError, _("Unable to find loader named '%{loader_name}'") % { loader_name: loader_name } if loader.nil?
+        loader = private_loader_for_module(loader_name[0..-9]) if loader_name.end_with?(' private')
+        raise Puppet::ParseError, _("Unable to find loader named '%{loader_name}'") % { loader_name: loader_name } if loader.nil?
+      end
+      loader
     end
-    loader
   end
 
   # Finds the appropriate loader for the given `module_name`, or for the environment in case `module_name`
@@ -214,13 +216,13 @@ class Loaders
       public_environment_loader
     else
       # TODO : Later check if definition is private, and then add it to private_loader_for_module
-      #
-      loader = public_loader_for_module(module_name)
-      if loader.nil?
-        raise Puppet::ParseError, _("Internal Error: did not find public loader for module: '%{module_name}'") % { module_name: module_name }
+      environment.lock.synchronize do
+        loader = public_loader_for_module(module_name)
+        if loader.nil?
+          raise Puppet::ParseError, _("Internal Error: did not find public loader for module: '%{module_name}'") % { module_name: module_name }
+        end
+        loader
       end
-
-      loader
     end
   end
 
