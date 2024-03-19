@@ -14,6 +14,12 @@ RSpec::Matchers.define :have_matching_log do |expected|
   end
 end
 
+RSpec::Matchers.define :have_matching_log_with_source do |expected, file, line, pos|
+  match do |actual|
+    actual.any? { |item| item.message =~ expected && item.file == file && item.line == line && item.pos == pos }
+  end
+end
+
 RSpec::Matchers.define :exit_with do |expected|
   actual = nil
   match do |block|
