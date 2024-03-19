@@ -176,7 +176,7 @@ class Puppet::X509::CertProvider
   # historical reasons, names are case insensitive.
   #
   # @param name [String] The private key identity
-  # @param key [OpenSSL::PKey::RSA] private key
+  # @param key [OpenSSL::PKey::PKey] private key
   # @param password [String, nil] If non-nil, derive an encryption key
   #   from the password, and use that to encrypt the private key. If nil,
   #   save the private key unencrypted.
@@ -227,7 +227,7 @@ class Puppet::X509::CertProvider
   # @param password [String, nil] If the private key is encrypted, decrypt
   #   it using the password. If the key is encrypted, but a password is
   #   not specified, then the key cannot be loaded.
-  # @return [OpenSSL::PKey::RSA, OpenSSL::PKey::EC] The private key
+  # @return [OpenSSL::PKey::PKey] The private key
   # @raise [OpenSSL::PKey::PKeyError] The `pem` text does not contain a valid key
   #
   # @api private
@@ -299,7 +299,7 @@ class Puppet::X509::CertProvider
   # Create a certificate signing request (CSR).
   #
   # @param name [String] the request identity
-  # @param private_key [OpenSSL::PKey::RSA] private key
+  # @param private_key [OpenSSL::PKey::PKey] private key
   # @return [Puppet::X509::Request] The request
   #
   # @api private
