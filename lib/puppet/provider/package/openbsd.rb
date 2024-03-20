@@ -69,7 +69,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       query = @resource[:name] + "--"
     end
 
-    output = Puppet::Util.withenv({}) {pkginfo "-Q", query}
+    output = Puppet::Util.withenv({}) { pkginfo "-Q", query }
 
     if output.nil? or output.size == 0 or output =~ /Error from /
       debug "Failed to query for #{resource[:name]}"
@@ -91,12 +91,12 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         return match[2]
       end
 
-      vcmp = properties[:ensure].split('.').map{|s|s.to_i} <=> match[2].split('.').map{|s|s.to_i}
+      vcmp = properties[:ensure].split('.').map { |s|s.to_i } <=> match[2].split('.').map { |s|s.to_i }
       if vcmp > 0
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
         debug "Package #{resource[:name]} #{properties[:ensure]} newer then available #{match[2]}"
-        return properties[:ensure]
+        properties[:ensure]
       else
         match[2]
       end
@@ -142,11 +142,11 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         use_version = @resource[:ensure]
       else
         use_version = ''
-      end      
+      end
       "#{resource[:name]}-#{use_version}-#{resource[:flavor]}"
     elsif resource[:name].to_s.match(/[a-z0-9]%[0-9a-z]/i)
         "#{resource[:name]}"
-    elsif not latest
+    elsif ! latest
       "#{resource[:name]}--"
     else
       # If :ensure contains a version, use that instead of looking it up.
@@ -168,7 +168,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
   def get_version
     pkg_search_name = @resource[:name]
-    unless pkg_search_name.match(/[a-z0-9]%[0-9a-z]/i) and not @resource[:flavor]
+    unless pkg_search_name.match(/[a-z0-9]%[0-9a-z]/i) and ! @resource[:flavor]
       # we are only called when no flavor is specified
       # so append '--' to the :name to avoid patch versions on flavors
       pkg_search_name << "--"
