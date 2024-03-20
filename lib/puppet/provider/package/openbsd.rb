@@ -24,6 +24,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   has_feature :upgradeable
   has_feature :supports_flavors
 
+  mk_resource_methods
+
   def self.instances
     packages = []
 
@@ -46,12 +48,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
             packages << new(hash)
             hash = {}
-          else
-            unless line =~ /Updating the pkgdb/
-              # Print a warning on lines we can't match, but move
-              # on, since it should be non-fatal
-              warning(_("Failed to match line %{line}") % { line: line })
-            end
           end
         }
       end
@@ -67,26 +63,17 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def latest
-    parse_pkgconf
-
-    if @resource[:source][-1, 1] == ::File::SEPARATOR
-      e_vars = { 'PKG_PATH' => @resource[:source] }
-    else
-      e_vars = {}
-    end
-
     if @resource[:flavor]
       query = "#{@resource[:name]}--#{@resource[:flavor]}"
     else
-      query = @resource[:name]
+      query = @resource[:name] + "--"
     end
 
-    output = Puppet::Util.withenv(e_vars) { pkginfo "-Q", query }
-    version = properties[:ensure]
+    output = Puppet::Util.withenv({}) {pkginfo "-Q", query}
 
     if output.nil? or output.size == 0 or output =~ /Error from /
       debug "Failed to query for #{resource[:name]}"
-      return version
+      return properties[:ensure]
     else
       # Remove all fuzzy matches first.
       output = output.split.select { |p| p =~ /^#{resource[:name]}-(\d[^-]*)-?(\w*)/ }.join
@@ -95,21 +82,21 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     if output =~ /^#{resource[:name]}-(\d[^-]*)-?(\w*) \(installed\)$/
       debug "Package is already the latest available"
-      version
+      return properties[:ensure]
     else
       match = /^(.*)-(\d[^-]*)-?(\w*)$/.match(output)
       debug "Latest available for #{resource[:name]}: #{match[2]}"
 
-      if version.to_sym == :absent || version.to_sym == :purged
+      if properties[:ensure].to_sym == :absent
         return match[2]
       end
 
-      vcmp = version.split('.').map(&:to_i) <=> match[2].split('.').map(&:to_i)
+      vcmp = properties[:ensure].split('.').map{|s|s.to_i} <=> match[2].split('.').map{|s|s.to_i}
       if vcmp > 0
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
-        debug "Package #{resource[:name]} #{version} newer then available #{match[2]}"
-        version
+        debug "Package #{resource[:name]} #{properties[:ensure]} newer then available #{match[2]}"
+        return properties[:ensure]
       else
         match[2]
       end
@@ -120,57 +107,25 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     install(true)
   end
 
-  def parse_pkgconf
-    unless @resource[:source]
-      if Puppet::FileSystem.exist?("/etc/pkg.conf")
-        File.open("/etc/pkg.conf", "rb").readlines.each do |line|
-          matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
-          if matchdata
-            @resource[:source] = matchdata[1]
-          else
-            matchdata = line.match(/^installpath\s*\+=\s*(.+)\s*$/i)
-            if matchdata
-              if @resource[:source].nil?
-                @resource[:source] = matchdata[1]
-              else
-                @resource[:source] += ":" + matchdata[1]
-              end
-            end
-          end
-        end
-
-        unless @resource[:source]
-          raise Puppet::Error,
-                _("No valid installpath found in /etc/pkg.conf and no source was set")
-        end
-      else
-        raise Puppet::Error,
-              _("You must specify a package source or configure an installpath in /etc/pkg.conf")
-      end
-    end
-  end
-
   def install(latest = false)
     cmd = []
 
-    parse_pkgconf
-
-    if @resource[:source][-1, 1] == ::File::SEPARATOR
-      e_vars = { 'PKG_PATH' => @resource[:source] }
-      full_name = get_full_name(latest)
-    else
-      e_vars = {}
-      full_name = @resource[:source]
-    end
-
+    cmd << '-r'
     cmd << install_options
-    cmd << full_name
+    cmd << get_full_name(latest)
 
     if latest
-      cmd.unshift('-rz')
+      cmd.unshift('-z')
     end
 
-    Puppet::Util.withenv(e_vars) { pkgadd cmd.flatten.compact }
+    # pkg_add(1) doesn't set the return value upon failure so we have to peek
+    # at it's output to see if something went wrong.
+    output = Puppet::Util.withenv({}) { pkgadd cmd.flatten.compact }
+    require 'pp'
+    pp output
+    if output =~ /Can't find /
+      self.fail "pkg_add returned: #{output.chomp}"
+    end
   end
 
   def get_full_name(latest = false)
@@ -179,11 +134,20 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     # installing with 'latest', we do need to handle the flavors. This is
     # done so we can feed pkg_add(8) the full package name to install to
     # prevent ambiguity.
-    if latest && resource[:flavor]
-      "#{resource[:name]}--#{resource[:flavor]}"
-    elsif latest
-      # Don't depend on get_version for updates.
-      @resource[:name]
+    if resource[:flavor]
+      # If :ensure contains a version, use that instead of looking it up.
+      # This allows for installing packages with the same stem, but multiple
+      # version such as postfix-VERSION-flavor.
+      if @resource[:ensure].to_s =~ /(\d[^-]*)$/
+        use_version = @resource[:ensure]
+      else
+        use_version = ''
+      end      
+      "#{resource[:name]}-#{use_version}-#{resource[:flavor]}"
+    elsif resource[:name].to_s.match(/[a-z0-9]%[0-9a-z]/i)
+        "#{resource[:name]}"
+    elsif not latest
+      "#{resource[:name]}--"
     else
       # If :ensure contains a version, use that instead of looking it up.
       # This allows for installing packages with the same stem, but multiple
@@ -194,33 +158,41 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         use_version = get_version
       end
 
-      [@resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
+      if resource[:flavor]
+        [ @resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
+      else
+        [ @resource[:name], use_version ]
+      end
     end
   end
 
   def get_version
-    execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
-      # our regex for matching pkg_info output
-      regex = /^(.*)-(\d[^-]*)-?(\w*)(.*)$/
-      master_version = 0
-      version = -1
+    pkg_search_name = @resource[:name]
+    unless pkg_search_name.match(/[a-z0-9]%[0-9a-z]/i) and not @resource[:flavor]
+      # we are only called when no flavor is specified
+      # so append '--' to the :name to avoid patch versions on flavors
+      pkg_search_name << "--"
+    end
+    # our regex for matching pkg_info output
+    regex = /^(.*)-(\d[^-]*)[-]?(\w*)(.*)$/
+    master_version = 0
+    version = -1
 
-      process.each_line do |line|
-        match = regex.match(line.split[0])
-        next unless match
-
+    # pkg_info -I might return multiple lines, i.e. flavors
+    matching_pkgs = pkginfo("-I", "pkg_search_name")
+    matching_pkgs.each_line do |line|
+      if match = regex.match(line.split[0])
         # now we return the first version, unless ensure is latest
         version = match.captures[1]
         return version unless @resource[:ensure] == "latest"
-
         master_version = version unless master_version > version
       end
-
-      return master_version unless master_version == 0
-      return '' if version == -1
-
-      raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
     end
+
+    return master_version unless master_version == 0
+    return '' if version == -1
+    raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
+ 
   rescue Puppet::ExecutionFailure
     nil
   end
@@ -239,7 +211,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def uninstall_options
-    join_options(resource[:uninstall_options])
+    [join_options(resource[:uninstall_options])]
   end
 
   def uninstall
