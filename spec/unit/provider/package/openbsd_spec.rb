@@ -103,20 +103,20 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
 
     it "should recognize a new version" do
       pkginfo_query = 'tcsh-6.18.01p1'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
       expect(provider.latest).to eq('6.18.01p1')
     end
 
     it "should recognize a newer version" do
       allow(provider).to receive(:properties).and_return({:ensure => '1.6.8'})
       pkginfo_query = 'tcsh-1.6.10'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
       expect(provider.latest).to eq('1.6.10')
     end
 
     it "should recognize a package that is already the newest" do
       pkginfo_query = 'tcsh-6.18.01p0 (installed)'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
       expect(provider.latest).to eq('6.18.01p0')
     end
   end
