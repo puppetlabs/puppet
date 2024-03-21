@@ -82,7 +82,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     if output =~ /^#{resource[:name]}-(\d[^-]*)-?(\w*) \(installed\)$/
       debug "Package is already the latest available"
-      return properties[:ensure]
+      properties[:ensure]
     else
       match = /^(.*)-(\d[^-]*)-?(\w*)$/.match(output)
       debug "Latest available for #{resource[:name]}: #{match[2]}"
@@ -91,7 +91,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         return match[2]
       end
 
-      vcmp = properties[:ensure].split('.').map { |s|s.to_i } <=> match[2].split('.').map { |s|s.to_i }
+      vcmp = properties[:ensure].split('.').map { &:to_i } <=> match[2].split('.').map { &:to_i }
       if vcmp > 0
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
@@ -121,7 +121,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     # pkg_add(1) doesn't set the return value upon failure so we have to peek
     # at it's output to see if something went wrong.
     output = Puppet::Util.withenv({}) { pkgadd cmd.flatten.compact }
-    require 'pp'
     pp output
     if output =~ /Can't find /
       self.fail "pkg_add returned: #{output.chomp}"
@@ -145,8 +144,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       end
       "#{resource[:name]}-#{use_version}-#{resource[:flavor]}"
     elsif resource[:name].to_s.match(/[a-z0-9]%[0-9a-z]/i)
-        "#{resource[:name]}"
-    elsif ! latest
+      "#{resource[:name]}"
+    elsif !latest
       "#{resource[:name]}--"
     else
       # If :ensure contains a version, use that instead of looking it up.
@@ -168,7 +167,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
   def get_version
     pkg_search_name = @resource[:name]
-    unless pkg_search_name.match(/[a-z0-9]%[0-9a-z]/i) and ! @resource[:flavor]
+    unless pkg_search_name.match(/[a-z0-9]%[0-9a-z]/i) and !@resource[:flavor]
       # we are only called when no flavor is specified
       # so append '--' to the :name to avoid patch versions on flavors
       pkg_search_name << "--"
