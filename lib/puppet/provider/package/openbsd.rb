@@ -40,15 +40,14 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         process.each_line { |line|
           match = regex.match(line.split[0])
           next unless match
-            fields.zip(match.captures) { |field, value|
-              hash[field] = value
-            }
+          fields.zip(match.captures) { |field, value|
+            hash[field] = value
+          }
 
-            hash[:provider] = name
+          hash[:provider] = name
 
-            packages << new(hash)
-            hash = {}
-          end
+          packages << new(hash)
+          hash = {}
         }
       end
 
@@ -181,12 +180,11 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     matching_pkgs = pkginfo("-I", "pkg_search_name")
     matching_pkgs.each_line do |line|
       next unless (match = regex.match(line.split[0]))
-        # now we return the first version, unless ensure is latest
-        version = match.captures[1]
-        return version unless @resource[:ensure] == "latest"
+      # now we return the first version, unless ensure is latest
+      version = match.captures[1]
+      return version unless @resource[:ensure] == "latest"
 
-        master_version = version unless master_version > version
-      end
+      master_version = version unless master_version > version
     end
 
     return master_version unless master_version == 0
