@@ -82,9 +82,8 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
 
   context "#install" do
     it 'should use install_options as Array' do
-      provider.resource[:source] = '/tma1/'
-      provider.resource[:install_options] = ['-r', '-z']
-      expect(provider).to receive(:pkgadd).with(['-r', '-z', 'bash'])
+      provider.resource[:install_options] = ['-z']
+      expect(provider).to receive(:pkgadd).with(['-r', '-z', 'bash--'])
       provider.install
     end
   end
@@ -93,12 +92,12 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
     before do
       provider.resource[:source] = '/tmp/tcsh.tgz'
       provider.resource[:name] = 'tcsh'
-      allow(provider).to receive(:pkginfo).with('tcsh')
+      allow(provider).to receive(:pkginfo).with('tcsh--')
     end
 
     it "should return the ensure value if the package is already installed" do
       allow(provider).to receive(:properties).and_return({:ensure => '4.2.45'})
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh')
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--')
       expect(provider.latest).to eq('4.2.45')
     end
 
