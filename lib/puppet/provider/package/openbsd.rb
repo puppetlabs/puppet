@@ -91,7 +91,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         return match[2]
       end
 
-      vcmp = properties[:ensure].split('.').map { |s|s.to_i } <=> match[2].split('.').map { |s|s.to_i }
+      vcmp = properties[:ensure].split('.').map { |s| s.to_i } <=> match[2].split('.').map { |s| s.to_i }
       if vcmp > 0
         # The locally installed package may actually be newer than what a mirror
         # has. Log it at debug, but ignore it otherwise.
@@ -184,11 +184,13 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         # now we return the first version, unless ensure is latest
         version = match.captures[1]
         return version unless @resource[:ensure] == "latest"
+
         master_version = version unless master_version > version
       end
     end
 
     return master_version unless master_version == 0
+
     return '' if version == -1
     raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
  
