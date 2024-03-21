@@ -39,7 +39,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         # now turn each returned line into a package object
         process.each_line { |line|
           match = regex.match(line.split[0])
-          if match
+          next unless match
             fields.zip(match.captures) { |field, value|
               hash[field] = value
             }
@@ -144,7 +144,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       end
       "#{resource[:name]}-#{use_version}-#{resource[:flavor]}"
     elsif resource[:name].to_s.match(/[a-z0-9]%[0-9a-z]/i)
-      "#{resource[:name]}"
+      resource[:name].to_s
     elsif !latest
       "#{resource[:name]}--"
     else
@@ -158,9 +158,9 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       end
 
       if resource[:flavor]
-        [ @resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
+        [@resource[:name], use_version, @resource[:flavor]].join('-').gsub(/-+$/, '')
       else
-        [ @resource[:name], use_version ]
+        [@resource[:name], use_version]
       end
     end
   end
@@ -180,7 +180,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     # pkg_info -I might return multiple lines, i.e. flavors
     matching_pkgs = pkginfo("-I", "pkg_search_name")
     matching_pkgs.each_line do |line|
-      if match = regex.match(line.split[0])
+      next unless (match = regex.match(line.split[0]))
         # now we return the first version, unless ensure is latest
         version = match.captures[1]
         return version unless @resource[:ensure] == "latest"
@@ -192,8 +192,9 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     return master_version unless master_version == 0
 
     return '' if version == -1
+
     raise Puppet::Error, _("%{version} is not available for this package") % { version: version }
- 
+
   rescue Puppet::ExecutionFailure
     nil
   end
