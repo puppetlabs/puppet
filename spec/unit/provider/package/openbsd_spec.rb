@@ -81,160 +81,9 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
   end
 
   context "#install" do
-    it "should fail if the resource doesn't have a source" do
-      expect(Puppet::FileSystem).to receive(:exist?).with('/etc/pkg.conf').and_return(false)
-
-      expect {
-        provider.install
-      }.to raise_error(Puppet::Error, /must specify a package source/)
-    end
-
-    it "should fail if /etc/pkg.conf exists, but is not readable" do
-      expect(Puppet::FileSystem).to receive(:exist?).with('/etc/pkg.conf').and_return(true)
-      expect(File).to receive(:open).with('/etc/pkg.conf', 'rb').and_raise(Errno::EACCES)
-
-      expect {
-        provider.install
-      }.to raise_error(Errno::EACCES, /Permission denied/)
-    end
-
-    it "should fail if /etc/pkg.conf exists, but there is no installpath" do
-      expect_read_from_pkgconf([])
-      expect {
-        provider.install
-      }.to raise_error(Puppet::Error, /No valid installpath found in \/etc\/pkg\.conf and no source was set/)
-    end
-
-    it "should install correctly when given a directory-unlike source" do
-      source = '/whatever.tgz'
-      provider.resource[:source] = source
-      expect_pkgadd_with_source(source)
-
-      provider.install
-    end
-
-    it "should install correctly when given a directory-like source" do
-      source = '/whatever/'
-      provider.resource[:source] = source
-      expect_pkgadd_with_env_and_name(source) do
-        provider.install
-      end
-    end
-
-    it "should install correctly when given a CDROM installpath" do
-      dir = '/mnt/cdrom/5.2/packages/amd64/'
-      expect_read_from_pkgconf(["installpath = #{dir}"])
-      expect_pkgadd_with_env_and_name(dir) do
-        provider.install
-      end
-    end
-
-    it "should install correctly when given a ftp mirror" do
-      url = 'ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/'
-      expect_read_from_pkgconf(["installpath = #{url}"])
-      expect_pkgadd_with_env_and_name(url) do
-        provider.install
-      end
-    end
-
-    it "should set the resource's source parameter" do
-      url = 'ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/'
-      expect_read_from_pkgconf(["installpath = #{url}"])
-      expect_pkgadd_with_env_and_name(url) do
-        provider.install
-      end
-
-      expect(provider.resource[:source]).to eq(url)
-    end
-
-    it "should strip leading whitespace in installpath" do
-      dir = '/one/'
-      lines = ["# Notice the extra spaces after the ='s\n",
-               "installpath =   #{dir}\n",
-               "# And notice how each line ends with a newline\n"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_env_and_name(dir) do
-        provider.install
-      end
-    end
-
-    it "should not require spaces around the equals" do
-      dir = '/one/'
-      lines = ["installpath=#{dir}"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_env_and_name(dir) do
-        provider.install
-      end
-    end
-
-    it "should be case-insensitive" do
-      dir = '/one/'
-      lines = ["INSTALLPATH = #{dir}"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_env_and_name(dir) do
-        provider.install
-      end
-    end
-
-    it "should ignore unknown keywords" do
-      dir = '/one/'
-      lines = ["foo = bar\n",
-               "installpath = #{dir}\n"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_env_and_name(dir) do
-        provider.install
-      end
-    end
-
-    it "should preserve trailing spaces" do
-      dir = '/one/   '
-      lines = ["installpath = #{dir}"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_source(dir)
-
-      provider.install
-    end
-
-    it "should append installpath" do
-      urls = ["ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/",
-              "http://another.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/"]
-      lines = ["installpath  = #{urls[0]}\n",
-               "installpath += #{urls[1]}\n"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_env_and_name(urls.join(":")) do
-        provider.install
-      end
-    end
-
-    it "should handle append on first installpath" do
-      url = "ftp://your.ftp.mirror/pub/OpenBSD/5.2/packages/amd64/"
-      lines = ["installpath += #{url}\n"]
-
-      expect_read_from_pkgconf(lines)
-      expect_pkgadd_with_env_and_name(url) do
-        provider.install
-      end
-    end
-
-    %w{ installpath installpath= installpath+=}.each do |line|
-      it "should reject '#{line}'" do
-        expect_read_from_pkgconf([line])
-        expect {
-          provider.install
-        }.to raise_error(Puppet::Error, /No valid installpath found in \/etc\/pkg\.conf and no source was set/)
-      end
-    end
-
     it 'should use install_options as Array' do
-      provider.resource[:source] = '/tma1/'
-      provider.resource[:install_options] = ['-r', '-z']
-      expect(provider).to receive(:pkgadd).with(['-r', '-z', 'bash'])
+      provider.resource[:install_options] = ['-z']
+      expect(provider).to receive(:pkgadd).with(['-r', '-z', 'bash--'])
       provider.install
     end
   end
@@ -243,31 +92,31 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
     before do
       provider.resource[:source] = '/tmp/tcsh.tgz'
       provider.resource[:name] = 'tcsh'
-      allow(provider).to receive(:pkginfo).with('tcsh')
+      allow(provider).to receive(:pkginfo).with('tcsh--')
     end
 
     it "should return the ensure value if the package is already installed" do
       allow(provider).to receive(:properties).and_return({:ensure => '4.2.45'})
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh')
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--')
       expect(provider.latest).to eq('4.2.45')
     end
 
     it "should recognize a new version" do
       pkginfo_query = 'tcsh-6.18.01p1'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
       expect(provider.latest).to eq('6.18.01p1')
     end
 
     it "should recognize a newer version" do
       allow(provider).to receive(:properties).and_return({:ensure => '1.6.8'})
       pkginfo_query = 'tcsh-1.6.10'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
       expect(provider.latest).to eq('1.6.10')
     end
 
     it "should recognize a package that is already the newest" do
       pkginfo_query = 'tcsh-6.18.01p0 (installed)'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
       expect(provider.latest).to eq('6.18.01p0')
     end
   end
@@ -282,7 +131,7 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
     it "should return the full unversioned package name when updating without a flavor" do
         provider.resource[:name] = 'puppet'
         provider.resource[:ensure] = 'latest'
-        expect(provider.get_full_name).to eq('puppet')
+        expect(provider.get_full_name).to eq('puppet--')
     end
 
     it "should use the ensure parameter if it is numeric" do
