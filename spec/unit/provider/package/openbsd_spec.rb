@@ -103,7 +103,7 @@ describe Puppet::Type.type(:package).provider(:openbsd) do
 
     it "should recognize a new version" do
       pkginfo_query = 'tcsh-6.18.01p1'
-      allow(provider).to receive(:pkginfo).with('-Q', 'tcsh--').and_return(pkginfo_query)
+      allow(provider).to receive(:pkginfo).with('tcsh').and_return(pkginfo_query)
       expect(provider.latest).to eq('6.18.01p1')
     end
 
