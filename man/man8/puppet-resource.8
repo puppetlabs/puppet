@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-RESOURCE" "8" "March 2024" "Puppet, Inc." "Puppet manual"
+.TH "PUPPET\-RESOURCE" "8" "April 2024" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-resource\fR \- The resource abstraction layer shell
@@ -54,6 +54,10 @@ Print extra information\.
 .TP
 \-\-to_yaml
 Output found resources in yaml format, suitable to use with Hiera and create_resources\.
+.
+.TP
+\-\-fail
+Fails and returns an exit code of 1 if the resource could not be modified\.
 .
 .SH "EXAMPLE"
 This example uses \fBpuppet resource\fR to return a Puppet configuration for the user \fBluke\fR:
