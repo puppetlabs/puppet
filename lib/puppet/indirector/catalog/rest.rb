@@ -14,12 +14,14 @@ class Puppet::Resource::Catalog::Rest < Puppet::Indirector::REST
     session = Puppet.lookup(:http_session)
     api = session.route_to(:puppet)
 
-    ip_address = begin
-      " (#{Resolv.getaddress(api.url.host)})"
-    rescue Resolv::ResolvError
-      nil
+    unless Puppet.settings[:skip_logging_catalog_request_destination]
+      ip_address = begin
+        " (#{Resolv.getaddress(api.url.host)})"
+      rescue Resolv::ResolvError
+        nil
+      end
+      Puppet.notice("Requesting catalog from #{api.url.host}:#{api.url.port}#{ip_address}")
     end
-    Puppet.notice("Requesting catalog from #{api.url.host}:#{api.url.port}#{ip_address}")
 
     _, catalog = api.post_catalog(
       request.key,
