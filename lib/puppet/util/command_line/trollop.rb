@@ -335,9 +335,21 @@ class CommandLine
               when /^-([^-])$/
                 @short[::Regexp.last_match(1)]
               when /^--no-([^-]\S*)$/
-                @long["[no-]#{::Regexp.last_match(1)}"]
+                possible_match = @long["[no-]#{::Regexp.last_match(1)}"]
+                if !possible_match
+                  Puppet.warning _("Partial argument match detected: %{arg}. Partial argument matching will be deprecated in Puppet 9.") % { arg: arg }
+                  @long["[no-]#{::Regexp.last_match(1).tr('-', '_')}"] || @long["[no-]#{::Regexp.last_match(1).tr('_', '-')}"]
+                else
+                  possible_match
+                end
               when /^--([^-]\S*)$/
-                @long[::Regexp.last_match(1)] || @long["[no-]#{::Regexp.last_match(1)}"]
+                possible_match = @long[::Regexp.last_match(1)] || @long["[no-]#{::Regexp.last_match(1)}"]
+                if !possible_match
+                  Puppet.warning _("Partial argument match detected: %{arg}. Partial argument matching will be deprecated in Puppet 9.") % { arg: arg }
+                  @long[::Regexp.last_match(1).tr('-', '_')] || @long[::Regexp.last_match(1).tr('_', '-')] || @long["[no-]#{::Regexp.last_match(1).tr('-', '_')}"] || @long["[no-]#{::Regexp.last_match(1).tr('_', '-')}"]
+                else
+                  possible_match
+                end
               else
                 raise CommandlineError, _("invalid argument syntax: '%{arg}'") % { arg: arg }
               end
