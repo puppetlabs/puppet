@@ -172,6 +172,20 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         allow(arch_provider).to receive(:query).and_return(:ensure => version)
         arch_provider.install
       end
+
+      it "does not move '-noarch' to the end of version" do
+        version = '1.2.3'
+        resource = Puppet::Type.type(:package).new(
+          :name => "#{name}-noarch",
+          :ensure => version,
+          :provider =>provider_name
+        )
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, "#{name}-noarch-#{version}"])
+        provider = provider_class.new
+        provider.resource = resource
+        allow(provider).to receive(:query).and_return(:ensure => version)
+        provider.install
+      end
     end
 
     describe 'when uninstalling' do
