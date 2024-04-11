@@ -518,12 +518,15 @@ describe "Puppet::InfoService" do
      it "errors with a descriptive message if non-literal class parameter is given" do
        files = ['non_literal.pp', 'non_literal_2.pp'].map {|f| File.join(code_dir, f) }
        result = Puppet::InfoService.classes_per_environment({'production' => files })
+       expect(@logs).to have_matching_log_with_source(/The parameter '\$bad_int' must be a literal type, not a Puppet::Pops::Model::AccessExpression/, "#{code_dir}/non_literal.pp", 1, 37)
+       expect(@logs).to have_matching_log_with_source(/The parameter '\$double_brackets' must be a literal type, not a Puppet::Pops::Model::AccessExpression/, "#{code_dir}/non_literal_2.pp", 1, 44)
+
        expect(result).to eq({
         "production"=>{
            "#{code_dir}/non_literal.pp" =>
-           {:error=> "The parameter '$bad_int' must be a literal type, not a Puppet::Pops::Model::AccessExpression (file: #{code_dir}/non_literal.pp, line: 1, column: 37)"},
+           {:error=> "The parameter '\$bad_int' is invalid: The expression <1-3> is not a valid type specification."},
            "#{code_dir}/non_literal_2.pp" =>
-           {:error=> "The parameter '$double_brackets' must be a literal type, not a Puppet::Pops::Model::AccessExpression (file: #{code_dir}/non_literal_2.pp, line: 1, column: 44)"}
+           {:error=> "The parameter '\$double_brackets' is invalid: The expression <Optional[[String]]> is not a valid type specification."}
           } # end production env
         })
      end

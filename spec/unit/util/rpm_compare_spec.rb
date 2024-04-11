@@ -172,6 +172,11 @@ describe Puppet::Util::RpmCompare do
       expect([version[:epoch], version[:version], version[:release]]).to \
         eq([nil, '2.2', 'SNAPSHOT20121119105647'])
     end
+
+    it 'parses .noarch' do
+      version = RpmTest.rpm_parse_evr('3.0.12-1.el5.centos.noarch')
+      expect(version[:arch]).to eq('noarch')
+    end
   end
 
   describe '.compare_values' do

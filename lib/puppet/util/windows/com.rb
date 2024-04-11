@@ -141,7 +141,7 @@ module Puppet::Util::Windows::COM
 
         self::VTBL.members.each do |name|
           define_method(name) do |*args|
-            if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
+            if Puppet::Util::Windows::COM.FAILED((result = @vtbl[name].call(self, *args)))
               raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
 
@@ -183,7 +183,7 @@ module Puppet::Util::Windows::COM
 
         self::VTBL.members.each do |name|
           define_method(name) do |*args|
-            if Puppet::Util::Windows::COM.FAILED(result = @vtbl[name].call(self, *args))
+            if Puppet::Util::Windows::COM.FAILED((result = @vtbl[name].call(self, *args)))
               raise Puppet::Util::Windows::Error.new(_("Failed to call %{klass}::%{name} with HRESULT: %{result}.") % { klass: self, name: name, result: result }, result)
             end
 
