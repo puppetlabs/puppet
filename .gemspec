@@ -24,7 +24,10 @@ Gem::Specification.new do |s|
   s.required_ruby_version = Gem::Requirement.new(">= 3.1.0")
   s.authors = ["Puppet Labs"]
   s.date = "2012-08-17"
-  s.description = "Puppet, an automated configuration management tool"
+  s.description = <<~EOF
+    Puppet, an automated administrative engine for your Linux, Unix, and Windows systems, performs administrative tasks
+    (such as adding users, installing packages, and updating server configurations) based on a centralized specification.
+  EOF
   s.email = "puppet@puppetlabs.com"
   s.executables = ["puppet"]
   s.files = ["bin/puppet"]
