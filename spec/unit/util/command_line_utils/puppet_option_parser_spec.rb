@@ -13,6 +13,24 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
       )
     end
 
+    it "parses a 'long' option with a value and converts '-' to '_' & warns" do
+      parses(
+        :option => ["--an_gry", "Angry", :REQUIRED],
+        :from_arguments => ["--an-gry", "foo"],
+        :expects => "foo"
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --an-gry. Partial argument matching will be deprecated in Puppet 9./)
+    end
+
+    it "parses a 'long' option with a value and converts '_' to '-' & warns" do
+      parses(
+        :option => ["--an-gry", "Angry", :REQUIRED],
+        :from_arguments => ["--an_gry", "foo"],
+        :expects => "foo"
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --an_gry. Partial argument matching will be deprecated in Puppet 9./)
+    end
+
     it "parses a 'short' option with a value" do
       parses(
         :option => ["--angry", "-a", "Angry", :REQUIRED],
@@ -39,6 +57,24 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
       )
     end
 
+    it "converts '_' to '-' with a 'long' option & warns" do
+      parses(
+        :option => ["--an-gry", "Angry", :NONE],
+        :from_arguments => ["--an_gry"],
+        :expects => true
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --an_gry. Partial argument matching will be deprecated in Puppet 9./)
+    end
+
+    it "converts '-' to '_' with a 'long' option & warns" do
+      parses(
+        :option => ["--an_gry", "Angry", :NONE],
+        :from_arguments => ["--an-gry"],
+        :expects => true
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --an-gry. Partial argument matching will be deprecated in Puppet 9./)
+    end
+
     it "parses a 'short' option" do
       parses(
         :option => ["--angry", "-a", "Angry", :NONE],
@@ -54,6 +90,42 @@ describe Puppet::Util::CommandLine::PuppetOptionParser do
         :expects => false
       )
     end
+
+    it "resolves '-' to '_' with '--no-blah' syntax" do
+      parses(
+        :option => ["--[no-]an_gry", "Angry", :NONE],
+        :from_arguments => ["--no-an-gry"],
+        :expects => false
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --no-an-gry. Partial argument matching will be deprecated in Puppet 9./)
+    end
+
+    it "resolves '_' to '-' with '--no-blah' syntax" do
+      parses(
+        :option => ["--[no-]an-gry", "Angry", :NONE],
+        :from_arguments => ["--no-an_gry"],
+        :expects => false
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --no-an_gry. Partial argument matching will be deprecated in Puppet 9./)
+    end
+
+    it "resolves '-' to '_' & warns when option is defined with '--no-blah syntax' but argument is given in '--option' syntax" do
+      parses(
+        :option => ["--[no-]rag-e", "Rage", :NONE],
+        :from_arguments => ["--rag_e"],
+        :expects => true
+      )
+      expect(@logs).to have_matching_log(/Partial argument match detected: --rag_e. Partial argument matching will be deprecated in Puppet 9./)
+  end
+
+  it "resolves '_' to '-' & warns when option is defined with '--no-blah syntax' but argument is given in '--option' syntax" do
+    parses(
+      :option => ["--[no-]rag_e", "Rage", :NONE],
+      :from_arguments => ["--rag-e"],
+      :expects => true
+    )
+    expect(@logs).to have_matching_log(/Partial argument match detected: --rag-e. Partial argument matching will be deprecated in Puppet 9./)
+  end
 
     it "overrides a previous argument with a later one" do
       parses(
