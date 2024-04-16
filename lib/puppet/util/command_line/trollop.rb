@@ -337,16 +337,22 @@ class CommandLine
               when /^--no-([^-]\S*)$/
                 possible_match = @long["[no-]#{::Regexp.last_match(1)}"]
                 if !possible_match
-                  Puppet.warning _("Partial argument match detected: %{arg}. Partial argument matching will be deprecated in Puppet 9.") % { arg: arg }
-                  @long["[no-]#{::Regexp.last_match(1).tr('-', '_')}"] || @long["[no-]#{::Regexp.last_match(1).tr('_', '-')}"]
+                  partial_match = @long["[no-]#{::Regexp.last_match(1).tr('-', '_')}"] || @long["[no-]#{::Regexp.last_match(1).tr('_', '-')}"]
+                  if partial_match
+                    Puppet.deprecation_warning _("Partial argument match detected: correct argument is %{partial_match}, got %{arg}. Partial argument matching is deprecated and will be removed in a future release.") % { arg: arg, partial_match: partial_match }
+                  end
+                  partial_match
                 else
                   possible_match
                 end
               when /^--([^-]\S*)$/
                 possible_match = @long[::Regexp.last_match(1)] || @long["[no-]#{::Regexp.last_match(1)}"]
                 if !possible_match
-                  Puppet.warning _("Partial argument match detected: %{arg}. Partial argument matching will be deprecated in Puppet 9.") % { arg: arg }
-                  @long[::Regexp.last_match(1).tr('-', '_')] || @long[::Regexp.last_match(1).tr('_', '-')] || @long["[no-]#{::Regexp.last_match(1).tr('-', '_')}"] || @long["[no-]#{::Regexp.last_match(1).tr('_', '-')}"]
+                  partial_match = @long[::Regexp.last_match(1).tr('-', '_')] || @long[::Regexp.last_match(1).tr('_', '-')] || @long["[no-]#{::Regexp.last_match(1).tr('-', '_')}"] || @long["[no-]#{::Regexp.last_match(1).tr('_', '-')}"]
+                  if partial_match
+                    Puppet.deprecation_warning _("Partial argument match detected: correct argument is %{partial_match}, got %{arg}. Partial argument matching is deprecated and will be removed in a future release.") % { arg: arg, partial_match: partial_match }
+                  end
+                  partial_match
                 else
                   possible_match
                 end
