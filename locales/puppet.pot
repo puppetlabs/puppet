@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.6.0-17-gea44ace7bc\n"
+"Project-Id-Version: Puppet automation framework 8.6.0-20-g814882491c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2024-04-15 22:21+0000\n"
-"PO-Revision-Date: 2024-04-15 22:21+0000\n"
+"POT-Creation-Date: 2024-04-16 22:51+0000\n"
+"PO-Revision-Date: 2024-04-16 22:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -8652,84 +8652,84 @@ msgstr ""
 msgid "Show this message"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:340 ../lib/puppet/util/command_line/trollop.rb:348
-msgid "Partial argument match detected: %{arg}. Partial argument matching will be deprecated in Puppet 9."
+#: ../lib/puppet/util/command_line/trollop.rb:342 ../lib/puppet/util/command_line/trollop.rb:353
+msgid "Partial argument match detected: correct argument is %{partial_match}, got %{arg}. Partial argument matching is deprecated and will be removed in a future release."
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:354
+#: ../lib/puppet/util/command_line/trollop.rb:360
 msgid "invalid argument syntax: '%{arg}'"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:359
+#: ../lib/puppet/util/command_line/trollop.rb:365
 msgid "unknown argument '%{arg}'"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:363
+#: ../lib/puppet/util/command_line/trollop.rb:369
 msgid "option '%{arg}' specified multiple times"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:400
+#: ../lib/puppet/util/command_line/trollop.rb:406
 msgid "--%{value0} requires --%{value1}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:402
+#: ../lib/puppet/util/command_line/trollop.rb:408
 msgid "--%{value0} conflicts with --%{value1}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:407
+#: ../lib/puppet/util/command_line/trollop.rb:413
 msgid "option --%{opt} must be specified"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:416
+#: ../lib/puppet/util/command_line/trollop.rb:422
 msgid "option '%{arg}' needs a parameter"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:475
+#: ../lib/puppet/util/command_line/trollop.rb:481
 msgid "option '%{arg}' needs a date"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:507
+#: ../lib/puppet/util/command_line/trollop.rb:513
 msgid "Options:"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:531
+#: ../lib/puppet/util/command_line/trollop.rb:537
 msgid " (Default: %{default_s})"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:533
+#: ../lib/puppet/util/command_line/trollop.rb:539
 msgid " (default: %{default_s})"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:570
+#: ../lib/puppet/util/command_line/trollop.rb:576
 msgid "Error: argument --%{value0} %{msg}."
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:572
+#: ../lib/puppet/util/command_line/trollop.rb:578
 msgid "Error: %{arg}."
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:574 ../lib/puppet/util/command_line/trollop.rb:800
+#: ../lib/puppet/util/command_line/trollop.rb:580 ../lib/puppet/util/command_line/trollop.rb:806
 msgid "Try --help for help."
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:653
+#: ../lib/puppet/util/command_line/trollop.rb:659
 msgid "option '%{arg}' needs an integer"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:659
+#: ../lib/puppet/util/command_line/trollop.rb:665
 msgid "option '%{arg}' needs a floating-point number"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:672
+#: ../lib/puppet/util/command_line/trollop.rb:678
 msgid "file or url for option '%{arg}' cannot be opened: %{value0}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line/trollop.rb:799
+#: ../lib/puppet/util/command_line/trollop.rb:805
 msgid "Error: %{value0}."
 msgstr ""
 
 #. TRANSLATORS 'Trollop' is the name of a module and 'die' and 'options' are methods in it and should not be translated.
-#: ../lib/puppet/util/command_line/trollop.rb:833
+#: ../lib/puppet/util/command_line/trollop.rb:839
 msgid "Trollop::die can only be called after Trollop::options"
 msgstr ""
 
