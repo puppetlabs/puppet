@@ -12,7 +12,9 @@ def location_for(place, fake_version = nil)
   end
 end
 
-# Make sure these gem requirements are in sync with the gempspec and ext/project_data.yaml
+# Make sure these gem requirements are in sync with the gempspec. Specifically,
+# the runtime_dependencies in puppet.gemspec match the runtime dependencies here
+# (like facter, semantic_puppet, and puppet-resource_api)
 
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ["~> 4.3"])
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
@@ -33,6 +35,7 @@ group(:features) do
   # requires native ldap headers/libs
   # gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
   gem 'puppetserver-ca', '~> 2.0', require: false
+  gem 'CFPropertyList', ['>= 3.0.6', '< 4'], require: false
 end
 
 group(:test) do
