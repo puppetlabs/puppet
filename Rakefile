@@ -1,4 +1,4 @@
-# Rakefile for Puppet -*- ruby -*-
+# frozen_string_literal: true
 
 # We need access to the Puppet.version method
 $LOAD_PATH.unshift(File.expand_path("lib"))
