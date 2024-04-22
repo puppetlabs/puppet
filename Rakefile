@@ -4,19 +4,10 @@
 $LOAD_PATH.unshift(File.expand_path("lib"))
 require 'puppet/version'
 
-begin
-  require 'rubygems'
-  require 'rubygems/package_task'
-rescue LoadError
-  # Users of older versions of Rake (0.8.7 for example) will not necessarily
-  # have rubygems installed, or the newer rubygems package_task for that
-  # matter.
-  require 'rake/packagetask'
-  require 'rake/gempackagetask'
-end
-
-require 'rake'
 require 'open3'
+require 'rake'
+require 'rubygems'
+require 'rubygems/package_task'
 
 if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
   begin
