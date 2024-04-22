@@ -45,6 +45,19 @@ task :default do
   sh %{rake -T}
 end
 
+namespace :pl_ci do
+  desc 'Build puppet gems'
+  task :gem_build do
+    stdout, stderr, status = Open3.capture3('gem build puppet.gemspec --platform x86-mingw32 && gem build puppet.gemspec --platform x64-mingw32 && gem build puppet.gemspec --platform universal-darwin && gem build puppet.gemspec')
+    if !status.exitstatus.zero?
+      puts "Error building facter.gemspec \n#{stdout} \n#{stderr}"
+      exit(1)
+    else
+      puts stdout
+    end
+  end
+end
+
 task :spec do
   ENV["LOG_SPEC_ORDER"] = "true"
   sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
