@@ -1,11 +1,8 @@
 # Rakefile for Puppet -*- ruby -*-
-RAKE_ROOT = File.dirname(__FILE__)
 
 # We need access to the Puppet.version method
 $LOAD_PATH.unshift(File.expand_path("lib"))
 require 'puppet/version'
-
-$LOAD_PATH << File.join(RAKE_ROOT, 'tasks')
 
 begin
   require 'rubygems'
@@ -20,8 +17,6 @@ end
 
 require 'rake'
 require 'open3'
-
-Dir['tasks/**/*.rake'].each { |t| load t }
 
 if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
   begin
