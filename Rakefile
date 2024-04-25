@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-# We need access to the Puppet.version method
-$LOAD_PATH.unshift(File.expand_path("lib"))
-require 'puppet/version'
-
 require 'open3'
 require 'rake'
 require 'rubygems'
