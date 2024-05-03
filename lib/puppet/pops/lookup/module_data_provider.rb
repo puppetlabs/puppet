@@ -47,16 +47,16 @@ class ModuleDataProvider < ConfiguredDataProvider
   def validate_data_hash(data_hash)
     super
     module_prefix = "#{module_name}::"
-    data_hash.each_key.reduce(data_hash) do |memo, k|
-      next memo if k == LOOKUP_OPTIONS || k.start_with?(module_prefix)
-
-      msg = "#{yield} must use keys qualified with the name of the module"
-      memo = memo.clone if memo.equal?(data_hash)
-      memo.delete(k)
-      Puppet.warning("Module '#{module_name}': #{msg}")
-      memo
+    data_hash_to_return = {}
+    data_hash.keys.each do |k|
+      if k == LOOKUP_OPTIONS || k.start_with?(module_prefix)
+        data_hash_to_return[k] = data_hash[k]
+      else
+        msg = "#{yield} must use keys qualified with the name of the module"
+        Puppet.warning("Module '#{module_name}': #{msg}; got #{k}")
+      end
     end
-    data_hash
+    data_hash_to_return
   end
 
   protected

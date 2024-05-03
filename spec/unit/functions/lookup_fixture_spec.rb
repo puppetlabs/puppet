@@ -47,7 +47,7 @@ describe 'The lookup function' do
     Puppet[:code] = code
     node.environment.check_for_reparse
     catalog = block_given? ? compiler.compile { |cat| yield(compiler.topscope); cat } : compiler.compile
-    catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
+    catalog.resources.map(&:ref).filter_map { |r| r[7..-2] if r.start_with?('Notify[') }
   end
 
   # There is a fully configured 'production' environment in fixtures at this location
@@ -376,8 +376,8 @@ describe 'The lookup function' do
         Puppet[:code] = "include bad_data\nlookup('bad_data::b')"
         expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'bad_data::b'/)
       end
-      warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module")
+      warnings = logs.filter_map { |log| log.message if log.level == :warning }
+      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module; got b")
     end
 
     it 'will succeed finding prefixed keys even when a key in the function provided module data is not prefixed' do
@@ -390,8 +390,8 @@ describe 'The lookup function' do
         PUPPET
         expect(resources).to include('module_c')
       end
-      warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module")
+      warnings = logs.filter_map { |log| log.message if log.level == :warning }
+      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module; got b")
     end
 
     it 'will resolve global, environment, and module correctly' do
@@ -422,8 +422,8 @@ describe 'The lookup function' do
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         compiler.compile
       end
-      warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module")
+      warnings = logs.filter_map { |log| log.message if log.level == :warning }
+      expect(warnings).to include("Module 'bad_data': Value returned from deprecated API function 'bad_data::data' must use keys qualified with the name of the module; got b")
     end
 
     it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
@@ -432,8 +432,8 @@ describe 'The lookup function' do
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         compiler.compile
       end
-      warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
-      expect(warnings).to include("Module 'hieraprovider': Value returned from data_hash function 'json_data', when using location '#{environmentpath}/production/modules/hieraprovider/data/first.json', must use keys qualified with the name of the module")
+      warnings = logs.filter_map { |log| log.message if log.level == :warning }
+      expect(warnings).to include("Module 'hieraprovider': Value returned from data_hash function 'json_data', when using location '#{environmentpath}/production/modules/hieraprovider/data/first.json', must use keys qualified with the name of the module; got test::param_b")
     end
   end
 
