@@ -235,9 +235,13 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def noop(event, param, current_value, audit_message)
-    event.message = param.format(_("current_value %s, should be %s (noop)"),
-                                 param.is_to_s(current_value),
-                                 param.should_to_s(param.should)) + audit_message.to_s
+    if param.sensitive
+      event.message = param.format(_("current_value %s, should be %s (noop)"),
+                                   param.is_to_s(current_value),
+                                   param.should_to_s(param.should)) + audit_message.to_s
+    else
+      event.message = "#{param.change_to_s(current_value, param.should)} (noop)#{audit_message}"
+    end
     event.status = "noop"
   end
 

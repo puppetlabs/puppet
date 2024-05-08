@@ -176,6 +176,10 @@ describe Puppet::Transaction::ResourceHarness do
           def should_to_s(value)
             (@resource.behaviors[:on_should_to_s] || proc { "'#{value}'" }).call
           end
+
+          def change_to_s(value, should)
+            "some custom insync message"
+          end
         end
 
         newparam(:name) do
@@ -249,6 +253,7 @@ describe Puppet::Transaction::ResourceHarness do
       expect(status.events[0].property).to eq('ensure')
       expect(status.events[0].name.to_s).to eq('Testing_created')
       expect(status.events[0].status).to eq('success')
+      expect(status.events[0].message).to eq 'some custom insync message'
     end
 
     it "ensure is in sync means that the rest *does* happen" do
@@ -282,6 +287,14 @@ describe Puppet::Transaction::ResourceHarness do
       expect(resource_errors.length).to eq(1)
       expect(testing_errors[0].message).not_to be_nil
       expect(resource_errors[0].message).not_to eq("Puppet::Util::Log requires a message")
+    end
+
+    it "displays custom insync message in noop" do
+      resource = an_ensurable_resource_reacting_as(:present? => true)
+      resource[:noop] = true
+      status = @harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).to eq 'some custom insync message (noop)'
     end
   end
 
