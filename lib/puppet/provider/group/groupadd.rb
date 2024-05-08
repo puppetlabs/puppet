@@ -17,11 +17,11 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     value.is_a? Integer
   end
 
-  optional_commands :localadd => "lgroupadd", :localdelete => "lgroupdel", :localmodify => "lgroupmod"
+  optional_commands :localadd => "groupadd", :localdelete => "groupdel", :localmodify => "groupmod"
 
-  has_feature :manages_local_users_and_groups, :manages_members if Puppet.features.libuser?
+  has_feature :manages_local_users_and_groups, :manages_members #if Puppet.features.libuser?
 
-  options :members, :flag => '-M', :method => :mem
+  options :members, :flag => '-aU', :method => :mem
 
   def exists?
     return !!localgid if @resource.forcelocal?
