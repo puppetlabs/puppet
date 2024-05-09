@@ -12,7 +12,11 @@ def location_for(place, fake_version = nil)
   end
 end
 
-# override .gemspec deps - may issue warning depending on Bundler version
+# Make sure these gem requirements are in sync with the gempspec. Specifically,
+# the runtime_dependencies in puppet.gemspec match the runtime dependencies here
+# (like semantic_puppet and puppet-resource_api)
+
+# override .gemspec deps for facter & hiera - may issue warning depending on Bundler version
 gem "facter", *location_for(ENV['FACTER_LOCATION']) if ENV.has_key?('FACTER_LOCATION')
 gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATION')
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
@@ -32,6 +36,7 @@ group(:features) do
   # requires native ldap headers/libs
   # gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
   gem 'puppetserver-ca', '~> 2.0', require: false
+  gem 'CFPropertyList', '~> 2.2', require: false
 end
 
 group(:test) do

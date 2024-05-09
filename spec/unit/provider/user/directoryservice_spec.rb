@@ -4,7 +4,7 @@ require 'spec_helper'
 module Puppet::Util::Plist
 end
 
-describe Puppet::Type.type(:user).provider(:directoryservice) do
+describe Puppet::Type.type(:user).provider(:directoryservice), :if => Puppet.features.cfpropertylist? do 
   let(:username) { 'nonexistent_user' }
   let(:user_path) { "/Users/#{username}" }
   let(:resource) do
