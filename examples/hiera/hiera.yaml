@@ -1,0 +1,15 @@
+---
+version: 5
+defaults:
+  datadir: data
+  data_hash: yaml_data
+
+hierarchy:
+  - name: 'Per Location'
+    path: "%{facts.location}.yaml"
+
+  - name: 'Per Environment'
+    path: "%{facts.environment}.yaml"
+
+  - name: 'Common Data'
+    path: 'common.yaml'
