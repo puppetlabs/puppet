@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'etc'
 require_relative '../../puppet/parameter/boolean'
 require_relative '../../puppet/property/list'
 require_relative '../../puppet/property/ordered_list'
