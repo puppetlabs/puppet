@@ -1,0 +1,12 @@
+---
+classes:
+  - users::common
+  - ntp::config
+
+ntp::config::ntpservers:
+  - 'ntp1.example.com'
+  - 'ntp2.example.com'
+
+lookup_options:
+  classes:
+    merge: unique

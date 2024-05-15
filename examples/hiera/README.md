@@ -1,91 +1,102 @@
-A working demo of Hiera with YAML and Puppet backends.
+A working demo of Hiera with YAML backend.
 ======================================================
 
 This demo consists of:
 
- * A NTP module that has defaults for pool.ntp.org servers
- * A common data module where module users can create override data in pp files
- * A YAML data source in etc/hieradb where users can override data in yaml files
- * A couple of users modules that just notify the fact that they are being included
- * In Hiera data files a key called _classes_ that decides what to include on a node
+- A **NTP** module that has defaults for *pool.ntp.org* servers
+- A **YAML** data source in the *data/* directory where users can override data in yaml files
+- A **Users** module that has a few manifests that simply notify that they are being included
+- In Hiera data files a key called **classes** that decides what to include on a node
 
 Below various usage scenarios can be tested using this module.
 
-The examples below assume you have Hiera already installed and that you have
-hiera-puppet cloned from github and running these commands in _hiera-puppet/example_ as cwd.
+The examples below assume you:
+- Have the puppet-agent already installed
+- You have this repository cloned from github
+- Are running these commands from within the *examples/hiera* directory as cwd.
 
 Module from forge with module defaults
 --------------------------------------
 
- * Move the _modules/data_ directory to _modules/data.bak_ to avoid overrides
-   used further in the example
- * Run puppet, creates _/etc/ntp.conf_ with ntp.org addresses
- * The _hiera\_include()_ function includes just _users::common_
+- Comment out lines 6-8 of [data/common.yaml](data/common.yaml#L6-8) to avoid overrides used further in the example
+- Run a `puppet apply` to create a */tmp/ntp.conf* file containing the two *pool.ntp.org* addresses
+- The *users::common* class should also be present in your catalog
 
-<pre>
-$ mv modules/data modules/data.bak
-$ puppet apply --config etc/puppet.conf site.pp
-notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/ensure: defined content as '{md5}7045121976147a932a66c7671939a9ad'
-notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+```shell
+$ sed -i '6,8 s/^/#/' data/common.yaml
+$ puppet apply site.pp --hiera_config=hiera.yaml --modulepath=modules
+Notice: Compiled catalog for node.corp.com in environment production in 0.04 seconds
+Notice: Adding users::common
+Notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+Notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/ensure: defined content as '{sha256}949c7247dbe0870258c921418cc8b270afcc57e1aa6f9d9933f306009ede60d0'
+Notice: Applied catalog in 0.02 seconds
 $ cat /tmp/ntp.conf
 server 1.pool.ntp.org
 server 2.pool.ntp.org
-</pre>
+```
 
 Site wide override data in _data::common_
 -----------------------------------------
 
- * Restore the _modules/data_ directory that has a class _data::common_ that declares site wide overrides
- * The _hiera_include()_ function includes just _users::common_
+- Remove the comments on lines 6-8 of [data/common.yaml](data/common.yaml#L6-8)
+- Run a `puppet apply` to update */tmp/ntp.conf* to contain the two *ntp.example.com* addresses
+- The *users::common* class should also be present in your catalog
 
-<pre>
-$ mv modules/data.bak modules/data
-$ puppet apply --config etc/puppet.conf site.pp
-notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{md5}7045121976147a932a66c7671939a9addc2' to '{md5}8f9039fe1989a278a0a8e1836acb8d23'
-notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+```shell
+$ sed -i '6,8 s/^#//' data/common.yaml
+$ puppet apply site.pp --hiera_config=hiera.yaml --modulepath=modules
+Notice: Compiled catalog for node.corp.com in environment production in 0.04 seconds
+Notice: Adding users::common
+Notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+Notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{sha256}949c7247dbe0870258c921418cc8b270afcc57e1aa6f9d9933f306009ede60d0' to '{sha256}28ced955a8ed9efd7514b2364fe378ba645ab947f26e8c0b4d84e8368f1257a0'
+Notice: Applied catalog in 0.02 seconds
 $ cat /tmp/ntp.conf
 server ntp1.example.com
 server ntp2.example.com
-</pre>
+```
 
 Fact driven overrides for location=dc1
 --------------------------------------
 
- * Set a fact location=dc1 that uses the YAML data in _etc/hieradb/dc1.yaml_ to override
- * Show that machines in dc2 would use site-wide defaults
- * The _hiera_include()_ function includes _users::common_ and _users::dc1_ as the data file for dc1 adds that
+- Override the location fact to `dc1` to demonstrate *data/dc1.yaml* overrides the *ntp::config::ntpservers* values in *data/common.yaml*
+- `dc1` nodes will
+  - have the *users::common* and *users::dc1* in their catalogs
+  - */tmp/ntp.conf* will contain the two *ntp.dc1.example.com* addresses
+- Show that the nodes in `dc2` would use the site-wide defaults
 
-<pre>
-$ FACTER_location=dc1 puppet apply --config etc/puppet.conf site.pp
-notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{md5}8f9039fe1989a278a0a8e1836acb8d23' to '{md5}074d0e2ac727f6cb9afe3345d574b578'
-notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
-notice: /Stage[main]/Users::Dc1/Notify[Adding users::dc1]/message: defined 'message' as 'Adding users::dc1'
+```shell
+$ FACTER_location=dc1 puppet apply site.pp --hiera_config=hiera.yaml --modulepath=modules
+Notice: Compiled catalog for node.corp.com in environment production in 0.04 seconds
+Notice: Adding users::dc1
+Notice: /Stage[main]/Users::Dc1/Notify[Adding users::dc1]/message: defined 'message' as 'Adding users::dc1'
+Notice: Adding users::common
+Notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+Notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{sha256}28ced955a8ed9efd7514b2364fe378ba645ab947f26e8c0b4d84e8368f1257a0' to '{sha256}39227f1cf8d09623d2e66b6622af2e8db01ab26f77a5a2e6d6e058d0977f369b'
+Notice: Applied catalog in 0.02 seconds
 $ cat /tmp/ntp.conf
 server ntp1.dc1.example.com
 server ntp2.dc1.example.com
-</pre>
+```
 
-Now simulate a machine in _dc2_, because there is no data for dc2 it uses the site wide defaults and
-does not include the _users::dc1_ class anymore
+Now simulate a machine in `dc2`, because there is no data for `dc2` it uses the site wide defaults and
+does not include the *users::dc1* class anymore
 
-<pre>
-$ FACTER_location=dc2 puppet apply --config etc/puppet.conf site.pp
-warning: Could not find class data::dc2 for nephilim.ml.org
-notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{md5}074d0e2ac727f6cb9afe3345d574b578' to '{md5}8f9039fe1989a278a0a8e1836acb8d23'
-notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+```shell
+$ FACTER_location=dc2 puppet apply site.pp --hiera_config=hiera.yaml --modulepath=modules
+Notice: Compiled catalog for node.corp.com in environment production in 0.04 seconds
+Notice: Adding users::common
+Notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
+Notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{sha256}39227f1cf8d09623d2e66b6622af2e8db01ab26f77a5a2e6d6e058d0977f369b' to '{sha256}28ced955a8ed9efd7514b2364fe378ba645ab947f26e8c0b4d84e8368f1257a0'
+Notice: Applied catalog in 0.02 seconds
 $ cat /tmp/ntp.conf
 server ntp1.example.com
 server ntp2.example.com
-</pre>
+```
 
-You could create override data in the following places for a machine in _location=dc2_, they will be searched in this order and the first one with data will match.
+You could create override data in the following places for a machine in *location=dc2*, they will be searched in this order and the first one with data will match.
 
- * file etc/hieradb/dc2.yaml
- * file etc/hieradb/common.yaml
- * class data::dc2
- * class data::production
- * class data::common
- * class ntp::config::data
- * class ntp::data
+- file data/dc2.yaml
+- file data/&lt;environment&gt;.yaml
+- file data/common.yaml
 
-In this example due to the presence of _common.yaml_ that declares _ntpservers_ the classes will never be searched, it will have precedence.
+In this example due to the presence of *common.yaml* that declares *ntpservers* the classes will never be searched, it will have precedence.

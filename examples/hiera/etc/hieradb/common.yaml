@@ -1,3 +1,0 @@
-classes:
-  - users::common
-  - ntp::config
