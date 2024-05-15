@@ -15,11 +15,20 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     value.is_a? Integer
   end
 
-  optional_commands :localadd => "lgroupadd", :localdelete => "lgroupdel", :localmodify => "lgroupmod"
+  optional_commands :localadd => "lgroupadd", :localdelete => "lgroupdel", :localmodify => "lgroupmod", :purgemember => "usermod"
 
-  has_feature :manages_local_users_and_groups, :manages_members if Puppet.features.libuser?
+  has_feature :manages_local_users_and_groups if Puppet.features.libuser?
+  has_feature :manages_members if Puppet.features.libuser? ||
+                                  (Puppet.runtime[:facter].value('os.name') == "Fedora" &&
+                                  Puppet.runtime[:facter].value('os.release.major').to_i >= 40)
 
-  options :members, :flag => '-M', :method => :mem
+  # Libuser's modify command 'lgroupmod' requires '-M' flag for member additions.
+  # 'groupmod' command requires the '-aU' flags for it.
+  if Puppet.features.libuser?
+    options :members, :flag => '-M', :method => :mem
+  else
+    options :members, :flag => '-aU', :method => :mem
+  end
 
   def exists?
     return !!localgid if @resource.forcelocal?
@@ -58,7 +67,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   def addcmd
-    if @resource.forcelocal?
+    # The localadd command (lgroupadd) must only be called when libuser is supported.
+    if Puppet.features.libuser? && @resource.forcelocal?
       cmd = [command(:localadd)]
       @custom_environment = Puppet::Util::Libuser.getenv
     else
@@ -86,7 +96,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   def modifycmd(param, value)
-    if @resource.forcelocal? || @resource[:members]
+    # The localmodify command (lgroupmod) must only be called when libuser is supported.
+    if Puppet.features.libuser? && (@resource.forcelocal? || @resource[:members])
       cmd = [command(:localmodify)]
       @custom_environment = Puppet::Util::Libuser.getenv
     else
@@ -109,7 +120,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   def deletecmd
-    if @resource.forcelocal?
+    # The localdelete command (lgroupdel) must only be called when libuser is supported.
+    if Puppet.features.libuser? && @resource.forcelocal?
       @custom_environment = Puppet::Util::Libuser.getenv
       [command(:localdelete), @resource[:name]]
     else
@@ -127,7 +139,16 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   end
 
   def purge_members
-    localmodify('-m', members_to_s(members), @resource.name)
+    # The groupadd provider doesn't have the ability currently to remove members from a group, libuser does.
+    # Use libuser's lgroupmod command to achieve purging members if libuser is supported.
+    # Otherwise use the 'usermod' command.
+    if Puppet.features.libuser?
+      localmodify('-m', members_to_s(members), @resource.name)
+    else
+      members.each do |member|
+        purgemember('-rG', @resource.name, member)
+      end
+    end
   end
 
   private
