@@ -96,7 +96,7 @@ server ntp2.example.com
 You could create override data in the following places for a machine in *location=dc2*, they will be searched in this order and the first one with data will match.
 
 - file data/dc2.yaml
-- file data/<environment>.yaml
+- file data/&lt;environment&gt;.yaml
 - file data/common.yaml
 
 In this example due to the presence of *common.yaml* that declares *ntpservers* the classes will never be searched, it will have precedence.
