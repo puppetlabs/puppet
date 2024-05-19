@@ -26,7 +26,9 @@ package_name = {'el'     => 'httpd',
 agents.each do |agent|
   platform = agent.platform.variant
 
-  if agent['platform'] =~ /(debian|ubuntu)/
+  if agent['platform'] =~ /ubuntu-24.04-amd64/
+    init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
+  elsif agent['platform'] =~ /(debian|ubuntu)/
     init_script_systemd = "/lib/systemd/system/#{package_name[platform]}.service"
   else
     init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
