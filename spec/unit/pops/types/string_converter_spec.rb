@@ -316,7 +316,6 @@ describe 'The string converter' do
       '%.1f'    => '18.0',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
-        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[aA]$/
         string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => fmt}
         expect(converter.convert(18, string_formats)).to eq(result)
       end
@@ -410,7 +409,6 @@ describe 'The string converter' do
       '%#B'     => '0B10010',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
-        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[-.014]*[aA]$/
         string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => fmt}
         expect(converter.convert(18.0, string_formats)).to eq(result)
       end
@@ -587,7 +585,6 @@ describe 'The string converter' do
       "%#Y"  => 'Y',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
-        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[aA]$/
         string_formats = { Puppet::Pops::Types::PBooleanType::DEFAULT => fmt}
         expect(converter.convert(true, string_formats)).to eq(result)
       end
@@ -634,7 +631,6 @@ describe 'The string converter' do
       "%#Y"  => 'N',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
-        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[aA]$/
         string_formats = { Puppet::Pops::Types::PBooleanType::DEFAULT => fmt}
         expect(converter.convert(false, string_formats)).to eq(result)
       end
