@@ -1,27 +1,9 @@
-# Rakefile for Puppet -*- ruby -*-
-RAKE_ROOT = File.dirname(__FILE__)
+# frozen_string_literal: true
 
-# We need access to the Puppet.version method
-$LOAD_PATH.unshift(File.expand_path("lib"))
-require 'puppet/version'
-
-$LOAD_PATH << File.join(RAKE_ROOT, 'tasks')
-
-begin
-  require 'rubygems'
-  require 'rubygems/package_task'
-rescue LoadError
-  # Users of older versions of Rake (0.8.7 for example) will not necessarily
-  # have rubygems installed, or the newer rubygems package_task for that
-  # matter.
-  require 'rake/packagetask'
-  require 'rake/gempackagetask'
-end
-
-require 'rake'
 require 'open3'
-
-Dir['tasks/**/*.rake'].each { |t| load t }
+require 'rake'
+require 'rubygems'
+require 'rubygems/package_task'
 
 if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
   begin
