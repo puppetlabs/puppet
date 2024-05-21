@@ -134,9 +134,6 @@ describe Puppet::FileSystem::PathPattern do
   end
 
   it 'globs wildcard patterns properly' do
-    # See PUP-11788 and https://github.com/jruby/jruby/issues/7836.
-    pending 'JRuby does not properly handle Dir.glob' if Puppet::Util::Platform.jruby?
-
     dir = tmpdir('globtest')
     create_file_in(dir, 'foo.pp')
     create_file_in(dir, 'foo.pp.pp')
