@@ -44,6 +44,10 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     end
 
     describe "on systems with libuser" do
+      before do
+        allow(Puppet.features).to receive(:libuser?).and_return(true)
+      end
+
       describe "with forcelocal=true" do
         before do
           described_class.has_feature(:manages_local_users_and_groups)
@@ -71,7 +75,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       describe "with a list of members" do
         before do
           members.each { |m| allow(Etc).to receive(:getpwnam).with(m).and_return(true) }
-
+          allow(provider).to receive(:flag).and_return('-M')
           described_class.has_feature(:manages_members)
           resource[:forcelocal] = false
           resource[:members] = members
@@ -92,6 +96,10 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     end
 
     describe "on systems with libuser" do
+      before do
+        allow(Puppet.features).to receive(:libuser?).and_return(true)
+      end
+
       describe "with forcelocal=false" do
         before do
           described_class.has_feature(:manages_local_users_and_groups)
@@ -156,6 +164,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
           before { resource[:auth_membership] = false }
 
           it "should add to the existing users" do
+            allow(provider).to receive(:flag).and_return('-M')
             new_members = ['user1', 'user2', 'user3', 'user4']
             allow(provider).to receive(:members).and_return(members)
             expect(provider).not_to receive(:localmodify).with('-m', members.join(','), 'mygroup')
@@ -236,6 +245,10 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
     describe "on systems with the libuser and forcelocal=false" do
       before do
+        allow(Puppet.features).to receive(:libuser?).and_return(true)
+      end
+
+      before do
         described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :false
       end
@@ -247,6 +260,10 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     end
 
     describe "on systems with the libuser and forcelocal=true" do
+      before do
+        allow(Puppet.features).to receive(:libuser?).and_return(true)
+      end
+
       before do
         described_class.has_feature(:manages_local_users_and_groups)
         resource[:forcelocal] = :true
