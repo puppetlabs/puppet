@@ -22,6 +22,19 @@ task(:gen_cert_fixtures) do
     end
   end
 
+  def generate(type, inter)
+    # Create an EC key and cert, issued by "Test CA Subauthority"
+    cert = ca.create_cert(type, inter[:cert], inter[:private_key], key_type: :type)
+    save(dir, "#{type}.pem", cert[:cert])
+    save(dir, "#{type}-key.pem", cert[:private_key])
+
+    # Create an encrypted version of the above private key.
+    save(dir, "encrypted-#{type}-key.pem", cert[:private_key]) do |x509|
+      # private key password was chosen at random
+      x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
+    end
+  end
+
   # This task generates a PKI consisting of a root CA, intermediate CA and
   # several leaf certs. A CRL is generated for each CA. The root CA CRL is
   # empty, while the intermediate CA CRL contains the revoked cert's serial
@@ -125,16 +138,9 @@ task(:gen_cert_fixtures) do
   save(dir, 'revoked.pem', revoked[:cert])
   save(dir, 'revoked-key.pem', revoked[:private_key])
 
-  # Create an EC key and cert, issued by "Test CA Subauthority"
-  ec = ca.create_cert('ec', inter[:cert], inter[:private_key], key_type: :ec)
-  save(dir, 'ec.pem', ec[:cert])
-  save(dir, 'ec-key.pem', ec[:private_key])
-
-  # Create an encrypted version of the above private key for host "ec"
-  save(dir, 'encrypted-ec-key.pem', ec[:private_key]) do |x509|
-    # private key password was chosen at random
-    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
-  end
+  # Generate certificate and key sets for various algorithms.
+  generate('ec', inter)
+  generate('ed25519', inter)
 
   # Update intermediate CRL now that we've revoked
   save(dir, 'intermediate-crl.pem', inter_crl)

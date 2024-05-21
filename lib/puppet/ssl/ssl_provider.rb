@@ -134,7 +134,7 @@ class Puppet::SSL::SSLProvider
   #
   # @param cacerts [Array<OpenSSL::X509::Certificate>] Array of trusted CA certs
   # @param crls [Array<OpenSSL::X509::CRL>] Array of CRLs
-  # @param private_key [OpenSSL::PKey::RSA, OpenSSL::PKey::EC] client's private key
+  # @param private_key [OpenSSL::PKey::PKey] client's private key
   # @param client_cert [OpenSSL::X509::Certificate] client's cert whose public
   #   key matches the `private_key`
   # @param revocation [:chain, :leaf, false] revocation mode
@@ -199,7 +199,7 @@ class Puppet::SSL::SSLProvider
   # of the private key, and that it hasn't been tampered with since.
   #
   # @param csr [OpenSSL::X509::Request] certificate signing request
-  # @param public_key [OpenSSL::PKey::RSA, OpenSSL::PKey::EC] public key
+  # @param public_key [OpenSSL::PKey::PKey] public key
   # @raise [Puppet::SSL:SSLError] The private_key for the given `public_key` was
   #   not used to sign the CSR.
   # @api private
@@ -281,7 +281,9 @@ class Puppet::SSL::SSLProvider
   def resolve_client_chain(store, client_cert, private_key)
     client_chain = verify_cert_with_store(store, client_cert)
 
-    if !private_key.is_a?(OpenSSL::PKey::RSA) && !private_key.is_a?(OpenSSL::PKey::EC)
+    if !private_key.is_a?(OpenSSL::PKey::RSA) && \
+       !private_key.is_a?(OpenSSL::PKey::EC) && \
+       !(private_key.is_a?(OpenSSL::PKey::PKey) && private_key.respond_to?(:oid) && private_key.oid == 'ED25519')
       raise Puppet::SSL::SSLError, _("Unsupported key '%{type}'") % { type: private_key.class.name }
     end
 
