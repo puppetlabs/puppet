@@ -131,7 +131,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
       # AIX will do the right validation to ensure numeric attributes
       # can't be set to non-numeric values, so no need for the extra clutter.
-      info[:attribute_to_property] = lambda do |value|
+      info[:attribute_to_property] = lambda do |value| # rubocop:disable Style/SymbolProc
         value.to_i
       end
 
