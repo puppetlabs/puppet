@@ -47,13 +47,41 @@ end
 
 namespace :pl_ci do
   desc 'Build puppet gems'
-  task :gem_build do
-    stdout, stderr, status = Open3.capture3('gem build puppet.gemspec --platform x86-mingw32 && gem build puppet.gemspec --platform x64-mingw32 && gem build puppet.gemspec --platform universal-darwin && gem build puppet.gemspec')
+  task :gem_build, [:gemspec] do |t, args|
+    args.with_defaults(gemspec: 'puppet.gemspec')
+    stdout, stderr, status = Open3.capture3(<<~END)
+      gem build #{args.gemspec} --platform x86-mingw32 && \
+      gem build #{args.gemspec} --platform x64-mingw32 && \
+      gem build #{args.gemspec} --platform universal-darwin && \
+      gem build #{args.gemspec}
+    END
     if !status.exitstatus.zero?
-      puts "Error building facter.gemspec \n#{stdout} \n#{stderr}"
+      puts "Error building #{args.gemspec}\n#{stdout} \n#{stderr}"
       exit(1)
     else
       puts stdout
+    end
+  end
+
+  desc 'build the nightly puppet gems'
+  task :nightly_gem_build do
+    # this is taken from `rake package:nightly_gem`
+    extended_dot_version = %x{git describe --tags --dirty --abbrev=7}.chomp.tr('-', '.')
+
+    # we must create tempfile in the same directory as puppetg.gemspec, since
+    # it uses __dir__ to determine which files to include
+    require 'tempfile'
+    Tempfile.create('gemspec', __dir__) do |dst|
+      File.open('puppet.gemspec', 'r') do |src|
+        src.readlines.each do |line|
+          if line.match?(/version\s*=\s*['"][0-9.]+['"]/)
+            line = "spec.version = '#{extended_dot_version}'"
+          end
+          dst.puts line
+        end
+      end
+      dst.flush
+      Rake::Task['pl_ci:gem_build'].invoke(dst.path)
     end
   end
 end
