@@ -4,18 +4,20 @@ require 'shellwords'
 
 class Puppet::ModuleTool::Tar::Gnu
   def unpack(sourcefile, destdir, owner)
-    sourcefile = File.expand_path(sourcefile)
+    safe_sourcefile = Shellwords.shellescape(File.expand_path(sourcefile))
     destdir = File.expand_path(destdir)
+    safe_destdir = Shellwords.shellescape(destdir)
 
-    Dir.chdir(destdir) do
-      Puppet::Util::Execution.execute("gzip -dc #{Shellwords.shellescape(sourcefile)} | tar xof -")
-      Puppet::Util::Execution.execute("find . -type d -exec chmod 755 {} +")
-      Puppet::Util::Execution.execute("find . -type f -exec chmod u+rw,g+r,a-st {} +")
-      Puppet::Util::Execution.execute("chown -R #{owner} .")
-    end
+    Puppet::Util::Execution.execute("gzip -dc #{safe_sourcefile} | tar --extract --no-same-owner --directory #{safe_destdir} --file -")
+    Puppet::Util::Execution.execute(['find', destdir, '-type', 'd', '-exec', 'chmod', '755', '{}', '+'])
+    Puppet::Util::Execution.execute(['find', destdir, '-type', 'f', '-exec', 'chmod', 'u+rw,g+r,a-st', '{}', '+'])
+    Puppet::Util::Execution.execute(['chown', '-R', owner, destdir])
   end
 
   def pack(sourcedir, destfile)
-    Puppet::Util::Execution.execute("tar cf - #{sourcedir} | gzip -c > #{File.basename(destfile)}")
+    safe_sourcedir = Shellwords.shellescape(sourcedir)
+    safe_destfile = Shellwords.shellescape(File.basename(destfile))
+
+    Puppet::Util::Execution.execute("tar cf - #{safe_sourcedir} | gzip -c > #{safe_destfile}")
   end
 end
