@@ -6,5 +6,3 @@ gem_rdoc_options:
   - --main
   - README.md
   - --line-numbers
-pre_tasks:
-  'package:apple': 'cfpropertylist'
