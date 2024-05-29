@@ -30,6 +30,7 @@ describe "directory environments" do
 
     it 'given an 8.3 style path on Windows, will config print an expanded path',
       :if => Puppet::Util::Platform.windows? do
+      pending("GH runners seem to have disabled 8.3 support")
 
       # ensure an 8.3 style path is set for environmentpath
       shortened = Puppet::Util::Windows::File.get_short_pathname(Puppet[:environmentpath])

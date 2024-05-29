@@ -38,6 +38,7 @@ describe Puppet::Node::Environment do
 
   it "should expand 8.3 paths on Windows when creating an environment",
     :if => Puppet::Util::Platform.windows? do
+    pending("GH runners seem to have disabled 8.3 support")
 
     # asking for short names only works on paths that exist
     base = Puppet::Util::Windows::File.get_short_pathname(tmpdir("env_modules"))
