@@ -908,6 +908,8 @@ describe "Puppet::FileSystem" do
         end
 
         it 'should expand a shortened path completely, unlike Ruby File.expand_path' do
+          pending("GH runners seem to have disabled 8.3 support")
+
           tmp_long_dir = tmpdir('super-long-thing-that-Windows-shortens')
           short_path = Puppet::Util::Windows::File.get_short_pathname(tmp_long_dir)
 
