@@ -203,6 +203,8 @@ describe Puppet::Util::Autoload do
     end
 
     it "autoloads from a directory whose ancestor is Windows 8.3", if: Puppet::Util::Platform.windows? do
+      pending("GH runners seem to have disabled 8.3 support")
+
       # File.expand_path will expand ~ in the last directory component only(!)
       # so create an ancestor directory with a long path
       dir = File.join(tmpdir('longpath'), 'short')
