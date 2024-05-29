@@ -55,7 +55,7 @@ jobs:
           Get-ChildItem Env: | % { Write-Output "$($_.Key): $($_.Value)"  }
           # list current OpenSSL install
           gem list openssl
-          ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"'
+          ruby -ropenssl -e 'puts "OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}"; puts "OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}"'
           Get-Content Gemfile.lock
           ruby -v
           gem --version
