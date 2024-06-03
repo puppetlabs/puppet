@@ -592,6 +592,14 @@ class Puppet::Provider
   # @return [void]
   # @api public
 
+  # @comment Document pre_resource_eval here as it does not exist anywhere else
+  # (called from transaction if implemented) @!method self.pre_resource_eval()
+  # @abstract A subclass may implement this - it is not implemented in the
+  # Provider class This method may be implemented by a provider in order to
+  # perform any setup actions needed, such as creating a handle. It will be
+  # called at the beginning of the transaction if the provider has implemented
+  # the method @return [void]
+
   # @comment Document post_resource_eval here as it does not exist anywhere else (called from transaction if implemented)
   # @!method self.post_resource_eval()
   # @since 3.4.0

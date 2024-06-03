@@ -420,6 +420,19 @@ describe Puppet::Transaction do
       transaction.evaluate
     end
 
+    it "should call ::pre_resource_eval on provider classes that support it" do
+      skip if Puppet::Util::Platform.windows?
+      selinux = double('selinux', is_selinux_enabled: true)
+      stub_const('Selinux', selinux)
+
+      resource = Puppet::Type.type(:file).new(:path => make_absolute("/tmp/foo"))
+      transaction = transaction_with_resource(resource)
+
+      expect(resource.provider.class).to receive(:pre_resource_eval)
+
+      transaction.evaluate
+    end
+
     it "should abort the transaction on failure" do
       expect(resource).to receive(:pre_run_check).and_raise(Puppet::Error, spec_exception)
 
