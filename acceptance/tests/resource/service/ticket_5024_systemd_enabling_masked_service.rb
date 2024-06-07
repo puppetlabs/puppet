@@ -25,13 +25,15 @@ package_name = {'el'     => 'httpd',
 
 agents.each do |agent|
   platform = agent.platform.variant
+  init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
 
-  if agent['platform'] =~ /ubuntu-24.04-amd64/
-    init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
-  elsif agent['platform'] =~ /(debian|ubuntu)/
+  if agent['platform'] =~ /(ubuntu)/
+    version = on(agent, facter('os.release.full')).stdout.chomp.to_i
+    if version < 24
+      init_script_systemd = "/lib/systemd/system/#{package_name[platform]}.service"
+    end
+  elsif agent['platform'] =~ /debian/
     init_script_systemd = "/lib/systemd/system/#{package_name[platform]}.service"
-  else
-    init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
   end
 
   symlink_systemd = "/etc/systemd/system/multi-user.target.wants/#{package_name[platform]}.service"
