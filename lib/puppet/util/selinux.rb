@@ -46,7 +46,6 @@ module Puppet::Util::SELinux
 
   # Retrieve and return the default context of the file.  If we don't have
   # SELinux support or if the SELinux call fails to file a default then return nil.
-  # @deprecated matchpathcon is a deprecated method, selabel_lookup is preferred
   def get_selinux_default_context(file, resource_ensure = nil)
     return nil unless selinux_support?
     # If the filesystem has no support for SELinux labels, return a default of nil
@@ -69,20 +68,11 @@ module Puppet::Util::SELinux
     end
 
     retval = Selinux.matchpathcon(file, mode)
-    retval == -1 ? nil : retval[1]
-  end
+    if retval == -1
+      return nil
+    end
 
-  def get_selinux_default_context_with_handle(file, handle)
-    return nil unless selinux_support?
-    # If the filesystem has no support for SELinux labels, return a default of nil
-    # instead of what selabel_lookup would return
-    return nil unless selinux_label_support?(file)
-
-    # Handle is needed for selabel_lookup
-    raise ArgumentError, _("Cannot get default context with nil handle") unless handle
-
-    retval = Selinux.selabel_lookup(handle, file, 0)
-    retval == -1 ? nil : retval[1]
+    retval[1]
   end
 
   # Take the full SELinux context returned from the tools and parse it

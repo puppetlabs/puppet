@@ -758,15 +758,15 @@ describe Puppet::Transaction do
       transaction.evaluate
     end
 
-    it "should call Selinux.selabel_close in case Selinux is enabled", :if => Puppet.features.posix? do
-      handle = double('selinux_handle')
-      selinux = class_double('selinux', is_selinux_enabled: 1, selabel_close: nil, selabel_open: handle, selabel_lookup: -1)
+    it "should call Selinux.matchpathcon_fini in case Selinux is enabled ", :if => Puppet.features.posix? do
+      selinux = double('selinux', is_selinux_enabled: true, matchpathcon_fini: nil)
       stub_const('Selinux', selinux)
-      stub_const('Selinux::SELABEL_CTX_FILE', 0)
+
       resource = Puppet::Type.type(:file).new(:path => make_absolute("/tmp/foo"))
       transaction = transaction_with_resource(resource)
 
-      expect(Selinux).to receive(:selabel_close).with(handle)
+      expect(Selinux).to receive(:matchpathcon_fini)
+      expect(Puppet::Util::SELinux).to receive(:selinux_support?).and_return(true)
 
       transaction.evaluate
     end
