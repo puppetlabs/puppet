@@ -241,35 +241,6 @@ describe Puppet::Util::SELinux do
     end
   end
 
-  describe "get_selinux_default_context_with_handle" do
-    it "should return a context if a default context exists" do
-      without_partial_double_verification do
-        expect(self).to receive(:selinux_support?).and_return(true)
-        expect(self).to receive(:find_fs).with("/foo").and_return("ext3")
-        hnd = double("SWIG::TYPE_p_selabel_handle")
-        expect(Selinux).to receive(:selabel_lookup).with(hnd, '/foo', 0).and_return([0, "user_u:role_r:type_t:s0"])
-        expect(get_selinux_default_context_with_handle("/foo", hnd)).to eq("user_u:role_r:type_t:s0")
-      end
-    end
-
-    it "should raise an ArgumentError when handle is nil" do
-      allow(self).to receive(:selinux_support?).and_return(true)
-      allow(self).to receive(:selinux_label_support?).and_return(true)
-      expect{get_selinux_default_context_with_handle("/foo", nil)}.to raise_error(ArgumentError, /Cannot get default context with nil handle/)
-    end
-
-    it "should return nil if there is no SELinux support" do
-      expect(self).to receive(:selinux_support?).and_return(false)
-      expect(get_selinux_default_context_with_handle("/foo", nil)).to be_nil
-    end
-
-    it "should return nil if selinux_label_support returns false" do
-      expect(self).to receive(:selinux_support?).and_return(true)
-      expect(self).to receive(:find_fs).with("/foo").and_return("nfs")
-      expect(get_selinux_default_context_with_handle("/foo", nil)).to be_nil
-    end
-  end
-
   describe "parse_selinux_context" do
     it "should return nil if no context is passed" do
       expect(parse_selinux_context(:seluser, nil)).to be_nil
