@@ -188,25 +188,6 @@ module Puppet::Util::Windows
       end
     end
 
-    ThreadProc = FFI::Function.new(:ulong,[:pointer]) do |lpParameter|
-      ste = FFI::MemoryPointer.new(SERVICE_TABLE_ENTRYW, 2)
-
-      s = SERVICE_TABLE_ENTRYW.new(ste[0])
-      s[:lpServiceName] = FFI::MemoryPointer.from_string('')
-      s[:lpServiceProc] = lpParameter
-
-      s = SERVICE_TABLE_ENTRYW.new(ste[1])
-      s[:lpServiceName] = nil
-      s[:lpServiceProc] = nil
-
-      # No service to step, no service handle, no ruby exceptions, just terminate the thread..
-      if !StartServiceCtrlDispatcherW(ste)
-        return 1
-      end
-
-      return 0
-    end
-
     # This is a shortcut for Daemon.new + Daemon#mainloop.
     #
     def self.mainloop
@@ -256,26 +237,28 @@ module Puppet::Util::Windows
         raise SystemCallError.new('CreateEvent', FFI.errno)
       end
 
-      hThread = CreateThread(nil, 0, ThreadProc, Service_Main, 0, nil)
+      hThread = Thread.new do
+        ste = FFI::MemoryPointer.new(SERVICE_TABLE_ENTRYW, 2)
 
-      if hThread == 0
-        raise SystemCallError.new('CreateThread', FFI.errno)
+        s = SERVICE_TABLE_ENTRYW.new(ste[0])
+        s[:lpServiceName] = FFI::MemoryPointer.from_string("")
+        s[:lpServiceProc] = Service_Main
+
+        s = SERVICE_TABLE_ENTRYW.new(ste[1])
+        s[:lpServiceName] = nil
+        s[:lpServiceProc] = nil
+
+        # No service to step, no service handle, no ruby exceptions, just terminate the thread..
+        StartServiceCtrlDispatcherW(ste)
       end
 
-      events = FFI::MemoryPointer.new(:pointer, 2)
-      events.put_pointer(0, FFI::Pointer.new(hThread))
-      events.put_pointer(FFI::Pointer.size, FFI::Pointer.new(@@hStartEvent))
-
-      while ((index = WaitForMultipleObjects(2, events, 0, 1000)) == WAIT_TIMEOUT) do
+      while (index = WaitForSingleObject(@@hStartEvent, 1000)) == WAIT_TIMEOUT
+        # The thread exited, so the show is off.
+        raise "Service_Main thread exited abnormally" unless hThread.alive?
       end
 
       if index == WAIT_FAILED
-        raise SystemCallError.new('WaitForMultipleObjects', FFI.errno)
-      end
-
-      # The thread exited, so the show is off.
-      if index == WAIT_OBJECT_0
-        raise "Service_Main thread exited abnormally"
+        raise SystemCallError.new("WaitForSingleObject", FFI.errno)
       end
 
       thr = Thread.new do
