@@ -546,6 +546,13 @@ Searching for "a"
         expect(run_lookup(lookup)).to eql("This is G from facts in facts hash")
       end
 
+      it 'looks up server facts' do
+        lookup.options[:node] = node
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['h'])
+        expect(run_lookup(lookup)).to eql("server version is #{Puppet.version}")
+      end
+
       describe 'when retrieving given facts' do
         before do
           lookup.options[:node] = node
