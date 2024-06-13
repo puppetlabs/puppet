@@ -323,7 +323,7 @@ module Puppet::Util::Execution
       unless options[:squelch]
         # if we opened a pipe, we need to clean it up.
         reader.close if reader
-        stdout.close! if Puppet::Util::Platform.windows?
+        stdout.close! if stdout && Puppet::Util::Platform.windows?
       end
     end
 

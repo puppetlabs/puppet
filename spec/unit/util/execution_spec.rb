@@ -834,6 +834,15 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
 
           Puppet::Util::Execution.execute('test command')
         end
+
+        it "should raise if it fails to create a Uniquefile for stdout" do
+          allow(Puppet::FileSystem::Uniquefile).to receive(:new)
+            .and_raise(Errno::ENOENT, 'C:\Users\ADMINI~1\AppData\Local\Temp\doesnotexist')
+
+          expect {
+            Puppet::Util::Execution.execute('test command')
+          }.to raise_error(Errno::ENOENT, 'No such file or directory - C:\Users\ADMINI~1\AppData\Local\Temp\doesnotexist')
+        end
       end
 
       it "should raise an error if failonfail is true and the child failed" do
