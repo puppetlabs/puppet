@@ -111,4 +111,19 @@ describe 'the regsubst function' do
     end
 
   end
+
+  context 'when using a Target of Type sensitive String' do
+    it 'should process it' do
+      expect(regsubst(Puppet::Pops::Types::PSensitiveType::Sensitive.new('very secret'), 'very', 'top')).to be_a(Puppet::Pops::Types::PSensitiveType::Sensitive)
+    end
+  end
+
+  context 'when using a Target of Type Array with mixed String and sensitive String' do
+    it 'should process it' do
+      my_array = ['very down', Puppet::Pops::Types::PSensitiveType::Sensitive.new('very secret')]
+      expect(regsubst(my_array, 'very', 'top')).to be_a(Array)
+      expect(regsubst(my_array, 'very', 'top')[0]).to eq('top down')
+      expect(regsubst(my_array, 'very', 'top')[1]).to  be_a(Puppet::Pops::Types::PSensitiveType::Sensitive)
+    end
+  end
 end
