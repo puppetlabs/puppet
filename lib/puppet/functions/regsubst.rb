@@ -32,7 +32,7 @@ Puppet::Functions.create_function(:regsubst) do
   #   $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
   #   ```
   dispatch :regsubst_string do
-    param          'Variant[Array[String],String]',       :target
+    param          'Variant[Array[Variant[String,Sensitive[String]]],Sensitive[Array[Variant[String,Sensitive[String]]]],Variant[String,Sensitive[String]]]', :target
     param          'String',                              :pattern
     param          'Variant[String,Hash[String,String]]', :replacement
     optional_param 'Optional[Pattern[/^[GEIM]*$/]]',      :flags
@@ -69,7 +69,7 @@ Puppet::Functions.create_function(:regsubst) do
   #   $x = regsubst($ipaddress, /([0-9]+)/, '<\\1>', 'G')
   #   ```
   dispatch :regsubst_regexp do
-    param          'Variant[Array[String],String]',       :target
+    param          'Variant[Array[Variant[String,Sensitive[String]]],Sensitive[Array[Variant[String,Sensitive[String]]]],Variant[String,Sensitive[String]]]', :target
     param          'Variant[Regexp,Type[Regexp]]',        :pattern
     param          'Variant[String,Hash[String,String]]', :replacement
     optional_param 'Pattern[/^G?$/]',                     :flags
@@ -97,7 +97,26 @@ Puppet::Functions.create_function(:regsubst) do
   end
 
   def inner_regsubst(target, re, replacement, op)
-    target.respond_to?(op) ? target.send(op, re, replacement) : target.collect { |e| e.send(op, re, replacement) }
+    if target.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive) && target.unwrap.is_a?(Array)
+      # this is a Sensitive Array
+      target = target.unwrap
+      target.map do |item|
+        inner_regsubst(item, re, replacement, op)
+      end
+    elsif target.is_a?(Array)
+      # this is an Array
+      target.map do |item|
+        inner_regsubst(item, re, replacement, op)
+      end
+    elsif target.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+      # this is a Sensitive
+      target = target.unwrap
+      target = target.respond_to?(op) ? target.send(op, re, replacement) : target.map { |e| e.send(op, re, replacement) }
+      Puppet::Pops::Types::PSensitiveType::Sensitive.new(target)
+    else
+      # this should be a String
+      target.respond_to?(op) ? target.send(op, re, replacement) : target.map { |e| e.send(op, re, replacement) }
+    end
   end
   private :inner_regsubst
 end
