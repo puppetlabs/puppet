@@ -83,6 +83,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
       custom_environment[:PATH] = windows_path_without_puppet_bin
     end
 
+    # This uses an unusual form of passing the command and args as [<cmd>, [<arg1>, <arg2>, ...]]
     execute(cmd, { :failonfail => true, :combine => true, :custom_environment => custom_environment })
   end
 
