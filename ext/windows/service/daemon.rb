@@ -155,6 +155,10 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     end
   end
 
+  # Parses runinterval.
+  #
+  # @param puppet_path [String] The file path for the Puppet executable.
+  # @return runinterval [Integer] How often to do a Puppet run, in seconds.
   def parse_runinterval(puppet_path)
     begin
       runinterval = %x(#{puppet_path} config --section agent --log_level notice print runinterval).to_i
