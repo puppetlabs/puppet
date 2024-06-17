@@ -20,5 +20,7 @@ ab: "%{hiera('a')} and %{hiera('b')}"
 
 g: "This is%{facts.cx} in facts hash"
 
+h: "server version is %{server_facts.serverversion}"
+
 lookup_options:
   a: first

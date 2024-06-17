@@ -3,6 +3,7 @@
 require_relative '../../puppet/application'
 require_relative '../../puppet/pops'
 require_relative '../../puppet/node'
+require_relative '../../puppet/node/server_facts'
 require_relative '../../puppet/parser/compiler'
 
 class Puppet::Application::Lookup < Puppet::Application
@@ -403,6 +404,7 @@ class Puppet::Application::Lookup < Puppet::Application
       end
     end
     node.environment = Puppet[:environment] if Puppet.settings.set_by_cli?(:environment)
+    node.add_server_facts(Puppet::Node::ServerFacts.load)
     Puppet[:code] = 'undef' unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
     if options[:node]
