@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency(%q<concurrent-ruby>, "~> 1.0")
   spec.add_runtime_dependency(%q<deep_merge>, "~> 1.0")
   spec.add_runtime_dependency(%q<scanf>, "~> 1.0")
+  spec.add_runtime_dependency(%q<getoptlong>, "~> 0.2.0")
 
   platform = spec.platform.to_s
   if platform == 'universal-darwin'
