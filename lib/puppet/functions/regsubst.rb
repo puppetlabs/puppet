@@ -20,13 +20,10 @@ Puppet::Functions.create_function(:regsubst) do
   #        - *M*         Multiline regexps
   #        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
   # @param encoding [Enum['N','E','S','U']]
-  #      Optional. How to handle multibyte characters when compiling the regexp (must not be used when pattern is a
-  #      precompiled regexp). A single-character string with the following values:
-  #        - *N*         None
-  #        - *E*         EUC
-  #        - *S*         SJIS
-  #        - *U*         UTF-8
+  #      Deprecated and ignored parameter, only here for compatibility.
   # @return [Array[String], String] The result of the substitution. Result type is the same as for the target parameter.
+  # @deprecated
+  #   This method has the optional encoding parameter, which is ignored.
   # @example Get the third octet from the node's IP address:
   #   ```puppet
   #   $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
@@ -56,13 +53,6 @@ Puppet::Functions.create_function(:regsubst) do
   #        - *I*         Ignore case in regexps
   #        - *M*         Multiline regexps
   #        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
-  # @param encoding [Enum['N','E','S','U']]
-  #      Optional. How to handle multibyte characters when compiling the regexp (must not be used when pattern is a
-  #      precompiled regexp). A single-character string with the following values:
-  #        - *N*         None
-  #        - *E*         EUC
-  #        - *S*         SJIS
-  #        - *U*         UTF-8
   # @return [Array[String], String] The result of the substitution. Result type is the same as for the target parameter.
   # @example Put angle brackets around each octet in the node's IP address:
   #   ```puppet
@@ -76,6 +66,13 @@ Puppet::Functions.create_function(:regsubst) do
   end
 
   def regsubst_string(target, pattern, replacement, flags = nil, encoding = nil)
+    if encoding
+      Puppet.warn_once(
+        'deprecations', 'regsubst_function_encoding',
+        _("The regsubst() function's encoding argument has been ignored since Ruby 1.9 and will be removed in a future release")
+      )
+    end
+
     re_flags = 0
     operation = :sub
     unless flags.nil?
@@ -88,7 +85,7 @@ Puppet::Functions.create_function(:regsubst) do
         end
       end
     end
-    inner_regsubst(target, Regexp.compile(pattern, re_flags, encoding), replacement, operation)
+    inner_regsubst(target, Regexp.compile(pattern, re_flags), replacement, operation)
   end
 
   def regsubst_regexp(target, pattern, replacement, flags = nil)
