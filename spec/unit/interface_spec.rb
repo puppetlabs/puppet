@@ -129,12 +129,22 @@ describe Puppet::Interface do
   describe 'when raising NoMethodErrors' do
     subject { described_class.new(:foo, '1.0.0') }
 
-    it 'includes the face name in the error message' do
-      expect { subject.boombaz }.to raise_error(NoMethodError, /#{subject.name}/)
-    end
+    if RUBY_VERSION.to_f >= 3.3
+      it 'includes the face name in the error message' do
+        expect { subject.boombaz }.to raise_error(NoMethodError, /for an instance of Puppet::Interface/)
+      end
 
-    it 'includes the face version in the error message' do
-      expect { subject.boombaz }.to raise_error(NoMethodError, /#{subject.version}/)
+      it 'includes the face version in the error message' do
+        expect { subject.boombaz }.to raise_error(NoMethodError, /for an instance of Puppet::Interface/)
+      end
+    else
+      it 'includes the face name in the error message' do
+        expect { subject.boombaz }.to raise_error(NoMethodError, /#{subject.name}/)
+      end
+
+      it 'includes the face version in the error message' do
+        expect { subject.boombaz }.to raise_error(NoMethodError, /#{subject.version}/)
+      end
     end
   end
 
