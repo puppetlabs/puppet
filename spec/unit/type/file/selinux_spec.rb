@@ -50,13 +50,16 @@ require 'spec_helper'
     end
 
     it "should handle no default gracefully" do
-      expect(@sel).to receive(:get_selinux_default_context).with(@path, :file).and_return(nil)
+      skip if Puppet::Util::Platform.windows?
+      expect(@sel).to receive(:get_selinux_default_context_with_handle).with(@path, nil).and_return(nil)
       expect(@sel.default).to be_nil
     end
 
-    it "should be able to detect matchpathcon defaults" do
+    it "should be able to detect default context on platforms other than Windows", unless: Puppet::Util::Platform.windows? do
       allow(@sel).to receive(:debug)
-      expect(@sel).to receive(:get_selinux_default_context).with(@path, :file).and_return("user_u:role_r:type_t:s0")
+      hnd = double("SWIG::TYPE_p_selabel_handle")
+      allow(@sel.provider.class).to receive(:selinux_handle).and_return(hnd)
+      expect(@sel).to receive(:get_selinux_default_context_with_handle).with(@path, hnd).and_return("user_u:role_r:type_t:s0")
       expectedresult = case param
         when :seluser; "user_u"
         when :selrole; "role_r"
@@ -64,6 +67,11 @@ require 'spec_helper'
         when :selrange; "s0"
       end
       expect(@sel.default).to eq(expectedresult)
+    end
+
+    it "returns nil default context on Windows", if: Puppet::Util::Platform.windows? do
+      expect(@sel).to receive(:retrieve_default_context)
+      expect(@sel.default).to be_nil
     end
 
     it "should return nil for defaults if selinux_ignore_defaults is true" do
