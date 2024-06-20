@@ -159,12 +159,19 @@ class WindowsDaemon < Puppet::Util::Windows::Daemon
     end
   end
 
+  # Parses runinterval.
+  #
+  # @param puppet_path [String] The file path for the Puppet executable.
+  # @return runinterval [Integer] How often to do a Puppet run, in seconds.
   def parse_runinterval(puppet_path)
     begin
-      runinterval = %x{ #{puppet_path} config --section agent --log_level notice print runinterval }.to_i
-      if runinterval == 0
+      runinterval = %x(#{puppet_path} config --section agent --log_level notice print runinterval).chomp
+      if runinterval == ''
         runinterval = 1800
         log_err("Failed to determine runinterval, defaulting to #{runinterval} seconds")
+      else
+        # Use Kernel#Integer because to_i will return 0 with non-numeric strings.
+        runinterval = Integer(runinterval)
       end
     rescue Exception => e
       log_exception(e)
