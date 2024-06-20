@@ -27,6 +27,8 @@ jobs:
           - {os: windows-2019, ruby: '3.0'}
 
     runs-on: ${{ matrix.cfg.os }}
+    env:
+      BUNDLE_SET: "without packaging documentation"
     steps:
       - name: Checkout current PR
         uses: actions/checkout@v4
@@ -35,12 +37,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.cfg.ruby }}
-
-      - name: Update rubygems and install gems
-        run: |
-          gem update --system 3.3.26 --silent --no-document
-          bundle config set without packaging documentation
-          bundle install --jobs 4 --retry 3
+          bundler-cache: true
 
       - name: Run tests on Windows
         if: runner.os == 'Windows'
