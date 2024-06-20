@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.7.0-22-g94d40bcaa1\n"
+"Project-Id-Version: Puppet automation framework 8.7.0-28-g32e8514386\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2024-06-18 00:21+0000\n"
-"PO-Revision-Date: 2024-06-18 00:21+0000\n"
+"POT-Creation-Date: 2024-06-20 20:51+0000\n"
+"PO-Revision-Date: 2024-06-20 20:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6238,23 +6238,23 @@ msgstr ""
 msgid "'%{exe}' is not executable"
 msgstr ""
 
-#: ../lib/puppet/provider/file/posix.rb:78
+#: ../lib/puppet/provider/file/posix.rb:92
 msgid "Apparently using negative UID (%{currentvalue}) on a platform that does not consistently handle them"
 msgstr ""
 
-#: ../lib/puppet/provider/file/posix.rb:96 ../lib/puppet/provider/file/windows.rb:48
+#: ../lib/puppet/provider/file/posix.rb:110 ../lib/puppet/provider/file/windows.rb:48
 msgid "Failed to set owner to '%{should}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/file/posix.rb:110
+#: ../lib/puppet/provider/file/posix.rb:124
 msgid "Apparently using negative GID (%{currentvalue}) on a platform that does not consistently handle them"
 msgstr ""
 
-#: ../lib/puppet/provider/file/posix.rb:128 ../lib/puppet/provider/file/windows.rb:60
+#: ../lib/puppet/provider/file/posix.rb:142 ../lib/puppet/provider/file/windows.rb:60
 msgid "Failed to set group to '%{should}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/file/posix.rb:144 ../lib/puppet/provider/file/windows.rb:77
+#: ../lib/puppet/provider/file/posix.rb:158 ../lib/puppet/provider/file/windows.rb:77
 msgid "failed to set mode %{mode} on %{path}: %{message}"
 msgstr ""
 
@@ -9149,31 +9149,35 @@ msgstr ""
 msgid "Caught exception %{klass}:%{error} retrying"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:88
+#: ../lib/puppet/util/selinux.rb:82
+msgid "Cannot get default context with nil handle"
+msgstr ""
+
+#: ../lib/puppet/util/selinux.rb:98
 msgid "Invalid context to parse: %{context}"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:101
+#: ../lib/puppet/util/selinux.rb:111
 msgid "Invalid SELinux parameter type"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:122
+#: ../lib/puppet/util/selinux.rb:132
 msgid "Can't set SELinux context on file unless the file already has some kind of context"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:136
+#: ../lib/puppet/util/selinux.rb:146
 msgid "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:147
+#: ../lib/puppet/util/selinux.rb:157
 msgid "Failed to set SELinux context %{context} on %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:200
+#: ../lib/puppet/util/selinux.rb:210
 msgid "Could not open SELinux category translation file %{path}."
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:288
+#: ../lib/puppet/util/selinux.rb:298
 msgid "got a relative path in SELinux find_fs: %{path}"
 msgstr ""
 
