@@ -1291,6 +1291,53 @@ describe Puppet::Type.type(:file) do
       end
     end
 
+    describe "source" do
+      it "should require file resource when specified with the source property" do
+        file = described_class.new(:path => File.expand_path("/foo"), :ensure => :file, :source => File.expand_path("/bar"))
+        source = described_class.new(:path => File.expand_path("/bar"), :ensure => :file)
+        catalog.add_resource file
+        catalog.add_resource source
+        reqs = file.autorequire
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(source)
+        expect(reqs[0].target).to eq(file)
+      end
+
+      it "should require file resource when specified with the source property as file: URI" do
+        file = described_class.new(:path => File.expand_path("/foo"), :ensure => :file, :source => "file://#{File.expand_path("/bar")}")
+        source = described_class.new(:path => File.expand_path("/bar"), :ensure => :file)
+        catalog.add_resource file
+        catalog.add_resource source
+        reqs = file.autorequire
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(source)
+        expect(reqs[0].target).to eq(file)
+      end
+
+      it "should require file resource when specified with the source property as an array" do
+        file = described_class.new(:path => File.expand_path("/foo"), :ensure => :file, :source => [File.expand_path("/bar")])
+        source = described_class.new(:path => File.expand_path("/bar"), :ensure => :file)
+        catalog.add_resource file
+        catalog.add_resource source
+        reqs = file.autorequire
+        expect(reqs.size).to eq(1)
+        expect(reqs[0].source).to eq(source)
+        expect(reqs[0].target).to eq(file)
+      end
+
+      it "should not require source if source is not local" do
+        file = described_class.new(:path => File.expand_path('/foo'), :ensure => :file, :source => 'puppet:///modules/nfs/conf')
+        catalog.add_resource file
+        expect(file.autorequire.size).to eq(0)
+      end
+
+      it "should not require source if source is not managed" do
+        file = described_class.new(:path => File.expand_path('/foo'), :ensure => :file, :source => File.expand_path('/bar'))
+        catalog.add_resource file
+        expect(file.autorequire.size).to eq(0)
+      end
+    end
+
     describe "directories" do
       it "should autorequire its parent directory" do
         dir = described_class.new(:path => File.dirname(path))
