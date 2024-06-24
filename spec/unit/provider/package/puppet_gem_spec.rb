@@ -20,42 +20,26 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     let(:provider_gem_cmd) { '/opt/puppetlabs/puppet/bin/gem' }
   end
 
-  custom_environment = {"HOME"=>ENV["HOME"]}
-  custom_environment['PKG_CONFIG_PATH'] = '/opt/puppetlabs/puppet/lib/pkgconfig'
-
-  let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => custom_environment} }
+  let(:execute_options) do
+    {
+      failonfail: true,
+      combine: true,
+      custom_environment: {
+        'HOME'=>ENV['HOME'],
+        'PKG_CONFIG_PATH' => '/opt/puppetlabs/puppet/lib/pkgconfig'
+      }
+    }
+  end
 
   before :each do
     resource.provider = provider
-    allow(described_class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
-    allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
-  end
-
-
-  describe '.windows_gemcmd' do
-    context 'when PUPPET_DIR is not set' do
-      before do
-        # allow(ENV).to receive(:fetch, anything).and_call_original
-        allow(ENV).to receive(:fetch).with('PUPPET_DIR', anything).and_return(nil)
-        allow(Gem).to receive(:default_bindir).and_return('default_gem_bin')
-      end
-
-      it 'uses Gem.default_bindir' do
-        expected_path = File.join('default_gem_bin', 'gem.bat')
-        expect(described_class.windows_gemcmd).to eql(expected_path)
-      end
+    if Puppet::Util::Platform.windows?
+      # provider is loaded before we can stub, so stub the class we're testing
+      allow(provider.class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
+    else
+      allow(provider.class).to receive(:which).with(provider_gem_cmd).and_return(provider_gem_cmd)
     end
-
-    context 'when PUPPET_DIR is set' do
-      before do
-        allow(ENV).to receive(:fetch).with('PUPPET_DIR', anything).and_return('puppet_dir')
-      end
-
-      it 'uses Gem.default_bindir' do
-        expected_path = File.join('puppet_dir', 'bin', 'gem.bat')
-        expect(described_class.windows_gemcmd).to eql(expected_path)
-      end
-    end
+    allow(File).to receive(:file?).with(provider_gem_cmd).and_return(true)
   end
 
   context "when installing" do
@@ -64,45 +48,43 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     end
 
     it "should use the path to the gem command" do
-      allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
-      expect(described_class).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, be_an(Array)], be_a(Hash)).and_return('')
       provider.install
     end
 
     it "should not append install_options by default" do
-      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{install --no-rdoc --no-ri myresource}).and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, %w{install --no-rdoc --no-ri myresource}], anything).and_return('')
       provider.install
     end
 
     it "should allow setting an install_options parameter" do
       resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{install --force --bindir=/usr/bin --no-rdoc --no-ri myresource}).and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, %w{install --force --bindir=/usr/bin --no-rdoc --no-ri myresource}], anything).and_return('')
       provider.install
     end
   end
 
   context "when uninstalling" do
     it "should use the path to the gem command" do
-      allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
-      expect(described_class).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, be_an(Array)], be_a(Hash)).and_return('')
       provider.uninstall
     end
 
     it "should not append uninstall_options by default" do
-      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource}).and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, %w{uninstall --executables --all myresource}], anything).and_return('')
       provider.uninstall
     end
 
     it "should allow setting an uninstall_options parameter" do
       resource[:uninstall_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource --force --bindir=/usr/bin}).and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, %w{uninstall --executables --all myresource --force --bindir=/usr/bin}], anything).and_return('')
       provider.uninstall
     end
 
     it 'should invalidate the rubygems cache' do
       gem_source = double('gem_source')
       allow(Puppet::Util::Autoload).to receive(:gem_source).and_return(gem_source)
-      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource}).and_return('')
+      expect(described_class).to receive(:execute).with([provider_gem_cmd, %w{uninstall --executables --all myresource}], anything).and_return('')
       expect(gem_source).to receive(:clear_paths)
       provider.uninstall
     end
@@ -125,5 +107,4 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
       it { is_expected.to be > 100 }
     end
   end
-
 end

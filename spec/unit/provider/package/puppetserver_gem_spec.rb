@@ -16,37 +16,37 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
 
   let(:provider_gem_cmd) { '/opt/puppetlabs/bin/puppetserver' }
 
-  custom_environment = { HOME: ENV['HOME'] }
-
-  let(:execute_options) { { failonfail: true, combine: true, custom_environment: custom_environment } }
+  let(:execute_options) do
+    { failonfail: true, combine: true, custom_environment: { 'HOME' => ENV['HOME'] } }
+  end
 
   before :each do
     resource.provider = provider
     allow(Puppet::Util).to receive(:which).with(provider_gem_cmd).and_return(provider_gem_cmd)
+    allow(File).to receive(:file?).with(provider_gem_cmd).and_return(true)
   end
 
   describe "#install" do
     it "uses the path to the gem command" do
-      allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
-      expect(Puppet::Util::Execution).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return('')
+      expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, be_an(Array)], be_a(Hash)).and_return('')
       provider.install
     end
 
     it "appends version if given" do
       resource[:ensure] = ['1.2.1']
-      expect(described_class).to receive(:puppetservercmd).with(%w{gem install -v 1.2.1 --no-document myresource}).and_return('')
+      expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem install -v 1.2.1 --no-document myresource}], anything).and_return('')
       provider.install
     end
 
     context "with install_options" do
       it "does not append the parameter by default" do
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem install --no-document myresource}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem install --no-document myresource}], anything).and_return('')
         provider.install
       end
 
       it "allows setting the parameter" do
         resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem install --force --bindir=/usr/bin --no-document myresource}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem install --force --bindir=/usr/bin --no-document myresource}], anything).and_return('')
         provider.install
       end
     end
@@ -54,19 +54,19 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
     context "with source" do
       it "correctly sets http source" do
         resource[:source] = 'http://rubygems.com'
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem install --no-document --source http://rubygems.com myresource}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem install --no-document --source http://rubygems.com myresource}], anything).and_return('')
         provider.install
       end
 
       it "correctly sets local file source" do
         resource[:source] = 'paint-2.2.0.gem'
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem install --no-document paint-2.2.0.gem}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem install --no-document paint-2.2.0.gem}], anything).and_return('')
         provider.install
       end
 
       it "correctly sets local file source with URI scheme" do
         resource[:source] = 'file:///root/paint-2.2.0.gem'
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem install --no-document /root/paint-2.2.0.gem}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem install --no-document /root/paint-2.2.0.gem}], anything).and_return('')
         provider.install
       end
 
@@ -84,20 +84,19 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
 
   describe "#uninstall" do
     it "uses the path to the gem command" do
-      allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
-      expect(Puppet::Util::Execution).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return('')
+      expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, be_an(Array)], be_a(Hash)).and_return('')
       provider.uninstall
     end
 
     context "with uninstall_options" do
       it "does not append the parameter by default" do
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem uninstall --executables --all myresource}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem uninstall --executables --all myresource}], anything).and_return('')
         provider.uninstall
       end
 
       it "allows setting the parameter" do
         resource[:uninstall_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-        expect(described_class).to receive(:puppetservercmd).with(%w{gem uninstall --executables --all myresource --force --bindir=/usr/bin}).and_return('')
+        expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem uninstall --executables --all myresource --force --bindir=/usr/bin}], anything).and_return('')
         provider.uninstall
       end
     end
@@ -106,14 +105,17 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
   describe ".gemlist" do
     context "listing installed packages" do
       it "uses the puppet_gem provider_command to list local gems" do
+        allow(Puppet::Type::Package::ProviderPuppet_gem).to receive(:provider_command).and_return('/opt/puppetlabs/puppet/bin/gem')
+        allow(described_class).to receive(:validate_command).with('/opt/puppetlabs/puppet/bin/gem')
+
         expected = { name: 'world_airports', provider: :puppetserver_gem, ensure: ['1.1.3'] }
-        expect(described_class).to receive(:execute_rubygems_list_command).with(['gem', 'list', '--local']).and_return(File.read(my_fixture('gem-list-local-packages')))
+        expect(Puppet::Util::Execution).to receive(:execute).with(['/opt/puppetlabs/puppet/bin/gem', %w[list --local]], anything).and_return(File.read(my_fixture('gem-list-local-packages')))
         expect(described_class.gemlist({ local: true })).to include(expected)
       end
     end
 
     it "appends the gem source if given" do
-      expect(described_class).to receive(:puppetservercmd).with(%w{gem list --remote --source https://rubygems.com}).and_return('')
+      expect(Puppet::Util::Execution).to receive(:execute).with([provider_gem_cmd, %w{gem list --remote --source https://rubygems.com}], anything).and_return('')
       described_class.gemlist({ source: 'https://rubygems.com' })
     end
   end

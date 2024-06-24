@@ -47,29 +47,15 @@ module Puppet
   end
 
   def self.default_basemodulepath
-    if Puppet::Util::Platform.windows?
-      path = ['$codedir/modules']
-      installdir = ENV.fetch("FACTER_env_windows_installdir", nil)
-      if installdir
-        path << "#{installdir}/puppet/modules"
-      end
-      path.join(File::PATH_SEPARATOR)
-    else
-      '$codedir/modules:/opt/puppetlabs/puppet/modules'
+    path = ['$codedir/modules']
+    if (run_mode_dir = Puppet.run_mode.common_module_dir)
+      path << run_mode_dir
     end
+    path.join(File::PATH_SEPARATOR)
   end
 
   def self.default_vendormoduledir
-    if Puppet::Util::Platform.windows?
-      installdir = ENV.fetch("FACTER_env_windows_installdir", nil)
-      if installdir
-        "#{installdir}\\puppet\\vendor_modules"
-      else
-        nil
-      end
-    else
-      '/opt/puppetlabs/puppet/vendor_modules'
-    end
+    Puppet.run_mode.vendor_module_dir
   end
 
   ############################################################################################
