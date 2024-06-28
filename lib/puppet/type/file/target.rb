@@ -44,22 +44,20 @@ module Puppet
 
       raise Puppet::Error, "Could not remove existing file" if Puppet::FileSystem.exist?(@resource[:path])
 
-      Dir.chdir(File.dirname(@resource[:path])) do
-        Puppet::Util::SUIDManager.asuser(@resource.asuser) do
-          mode = @resource.should(:mode)
-          if mode
-            Puppet::Util.withumask(0o00) do
-              Puppet::FileSystem.symlink(target, @resource[:path])
-            end
-          else
+      Puppet::Util::SUIDManager.asuser(@resource.asuser) do
+        mode = @resource.should(:mode)
+        if mode
+          Puppet::Util.withumask(0o00) do
             Puppet::FileSystem.symlink(target, @resource[:path])
           end
+        else
+          Puppet::FileSystem.symlink(target, @resource[:path])
         end
-
-        @resource.send(:property_fix)
-
-        :link_created
       end
+
+      @resource.send(:property_fix)
+
+      :link_created
     end
 
     def insync?(currentvalue)
