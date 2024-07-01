@@ -173,11 +173,7 @@ class Puppet::Application::Doc < Puppet::Application
 
     text += Puppet::Util::Reference.footer unless with_contents # We've only got one reference
 
-    if options[:mode] == :pdf
-      Puppet::Util::Reference.pdf(text)
-    else
-      puts text
-    end
+    puts text
 
     exit exit_code
   end
