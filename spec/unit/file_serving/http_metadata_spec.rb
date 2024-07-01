@@ -29,6 +29,14 @@ describe Puppet::FileServing::HttpMetadata do
       expect( metadata.mode ).to be_nil
     end
 
+    it "skips md5 checksum type in collect on FIPS enabled platforms" do
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
+      metadata = described_class.new(http_response)
+      allow(http_response).to receive(:[]).with('X-Checksum-Md5').and_return("c58989e9740a748de4f5054286faf99b")
+      metadata.collect
+      expect( metadata.checksum_type ).to eq :mtime
+    end
+
     context "with no Last-Modified or Content-MD5 header from the server" do
       it "should use :mtime as the checksum type, based on current time" do
         # Stringifying Time.now does some rounding; do so here so we don't end up with a time
