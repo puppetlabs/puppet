@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.7.0-28-g32e8514386\n"
+"Project-Id-Version: Puppet automation framework 8.7.0-45-g36bdec037a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2024-06-20 20:51+0000\n"
-"PO-Revision-Date: 2024-06-20 20:51+0000\n"
+"POT-Creation-Date: 2024-07-02 16:40+0000\n"
+"PO-Revision-Date: 2024-07-02 16:40+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -744,39 +744,39 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:170
+#: ../lib/puppet/defaults.rb:156
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:171
+#: ../lib/puppet/defaults.rb:157
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:569
+#: ../lib/puppet/defaults.rb:555
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:571
+#: ../lib/puppet/defaults.rb:557
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:765
+#: ../lib/puppet/defaults.rb:751
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:855
+#: ../lib/puppet/defaults.rb:841
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1114 ../lib/puppet/settings/enum_setting.rb:15 ../lib/puppet/settings/symbolic_enum_setting.rb:16
+#: ../lib/puppet/defaults.rb:1100 ../lib/puppet/settings/enum_setting.rb:15 ../lib/puppet/settings/symbolic_enum_setting.rb:16
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:2048
+#: ../lib/puppet/defaults.rb:2034
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -4239,7 +4239,7 @@ msgstr ""
 msgid "Can not use generators with '..' in them."
 msgstr ""
 
-#: ../lib/puppet/parser/functions/generate.rb:36
+#: ../lib/puppet/parser/functions/generate.rb:37
 msgid "Failed to execute generator %{generator}: %{detail}"
 msgstr ""
 
@@ -6462,27 +6462,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:125 ../lib/puppet/provider/package/puppetserver_gem.rb:64
+#: ../lib/puppet/provider/package/gem.rb:126 ../lib/puppet/provider/package/puppetserver_gem.rb:64
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:151
+#: ../lib/puppet/provider/package/gem.rb:152
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:228 ../lib/puppet/provider/package/puppetserver_gem.rb:96
+#: ../lib/puppet/provider/package/gem.rb:229 ../lib/puppet/provider/package/puppetserver_gem.rb:96
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:239 ../lib/puppet/provider/package/puppetserver_gem.rb:107
+#: ../lib/puppet/provider/package/gem.rb:240 ../lib/puppet/provider/package/puppetserver_gem.rb:107
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:255 ../lib/puppet/provider/package/puppetserver_gem.rb:118
+#: ../lib/puppet/provider/package/gem.rb:256 ../lib/puppet/provider/package/puppetserver_gem.rb:118
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:281 ../lib/puppet/provider/package/puppetserver_gem.rb:128
+#: ../lib/puppet/provider/package/gem.rb:282 ../lib/puppet/provider/package/puppetserver_gem.rb:128
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -9113,23 +9113,11 @@ msgstr ""
 msgid "Could not find section %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:36
-msgid "creating pdf"
-msgstr ""
-
-#: ../lib/puppet/util/reference.rb:38
-msgid "Could not find rst2latex"
-msgstr ""
-
-#: ../lib/puppet/util/reference.rb:52
-msgid "rst2latex failed"
-msgstr ""
-
-#: ../lib/puppet/util/reference.rb:94
+#: ../lib/puppet/util/reference.rb:65
 msgid "%{name} Reference"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:116
+#: ../lib/puppet/util/reference.rb:87
 msgid ""
 "\n"
 "\n"
