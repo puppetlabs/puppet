@@ -1,6 +1,11 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
+Puppet::Type.newtype(:test_deferred) do
+  newparam(:name)
+  newproperty(:value)
+end
+
 describe Puppet::Pops::Evaluator::DeferredResolver do
   include PuppetSpec::Compiler
 
@@ -46,4 +51,48 @@ describe Puppet::Pops::Evaluator::DeferredResolver do
     expect(deferred.resolve).to eq(["a", "b", "c"])
   end
 
+  it 'marks the parameter as sensitive when passed an array containing a Sensitive instance' do
+    catalog = compile_and_resolve_catalog(<<~END)
+      test_deferred { "deferred":
+        value => Deferred('join', [['a', Sensitive('b')], ':'])
+      }
+    END
+
+    resource = catalog.resource(:test_deferred, 'deferred')
+    expect(resource.sensitive_parameters).to eq([:value])
+  end
+
+  it 'marks the parameter as sensitive when passed a hash containing a Sensitive key' do
+    catalog = compile_and_resolve_catalog(<<~END)
+      test_deferred { "deferred":
+        value => Deferred('keys', [{Sensitive('key') => 'value'}])
+      }
+    END
+
+    resource = catalog.resource(:test_deferred, 'deferred')
+    expect(resource.sensitive_parameters).to eq([:value])
+  end
+
+  it 'marks the parameter as sensitive when passed a hash containing a Sensitive value' do
+    catalog = compile_and_resolve_catalog(<<~END)
+      test_deferred { "deferred":
+        value => Deferred('values', [{key => Sensitive('value')}])
+      }
+    END
+
+    resource = catalog.resource(:test_deferred, 'deferred')
+    expect(resource.sensitive_parameters).to eq([:value])
+  end
+
+  it 'marks the parameter as sensitive when passed a nested Deferred containing a Sensitive type' do
+    catalog = compile_and_resolve_catalog(<<~END)
+      $vars = {'token' => Deferred('new', [Sensitive, "hello"])}
+      test_deferred { "deferred":
+        value => Deferred('inline_epp', ['<%= $token %>', $vars])
+      }
+    END
+
+    resource = catalog.resource(:test_deferred, 'deferred')
+    expect(resource.sensitive_parameters).to eq([:value])
+  end
 end
