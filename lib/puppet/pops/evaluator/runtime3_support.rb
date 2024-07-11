@@ -443,12 +443,6 @@ module Runtime3Support
     resource.valid_parameter?(name)
   end
 
-  def resource_to_ptype(resource)
-    nil if resource.nil?
-    # inference returns the meta type since the 3x Resource is an alternate way to describe a type
-    type_calculator.infer(resource).type
-  end
-
   # This is the same type of "truth" as used in the current Puppet DSL.
   #
   def is_true?(value, o)

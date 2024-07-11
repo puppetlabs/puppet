@@ -76,7 +76,8 @@ module Runtime3ResourceSupport
   end
 
   def self.resource_to_ptype(resource)
-    nil if resource.nil?
+    return nil if resource.nil?
+
     # inference returns the meta type since the 3x Resource is an alternate way to describe a type
     Puppet::Pops::Types::TypeCalculator.singleton().infer(resource).type
   end
