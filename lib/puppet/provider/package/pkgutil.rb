@@ -115,11 +115,12 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   # Identify common types of pkgutil noise as it downloads catalogs etc
   def self.noise?(line)
-    true if line =~ /^#/
-    true if line =~ /^Checking integrity / # use_gpg
-    true if line =~ /^gpg: /               # gpg verification
-    true if line =~ /^=+> /                # catalog fetch
-    true if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
+    return true if line =~ /^#/
+    return true if line =~ /^Checking integrity / # use_gpg
+    return true if line =~ /^gpg: /               # gpg verification
+    return true if line =~ /^=+> /                # catalog fetch
+    return true if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
+
     false
   end
 
