@@ -88,16 +88,25 @@ class DeferredResolver
       overrides = {}
       r.parameters.each_pair do |k, v|
         resolved = resolve(v)
-        # If the value is instance of Sensitive - assign the unwrapped value
-        # and mark it as sensitive if not already marked
-        #
-        if resolved.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+        case resolved
+        when Puppet::Pops::Types::PSensitiveType::Sensitive
+          # If the resolved value is instance of Sensitive - assign the unwrapped value
+          # and mark it as sensitive if not already marked
+          #
           resolved = resolved.unwrap
           mark_sensitive_parameters(r, k)
-        # If the value is a DeferredValue and it has an argument of type PSensitiveType, mark it as sensitive
-        # The DeferredValue.resolve method will unwrap it during catalog application
-        elsif resolved.is_a?(Puppet::Pops::Evaluator::DeferredValue)
-          if v.arguments.any? {|arg| arg.is_a?(Puppet::Pops::Types::PSensitiveType)}
+
+        when Puppet::Pops::Evaluator::DeferredValue
+          # If the resolved value is a DeferredValue and it has an argument of type
+          # PSensitiveType, mark it as sensitive. Since DeferredValues can nest,
+          # we must walk all arguments, e.g. the DeferredValue may call the `epp`
+          # function, where one of its arguments is a DeferredValue to call the
+          # `vault:lookup` function.
+          #
+          # The DeferredValue.resolve method will unwrap the sensitive during
+          # catalog application
+          #
+          if contains_sensitive_args?(v)
             mark_sensitive_parameters(r, k)
           end
         end
@@ -106,6 +115,33 @@ class DeferredResolver
       r.parameters.merge!(overrides) unless overrides.empty?
     end
   end
+
+  # Return true if x contains an argument that is an instance of PSensitiveType:
+  #
+  #   Deferred('new', [Sensitive, 'password'])
+  #
+  # Or an instance of PSensitiveType::Sensitive:
+  #
+  #   Deferred('join', [['a', Sensitive('b')], ':'])
+  #
+  # Since deferred values can nest, descend into Arrays and Hash keys and values,
+  # short-circuiting when the first occurrence is found.
+  #
+  def contains_sensitive_args?(x)
+    case x
+    when @deferred_class
+      contains_sensitive_args?(x.arguments)
+    when Array
+      x.any? { |v| contains_sensitive_args?(v) }
+    when Hash
+      x.any? { |k, v| contains_sensitive_args?(k) || contains_sensitive_args?(v) }
+    when Puppet::Pops::Types::PSensitiveType, Puppet::Pops::Types::PSensitiveType::Sensitive
+      true
+    else
+      false
+    end
+  end
+  private :contains_sensitive_args?
 
   def mark_sensitive_parameters(r, k)
     unless r.sensitive_parameters.include?(k.to_sym)

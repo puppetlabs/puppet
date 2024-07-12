@@ -769,5 +769,20 @@ class amod::bad_type {
       }.to exit_with(0)
         .and output(/ensure: changed \[redacted\] to \[redacted\]/).to_stdout
     end
+
+    it "applies nested deferred sensitive file content" do
+      manifest = <<~END
+      $vars = {'token' => Deferred('new', [Sensitive, "hello"])}
+      file { '#{deferred_file}':
+        ensure => file,
+        content => Deferred('inline_epp', ['<%= $token %>', $vars])
+      }
+      END
+      apply.command_line.args = ['-e', manifest]
+      expect {
+        apply.run
+      }.to exit_with(0)
+        .and output(/ensure: changed \[redacted\] to \[redacted\]/).to_stdout
+    end
   end
 end
