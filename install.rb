@@ -36,14 +36,6 @@ require 'tempfile'
 require 'optparse'
 require 'ostruct'
 
-begin
-  require 'rdoc/rdoc'
-  $haverdoc = true
-rescue LoadError
-  puts "Missing rdoc; skipping documentation"
-  $haverdoc = false
-end
-
 PREREQS = %w{openssl facter cgi}
 MIN_FACTER_VERSION = 1.5
 
@@ -140,25 +132,9 @@ def prepare_installation
   InstallOptions.check_prereqs = true
   InstallOptions.batch_files = true
 
-  # Only try to do docs if we're sure they have rdoc
-  if $haverdoc
-    InstallOptions.rdoc  = true
-    InstallOptions.ri  = true
-  else
-    InstallOptions.rdoc  = false
-    InstallOptions.ri  = false
-  end
-
-
   ARGV.options do |opts|
     opts.banner = "Usage: #{File.basename($0)} [options]"
     opts.separator ""
-    opts.on('--[no-]rdoc', 'Prevents the creation of RDoc output.', 'Default on.') do |onrdoc|
-      InstallOptions.rdoc = onrdoc
-    end
-    opts.on('--[no-]ri', 'Prevents the creation of RI output.', 'Default off on mswin32.') do |onri|
-      InstallOptions.ri = onri
-    end
     opts.on('--[no-]configs', 'Prevents the installation of config files', 'Default off.') do |ontest|
       InstallOptions.configs = ontest
     end
@@ -205,14 +181,8 @@ def prepare_installation
       InstallOptions.batch_files = false
     end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
-      InstallOptions.rdoc    = false
-      InstallOptions.ri      = false
       InstallOptions.configs = true
-    end
-    opts.on('--full', 'Performs a full installation. All', 'optional installation steps are run.') do |full|
-      InstallOptions.rdoc    = true
-      InstallOptions.ri      = true
-      InstallOptions.configs = true
+      warn "--quick is deprecated. Use --configs"
     end
     opts.separator("")
     opts.on_tail('--help', "Shows this help text.") do
@@ -382,36 +352,6 @@ def join(basedir, dir)
 end
 
 ##
-# Build the rdoc documentation. Also, try to build the RI documentation.
-#
-def build_rdoc(files)
-  return unless $haverdoc
-  begin
-    r = RDoc::RDoc.new
-    r.document(["--main", "README", "--title", "Puppet -- Site Configuration Management", "--line-numbers"] + files)
-  rescue RDoc::RDocError => e
-    $stderr.puts e.message
-  rescue Exception => e
-    $stderr.puts "Couldn't build RDoc documentation\n#{e.message}"
-  end
-end
-
-def build_ri(files)
-  return unless $haverdoc
-  return if $osname == "windows"
-  begin
-    ri = RDoc::RDoc.new
-    #ri.document(["--ri-site", "--merge"] + files)
-    ri.document(["--ri-site"] + files)
-  rescue RDoc::RDocError => e
-    $stderr.puts e.message
-  rescue Exception => e
-    $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
-    $stderr.puts "Continuing with install..."
-  end
-end
-
-##
 # Install file(s) from ./bin to RbConfig::CONFIG['bindir']. Patch it on the way
 # to insert a #! line; on a Unix install, the command is named as expected
 # (e.g., bin/rdoc becomes rdoc); the shebang line handles running it. Under
@@ -476,8 +416,6 @@ FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
   configs = glob(%w{conf/puppet.conf conf/hiera.yaml})
   bins  = glob(%w{bin/*})
-  #rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
-  #ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
   man   = glob(%w{man/man[0-9]/*})
   libs  = glob(%w{lib/**/*})
   locales = glob(%w{locales/**/*})
@@ -488,8 +426,6 @@ FileUtils.cd File.dirname(__FILE__) do
     windows_bins = glob(%w{ext/windows/*bat})
   end
 
-  #build_rdoc(rdoc) if InstallOptions.rdoc
-  #build_ri(ri) if InstallOptions.ri
   do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
   do_bins(bins, InstallOptions.bin_dir)
   do_bins(windows_bins, InstallOptions.bin_dir, 'ext/windows/') if $osname == "windows" && InstallOptions.batch_files
