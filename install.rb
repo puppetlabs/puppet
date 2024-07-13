@@ -298,10 +298,6 @@ def prepare_installation
   # This is the new way forward
   if not InstallOptions.destdir.nil?
     destdir = InstallOptions.destdir
-  # To be deprecated once people move over to using --destdir option
-  elsif not ENV['DESTDIR'].nil?
-    destdir = ENV['DESTDIR']
-    warn "DESTDIR is deprecated. Use --destdir instead."
   else
     destdir = ''
   end
