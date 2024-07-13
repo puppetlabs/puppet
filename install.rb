@@ -193,9 +193,6 @@ def prepare_installation
     opts.parse!
   end
 
-  version = [RbConfig::CONFIG["MAJOR"], RbConfig::CONFIG["MINOR"]].join(".")
-  libdir = File.join(RbConfig::CONFIG["libdir"], "ruby", version)
-
   # Mac OS X 10.5 and higher declare bindir
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
   # which is not generally where people expect executables to be installed
@@ -282,7 +279,8 @@ def prepare_installation
     if sitelibdir.nil?
       sitelibdir = $LOAD_PATH.find { |x| x =~ /site_ruby/ }
       if sitelibdir.nil?
-        sitelibdir = File.join(libdir, "site_ruby")
+        version = [RbConfig::CONFIG["MAJOR"], RbConfig::CONFIG["MINOR"]].join(".")
+        sitelibdir = File.join(RbConfig::CONFIG["libdir"], "ruby", version, "site_ruby")
       elsif sitelibdir !~ Regexp.quote(version)
         sitelibdir = File.join(sitelibdir, version)
       end
@@ -328,7 +326,6 @@ def prepare_installation
   InstallOptions.codedir = codedir
   InstallOptions.config_dir = configdir
   InstallOptions.bin_dir = bindir
-  InstallOptions.lib_dir = libdir
   InstallOptions.man_dir = mandir
   InstallOptions.var_dir = vardir
   InstallOptions.public_dir = publicdir
