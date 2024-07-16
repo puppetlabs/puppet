@@ -161,7 +161,6 @@ class Puppet::Daemon
     reparse_run = Puppet::Scheduler.create_job(Puppet[:filetimeout]) do
       Puppet.settings.reparse_config_files
       agent_run.run_interval = Puppet[:runinterval]
-      agent_run.splay_limit = Puppet[:splaylimit] if Puppet[:splay]
       if Puppet[:filetimeout] == 0
         reparse_run.disable
       else

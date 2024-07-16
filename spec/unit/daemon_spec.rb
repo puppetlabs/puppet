@@ -86,18 +86,6 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
       daemon.start
       expect(scheduler.jobs[0]).not_to be_enabled
     end
-
-    it "recalculates splay if splaylimit changes" do
-      # Set file timeout so the daemon reparses
-      Puppet[:filetimeout] = 1
-      Puppet[:splay] = true
-      allow(agent).to receive(:run)
-      daemon.start
-      first_splay = scheduler.jobs[1].splay
-      allow(Kernel).to receive(:rand).and_return(1738)
-      scheduler.jobs[0].run(Time.now)
-      expect(scheduler.jobs[1].splay).to_not eq(first_splay)
-    end
   end
 
   describe "when stopping" do
