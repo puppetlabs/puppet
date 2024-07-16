@@ -23,15 +23,6 @@ module Puppet::Scheduler
       end
     end
 
-    # Recalculates splay.
-    #
-    # @param splay_limit [Integer] the maximum time (in seconds) to delay before an agent's first run.
-    # @return @splay [Integer] a random integer less than or equal to the splay limit that represents the seconds to
-    # delay before next agent run.
-    def splay_limit=(splay_limit)
-      @splay = calculate_splay(splay_limit)
-    end
-
     private
 
     def calculate_splay(limit)
