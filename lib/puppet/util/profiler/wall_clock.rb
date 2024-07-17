@@ -21,11 +21,11 @@ class Puppet::Util::Profiler::WallClock < Puppet::Util::Profiler::Logging
     FOUR_DECIMAL_DIGITS = '%0.4f'
 
     def initialize
-      @start = Time.now
+      @start = Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second)
     end
 
     def stop
-      @time = Time.now - @start
+      @time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second) - @start
       @time
     end
 
