@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'hiera/puppet_function'
+
 # Performs a standard priority lookup of the hierarchy and returns the most specific value
 # for a given key. The returned value can be any type of data.
 #
