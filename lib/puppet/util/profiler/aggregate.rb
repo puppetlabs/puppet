@@ -72,11 +72,11 @@ class Puppet::Util::Profiler::Aggregate < Puppet::Util::Profiler::WallClock
 
   class Timer
     def initialize
-      @start = Time.now
+      @start = Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second)
     end
 
     def stop
-      Time.now - @start
+      Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_second) - @start
     end
   end
 end
