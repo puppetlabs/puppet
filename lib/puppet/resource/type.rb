@@ -33,6 +33,16 @@ class Puppet::Resource::Type
   DOUBLE_COLON = '::'
   EMPTY_ARRAY = [].freeze
 
+  LOOKAROUND_OPERATORS = {
+    "(" => 'LP',
+    "?" => "QU",
+    "<" => "LT",
+    ">" => "GT",
+    "!" => "EX",
+    "=" => "EQ",
+    ")" => 'RP'
+  }.freeze
+
   attr_accessor :file, :line, :doc, :code, :parent, :resource_type_collection, :override
   attr_reader :namespace, :arguments, :behaves_like, :module_name
 
@@ -196,7 +206,11 @@ class Puppet::Resource::Type
 
   def name
     if type == :node && name_is_regex?
-      "__node_regexp__#{@name.source.downcase.gsub(/[^-\w:.]/, '').sub(/^\.+/, '')}"
+      # Normalize lookarround regex patthern
+      internal_name = @name.source.downcase.gsub(/\(\?[^)]*\)/) do |str|
+        str.gsub(/./) { |ch| LOOKAROUND_OPERATORS[ch] || ch }
+      end
+      "__node_regexp__#{internal_name.gsub(/[^-\w:.]/, '').sub(/^\.+/, '')}"
     else
       @name
     end

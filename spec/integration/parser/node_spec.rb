@@ -85,6 +85,15 @@ describe 'node statements' do
       end.not_to raise_error
     end
 
+    it 'does not raise an error with 2 regex node names are the same due to lookarround pattern' do
+      expect do
+        compile_to_catalog(<<-MANIFEST, Puppet::Node.new("async"))
+        node /(?<!a)sync/ { }
+        node /async/ { }
+        MANIFEST
+      end.not_to raise_error
+    end
+
     it 'errors when two nodes with regexes collide after some regex syntax is removed' do
       expect do
         compile_to_catalog(<<-MANIFEST)
