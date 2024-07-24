@@ -557,7 +557,7 @@
 # @example Simple Conversion to String specifying the format for the given value directly
 #
 # ```puppet
-# $str = String(10, "%#x")    # produces '0x10'
+# $str = String(10, "%#x")    # produces '0xa'
 # $str = String([10], "%(a")  # produces '("10")'
 # ```
 #

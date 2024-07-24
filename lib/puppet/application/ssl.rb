@@ -57,13 +57,13 @@ class Puppet::Application::Ssl < Puppet::Application
       * submit_request:
         Generate a certificate signing request (CSR) and submit it to the CA. If
         a private and public key pair already exist, they will be used to generate
-        the CSR. Otherwise a new key pair will be generated. If a CSR has already
+        the CSR. Otherwise, a new key pair will be generated. If a CSR has already
         been submitted with the given `certname`, then the operation will fail.
 
       * generate_request:
-        Generate a certificate signing request (CSR). If
-        a private and public key pair already exist, they will be used to generate
-        the CSR. Otherwise a new key pair will be generated.
+        Generate a certificate signing request (CSR). If a private and public key
+        pair exist, they will be used to generate the CSR. Otherwise a new key
+        pair will be generated.
 
       * download_cert:
         Download a certificate for this host. If the current private key matches

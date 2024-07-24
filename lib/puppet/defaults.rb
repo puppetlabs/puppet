@@ -161,8 +161,9 @@ module Puppet
     :skip_logging_catalog_request_destination => {
       :default => false,
       :type    => :boolean,
-      :desc    => "If you wish to suppress the notice of which compiler supplied the
-        catalog",
+      :desc    => "Disables \"notice\" level messages specifying which server the
+        agent requests a catalog from and which server actually handles
+        the request.",
     },
     :merge_dependency_warnings => {
       :default => false,

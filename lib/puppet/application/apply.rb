@@ -58,6 +58,11 @@ class Puppet::Application::Apply < Puppet::Application
         [--catalog <catalog>] [--write-catalog-summary] <file>
 
 
+      EXAMPLE
+      -------
+          $ puppet apply -e 'notify { "hello world": }'
+
+
       DESCRIPTION
       -----------
       This is the standalone puppet execution tool; use it to apply
