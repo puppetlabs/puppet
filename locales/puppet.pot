@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.7.0-45-g36bdec037a\n"
+"Project-Id-Version: Puppet automation framework 8.8.0-16-g7080b6a57b\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2024-07-02 16:40+0000\n"
-"PO-Revision-Date: 2024-07-02 16:40+0000\n"
+"POT-Creation-Date: 2024-07-29 23:51+0000\n"
+"PO-Revision-Date: 2024-07-29 23:51+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -792,7 +792,15 @@ msgstr ""
 msgid "Compile, save, view, and convert catalogs."
 msgstr ""
 
-#: ../lib/puppet/face/catalog.rb:89
+#: ../lib/puppet/face/catalog.rb:29
+msgid "Retrieve the catalog for the node from which the comamand is run."
+msgstr ""
+
+#: ../lib/puppet/face/catalog.rb:32
+msgid "Not yet implemented for the CLI; facts will be collected internally."
+msgstr ""
+
+#: ../lib/puppet/face/catalog.rb:103
 msgid "Compile a catalog."
 msgstr ""
 
@@ -2049,11 +2057,11 @@ msgstr ""
 msgid "'eyaml_lookup_key': one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this lookup_key function"
 msgstr ""
 
-#: ../lib/puppet/functions/eyaml_lookup_key.rb:54 ../lib/puppet/functions/yaml_data.rb:29
+#: ../lib/puppet/functions/eyaml_lookup_key.rb:54 ../lib/puppet/functions/yaml_data.rb:30
 msgid "%{path}: file does not contain a valid yaml hash"
 msgstr ""
 
-#: ../lib/puppet/functions/eyaml_lookup_key.rb:62 ../lib/puppet/functions/yaml_data.rb:37
+#: ../lib/puppet/functions/eyaml_lookup_key.rb:62 ../lib/puppet/functions/yaml_data.rb:38
 msgid "Unable to parse %{message}"
 msgstr ""
 
@@ -4591,7 +4599,7 @@ msgstr ""
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:24 ../lib/puppet/pops/evaluator/runtime3_support.rb:24 ../lib/puppet/pops/evaluator/runtime3_support.rb:525
+#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:24 ../lib/puppet/pops/evaluator/runtime3_support.rb:24 ../lib/puppet/pops/evaluator/runtime3_support.rb:519
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
@@ -6438,7 +6446,7 @@ msgstr ""
 msgid "See /var/pkg-get/admin-fullauto"
 msgstr ""
 
-#: ../lib/puppet/provider/package/blastwave.rb:81 ../lib/puppet/provider/package/pkgutil.rb:75 ../lib/puppet/provider/package/pkgutil.rb:147
+#: ../lib/puppet/provider/package/blastwave.rb:81 ../lib/puppet/provider/package/pkgutil.rb:75 ../lib/puppet/provider/package/pkgutil.rb:148
 msgid "Cannot match %{line}"
 msgstr ""
 
