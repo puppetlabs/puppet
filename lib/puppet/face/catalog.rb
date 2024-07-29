@@ -25,13 +25,27 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
   deactivate_action(:destroy)
   deactivate_action(:search)
-  find = get_action(:find)
-  find.summary "Retrieve the catalog for the node from which the command is run."
-  find.arguments "<certname>"
-  find.returns <<-'EOT'
-    A serialized catalog. When used from the Ruby API, returns a
-    Puppet::Resource::Catalog object.
-  EOT
+  action(:find) do
+    summary _("Retrieve the catalog for the node from which the comamand is run.")
+    arguments "<certname>, <facts>"
+    option("--facts_for_catalog") do
+      summary _("Not yet implemented for the CLI; facts will be collected internally.")
+    end
+    returns <<-'EOT'
+      A serialized catalog. When used from the Ruby API, returns a
+      Puppet::Resource::Catalog object.
+    EOT
+
+    when_invoked do |*args|
+      # Default the key to Puppet[:certname] if none is supplied
+      if args.length == 1
+        key = Puppet[:certname]
+      else
+        key = args.shift
+      end
+      call_indirection_method :find, key, args.first
+    end
+  end
 
   action(:apply) do
     summary "Find and apply a catalog."
@@ -135,9 +149,11 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     when_invoked do |_options|
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
       Puppet::Resource::Catalog.indirection.cache_class = nil
+      facts = Puppet::Face[:facts, '0.0.1'].find(Puppet[:certname])
       catalog = nil
       retrieval_duration = thinmark do
-        catalog = Puppet::Face[:catalog, '0.0.1'].find(Puppet[:certname])
+        catalog = Puppet::Face[:catalog, '0.0.1'].find(Puppet[:certname],
+                                                       { facts_for_catalog: facts })
       end
       catalog.retrieval_duration = retrieval_duration
       catalog.write_class_file
