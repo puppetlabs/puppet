@@ -51,7 +51,7 @@ require 'spec_helper'
 
     it "should handle no default gracefully" do
       skip if Puppet::Util::Platform.windows?
-      expect(@sel).to receive(:get_selinux_default_context_with_handle).with(@path, nil).and_return(nil)
+      expect(@sel).to receive(:get_selinux_default_context_with_handle).with(@path, nil, :file).and_return(nil)
       expect(@sel.default).to be_nil
     end
 
@@ -59,7 +59,7 @@ require 'spec_helper'
       allow(@sel).to receive(:debug)
       hnd = double("SWIG::TYPE_p_selabel_handle")
       allow(@sel.provider.class).to receive(:selinux_handle).and_return(hnd)
-      expect(@sel).to receive(:get_selinux_default_context_with_handle).with(@path, hnd).and_return("user_u:role_r:type_t:s0")
+      expect(@sel).to receive(:get_selinux_default_context_with_handle).with(@path, hnd, :file).and_return("user_u:role_r:type_t:s0")
       expectedresult = case param
         when :seluser; "user_u"
         when :selrole; "role_r"
