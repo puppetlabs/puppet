@@ -252,6 +252,93 @@ describe Puppet::Util::SELinux do
       end
     end
 
+    it "should return nil when permission denied errors are encountered" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 0).and_return(-1)
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::EACCES, "/root/chuj")
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd)).to be_nil
+      end
+    end
+
+    it "should return nil when no such file or directory errors are encountered and resource_ensure is unset" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_lookup).with(hnd, "/root/chuj", 0).and_return(-1)
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd)).to be_nil
+      end
+    end
+
+    it "should pass through lstat mode when file exists" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        fstat = double("File::Stat", :mode => 16384)
+        expect(Selinux).to receive(:selabel_lookup).with(hnd,  "/root/chuj", fstat.mode).and_return([0, "user_u:role_r:type_t:s0"])
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_return(fstat)
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd)).to eq("user_u:role_r:type_t:s0")
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd, :file)).to eq("user_u:role_r:type_t:s0")
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to file" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_lookup).with(hnd,  "/root/chuj", 32768).and_return(-1)
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd, :present)).to be_nil
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd, :file)).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to dir" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_lookup).with("/root/chuj", 16384).and_return(-1)
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd, :directory)).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to link" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_lookup).with("/root/chuj", 40960).and_return(-1)
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd, :link)).to be_nil
+      end
+    end
+
+    it "should determine mode based on resource ensure when set to unknown" do
+      without_partial_double_verification do
+        expect(self).to receive(:selinux_support?).and_return(true)
+        expect(self).to receive(:selinux_label_support?).and_return(true)
+        hnd = double("SWIG::TYPE_p_selabel_handle")
+        expect(Selinux).to receive(:selabel_lookup).with("/root/chuj", 0).and_return(-1)
+        expect(self).to receive(:file_lstat).with("/root/chuj").and_raise(Errno::ENOENT, "/root/chuj")
+
+        expect(get_selinux_default_context_with_handle("/root/chuj", hnd, "unknown")).to be_nil
+      end
+    end
+
     it "should raise an ArgumentError when handle is nil" do
       allow(self).to receive(:selinux_support?).and_return(true)
       allow(self).to receive(:selinux_label_support?).and_return(true)
