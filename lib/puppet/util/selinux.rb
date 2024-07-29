@@ -72,7 +72,7 @@ module Puppet::Util::SELinux
     retval == -1 ? nil : retval[1]
   end
 
-  def get_selinux_default_context_with_handle(file, handle)
+  def get_selinux_default_context_with_handle(file, handle, resource_ensure = nil)
     return nil unless selinux_support?
     # If the filesystem has no support for SELinux labels, return a default of nil
     # instead of what selabel_lookup would return
@@ -81,7 +81,22 @@ module Puppet::Util::SELinux
     # Handle is needed for selabel_lookup
     raise ArgumentError, _("Cannot get default context with nil handle") unless handle
 
-    retval = Selinux.selabel_lookup(handle, file, 0)
+    # If the file exists we should pass the mode to selabel_lookup for the most specific
+    # matching.  If not, we can pass a mode of 0.
+    begin
+      filestat = file_lstat(file)
+      mode = filestat.mode
+    rescue Errno::EACCES
+      mode = 0
+    rescue Errno::ENOENT
+      if resource_ensure
+        mode = get_create_mode(resource_ensure)
+      else
+        mode = 0
+      end
+    end
+
+    retval = Selinux.selabel_lookup(handle, file, mode)
     retval == -1 ? nil : retval[1]
   end
 
