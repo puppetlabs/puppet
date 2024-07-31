@@ -113,17 +113,20 @@ Nothing\.
 When used from the Ruby API, this action has a side effect of leaving Puppet::Resource::Catalog\.indirection\.terminus_class set to yaml\. The terminus must be explicitly re\-set for subsequent catalog actions\.
 .
 .TP
-\fBfind\fR \- Retrieve the catalog for the node from which the command is run\.
+\fBfind\fR \- Retrieve the catalog for the node from which the comamand is run\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet catalog find [\-\-terminus _TERMINUS] \fIcertname\fR
+puppet catalog find [\-\-terminus _TERMINUS] [\-\-facts_for_catalog] \fIcertname\fR, \fIfacts\fR
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-Retrieve the catalog for the node from which the command is run\.
+Retrieve the catalog for the node from which the comamand is run\.
+.
+.IP
+\fBOPTIONS\fR \fI\-\-facts_for_catalog\fR \- Not yet implemented for the CLI; facts will be collected internally\.
 .
 .IP
 \fBRETURNS\fR
