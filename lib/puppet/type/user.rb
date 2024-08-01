@@ -231,7 +231,7 @@ module Puppet
         * OS X 10.8 and higher use salted SHA512 PBKDF2 hashes. When managing passwords
           on these systems, the `salt` and `iterations` attributes need to be specified as
           well as the password.
-        * macOS 10.15 and higher require the salt to be 32-bytes. Since Puppet's user
+        * macOS 10.15 and later require the salt to be 32 bytes. Because Puppet's user
           resource requires the value to be hex encoded, the length of the salt's
           string must be 64.
         * Windows passwords can be managed only in cleartext, because there is no Windows

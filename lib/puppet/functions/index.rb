@@ -40,8 +40,8 @@
 # Note that the lambda gets the value and not an array with `[key, value]` as in other
 # iterative functions.
 #
-# Using a lambda that accepts two values works the same way, it simply gets the index/key
-# as the first parameter, and the value as the second.
+# Using a lambda that accepts two values works the same way. The lambda gets the index/key
+# as the first parameter and the value as the second parameter.
 #
 # @example Using the `index` function with an Array and a two-parameter lambda
 #

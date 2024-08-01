@@ -20,7 +20,7 @@ Puppet::Functions.create_function(:regsubst) do
   #        - *M*         Multiline regexps
   #        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
   # @param encoding [Enum['N','E','S','U']]
-  #      Deprecated and ignored parameter, only here for compatibility.
+  #      Deprecated and ignored parameter, included only for compatibility.
   # @return [Array[String], String] The result of the substitution. Result type is the same as for the target parameter.
   # @deprecated
   #   This method has the optional encoding parameter, which is ignored.

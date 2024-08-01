@@ -437,13 +437,12 @@ module Puppet
         actually contain `myfile`, the exec will keep running every time
         Puppet runs.
 
-        This parameter can also take an array of files and the command will
-        not run if **any** of these files exist. For example:
+        This parameter can also take an array of files, and the command will
+        not run if **any** of these files exist. Consider this example:
 
             creates => ['/tmp/file1', '/tmp/file2'],
 
-        will only run the command if both files don't exist.
-
+        The command is only run if both files don't exist.
       EOT
 
       accept_arrays
