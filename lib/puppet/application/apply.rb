@@ -58,11 +58,6 @@ class Puppet::Application::Apply < Puppet::Application
         [--catalog <catalog>] [--write-catalog-summary] <file>
 
 
-      EXAMPLE
-      -------
-          $ puppet apply -e 'notify { "hello world": }'
-
-
       DESCRIPTION
       -----------
       This is the standalone puppet execution tool; use it to apply
@@ -158,6 +153,7 @@ class Puppet::Application::Apply < Puppet::Application
 
       EXAMPLE
       -------
+          $ puppet apply -e 'notify { "hello world": }'
           $ puppet apply -l /tmp/manifest.log manifest.pp
           $ puppet apply --modulepath=/root/dev/modules -e "include ntpd::server"
           $ puppet apply --catalog catalog.json
