@@ -98,11 +98,6 @@ describe Puppet::Type.type(:package).provider(:pacman) do
             resource[:source] = source
 
             expect(executor).to receive(:execute).
-              with(include("-S") & include("--noprogressbar"), no_extra_options).
-              ordered.
-              and_return("")
-
-            expect(executor).to receive(:execute).
               with(include("-U") & include(source), no_extra_options).
               ordered.
               and_return("")
@@ -120,12 +115,6 @@ describe Puppet::Type.type(:package).provider(:pacman) do
         end
 
         it "should install from the path segment of the URL" do
-          expect(executor).to receive(:execute).
-            with(include("-S") & include("--noprogressbar") & include("--noconfirm"),
-                 no_extra_options).
-            ordered.
-            and_return("")
-
           expect(executor).to receive(:execute).
             with(include("-U") & include(actual_file_path), no_extra_options).
             ordered.

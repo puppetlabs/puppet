@@ -248,7 +248,6 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
              else
                fail _("Source %{source} is not supported by pacman") % { source: source }
              end
-    pacman "--noconfirm", "--noprogressbar", "-S"
     pacman "--noconfirm", "--noprogressbar", "-U", source
   end
 
