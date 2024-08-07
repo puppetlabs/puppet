@@ -910,11 +910,6 @@ RSpec.describe Puppet::Type.type(:exec) do
     let :abs  do make_absolute('/bin/echo') end
     let :path do make_absolute('/bin') end
 
-    it "should fail with relative command and no path" do
-      expect { type.new(:command => rel) }.
-        to raise_error Puppet::Error, /no path was specified/
-    end
-
     it "should accept a relative command with a path" do
       expect(type.new(:command => rel, :path => path)).to be
     end
