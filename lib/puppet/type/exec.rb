@@ -223,7 +223,9 @@ module Puppet
     newparam(:path) do
       desc "The search path used for command execution.
         Commands must be fully qualified if no path is specified.  Paths
-        can be specified as an array or as a '#{File::PATH_SEPARATOR}' separated list."
+        can be specified as an array or as a '#{File::PATH_SEPARATOR}' separated list. Defaults to the `path` fact."
+
+      defaultto Puppet.runtime[:facter].value('path')
 
       # Support both arrays and colon-separated fields.
       def value=(*values)
