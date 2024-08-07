@@ -29,7 +29,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # Checks if a given name is a group
   def self.group?(name)
-    !pacman("-Sg", name).empty?
+    !pacman('--sync', '--groups', name).empty?
   rescue Puppet::ExecutionFailure
     # pacman returns an expected non-zero exit code when the name is not a group
     false
@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # returns a hash package => version of installed packages
   def self.get_installed_packages
     packages = {}
-    execpipe([command(:pacman), "-Q"]) do |pipe|
+    execpipe([command(:pacman), "--query"]) do |pipe|
       # pacman -Q output is 'packagename version-rel'
       regex = /^(\S+)\s(\S+)/
       pipe.each_line do |line|
@@ -96,7 +96,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     groups = {}
     begin
       # Build a hash of group name => list of packages
-      command = [command(:pacman), "-Sgg"]
+      command = [command(:pacman), '--sync', '-gg']
       command << filter if filter
       execpipe(command) do |pipe|
         pipe.each_line do |line|
@@ -134,14 +134,14 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     resource_name = @resource[:name]
 
     # If target is a group, construct the group version
-    return pacman("-Sp", "--print-format", "%n %v", resource_name).lines.map(&:chomp).sort.join(', ') if self.class.group?(resource_name)
+    return pacman("--sync", "--print", "--print-format", "%n %v", resource_name).lines.map(&:chomp).sort.join(', ') if self.class.group?(resource_name)
 
     # Start by querying with pacman first
     # If that fails, retry using yaourt against the AUR
     pacman_check = true
     begin
       if pacman_check
-        output = pacman "-Sp", "--print-format", "%v", resource_name
+        output = pacman "--sync", "--print", "--print-format", "%v", resource_name
         output.chomp
       else
         output = yaourt "-Qma", resource_name
@@ -210,8 +210,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     cmd = %w[--noconfirm --noprogressbar]
     cmd += uninstall_options if @resource[:uninstall_options]
-    cmd << "-R"
-    cmd << '-s' if is_group
+    cmd << "--remove"
+    cmd << '--recursive' if is_group
     cmd << '--nosave' if purge_configs
     cmd << resource_name
 
@@ -248,8 +248,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
              else
                fail _("Source %{source} is not supported by pacman") % { source: source }
              end
-    pacman "--noconfirm", "--noprogressbar", "-S"
-    pacman "--noconfirm", "--noprogressbar", "-U", source
+    pacman "--noconfirm", "--noprogressbar", "--update", source
   end
 
   def install_from_repo
@@ -260,7 +259,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     cmd = %w[--noconfirm --needed --noprogressbar]
     cmd += install_options if @resource[:install_options]
-    cmd << "-S" << resource_name
+    cmd << "--sync" << resource_name
 
     if self.class.yaourt?
       yaourt(*cmd)
