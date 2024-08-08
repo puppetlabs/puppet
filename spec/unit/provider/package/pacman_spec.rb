@@ -26,7 +26,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call pacman to install the right package quietly when yaourt is not installed" do
-      args = ['--noconfirm', '--needed', '--noprogressbar', '-S', resource[:name]]
+      args = ['--noconfirm', '--needed', '--noprogressbar', '--sync', resource[:name]]
       expect(provider).to receive(:pacman).at_least(:once).with(*args).and_return('')
       provider.install
     end
@@ -34,7 +34,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     it "should call yaourt to install the right package quietly when yaourt is installed" do
       without_partial_double_verification do
         allow(described_class).to receive(:yaourt?).and_return(true)
-        args = ['--noconfirm', '--needed', '--noprogressbar', '-S', resource[:name]]
+        args = ['--noconfirm', '--needed', '--noprogressbar', '--sync', resource[:name]]
         expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
         provider.install
       end
@@ -70,7 +70,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       end
 
       it "should call pacman to install the right package quietly when yaourt is not installed" do
-        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-S', resource[:name]]
+        args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '--sync', resource[:name]]
         expect(provider).to receive(:pacman).at_least(:once).with(*args).and_return('')
         provider.install
       end
@@ -78,7 +78,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       it "should call yaourt to install the right package quietly when yaourt is installed" do
         without_partial_double_verification do
           expect(described_class).to receive(:yaourt?).and_return(true)
-          args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-S', resource[:name]]
+          args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '--sync', resource[:name]]
           expect(provider).to receive(:yaourt).at_least(:once).with(*args).and_return('')
           provider.install
         end
@@ -98,12 +98,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
             resource[:source] = source
 
             expect(executor).to receive(:execute).
-              with(include("-S") & include("--noprogressbar"), no_extra_options).
-              ordered.
-              and_return("")
-
-            expect(executor).to receive(:execute).
-              with(include("-U") & include(source), no_extra_options).
+              with(include("--update") & include(source), no_extra_options).
               ordered.
               and_return("")
 
@@ -121,13 +116,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
         it "should install from the path segment of the URL" do
           expect(executor).to receive(:execute).
-            with(include("-S") & include("--noprogressbar") & include("--noconfirm"),
-                 no_extra_options).
-            ordered.
-            and_return("")
-
-          expect(executor).to receive(:execute).
-            with(include("-U") & include(actual_file_path), no_extra_options).
+            with(include("--update") & include(actual_file_path), no_extra_options).
             ordered.
             and_return("")
 
@@ -170,7 +159,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
   describe "when purging" do
     it "should call pacman to remove the right package and configs quietly" do
-      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", "--nosave", resource[:name]]
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "--remove", "--nosave", resource[:name]]
       expect(executor).to receive(:execute).with(args, no_extra_options).and_return("")
       provider.purge
     end
@@ -178,7 +167,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
   describe "when uninstalling" do
     it "should call pacman to remove the right package quietly" do
-      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", resource[:name]]
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "--remove", resource[:name]]
       expect(executor).to receive(:execute).with(args, no_extra_options).and_return("")
       provider.uninstall
     end
@@ -186,7 +175,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     it "should call yaourt to remove the right package quietly" do
       without_partial_double_verification do
         allow(described_class).to receive(:yaourt?).and_return(true)
-        args = ["--noconfirm", "--noprogressbar", "-R", resource[:name]]
+        args = ["--noconfirm", "--noprogressbar", "--remove", resource[:name]]
         expect(provider).to receive(:yaourt).with(*args)
         provider.uninstall
       end
@@ -194,14 +183,14 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
     it "adds any uninstall_options" do
       resource[:uninstall_options] = ['-x', {'--arg' => 'value'}]
-      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-x", "--arg=value", "-R", resource[:name]]
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-x", "--arg=value", "--remove", resource[:name]]
       expect(executor).to receive(:execute).with(args, no_extra_options).and_return("")
       provider.uninstall
     end
 
     it "should recursively remove packages when given a package group" do
       allow(described_class).to receive(:group?).and_return(true)
-      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", "-s", resource[:name]]
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "--remove", "--recursive", resource[:name]]
       expect(executor).to receive(:execute).with(args, no_extra_options).and_return("")
       provider.uninstall
     end
@@ -209,19 +198,19 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
   describe "when querying" do
     it "should query pacman" do
-      expect(executor).to receive(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      expect(executor).to receive(:execpipe).with(["/usr/bin/pacman", '-Sgg', 'package'])
+      expect(executor).to receive(:execpipe).with(["/usr/bin/pacman", '--query'])
+      expect(executor).to receive(:execpipe).with(["/usr/bin/pacman", '--sync', '-gg', 'package'])
       provider.query
     end
 
     it "should return the version" do
       expect(executor).to receive(:execpipe).
-          with(["/usr/bin/pacman", "-Q"]).and_yield(<<EOF)
+          with(["/usr/bin/pacman", "--query"]).and_yield(<<EOF)
 otherpackage 1.2.3.4
 package 1.01.3-2
 yetanotherpackage 1.2.3.4
 EOF
-      expect(executor).to receive(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package']).and_yield('')
+      expect(executor).to receive(:execpipe).with(['/usr/bin/pacman', '--sync', '-gg', 'package']).and_yield('')
 
       expect(provider.query).to eq({ :name => 'package', :ensure => '1.01.3-2', :provider => :pacman,  })
     end
@@ -239,8 +228,8 @@ EOF
 
     describe 'when querying a group' do
       before :each do
-        expect(executor).to receive(:execpipe).with(['/usr/bin/pacman', '-Q']).and_yield('foo 1.2.3')
-        expect(executor).to receive(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'package']).and_yield('package foo')
+        expect(executor).to receive(:execpipe).with(['/usr/bin/pacman', '--query']).and_yield('foo 1.2.3')
+        expect(executor).to receive(:execpipe).with(['/usr/bin/pacman', '--sync', '-gg', 'package']).and_yield('package foo')
       end
 
       it 'should warn when allow_virtual is false' do
@@ -259,14 +248,14 @@ EOF
 
   describe "when determining instances" do
     it "should retrieve installed packages and groups" do
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Sgg'])
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--query'])
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--sync', '-gg'])
       described_class.instances
     end
 
     it "should return installed packages" do
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Q']).and_yield(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Sgg']).and_yield("")
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--query']).and_yield(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--sync', '-gg']).and_yield("")
       instances = described_class.instances
 
       expect(instances.length).to eq(2)
@@ -285,11 +274,11 @@ EOF
     end
 
     it "should return completely installed groups with a virtual version together with packages" do
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Q']).and_yield(<<EOF)
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--query']).and_yield(<<EOF)
 package1 1.00
 package2 1.00
 EOF
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Sgg']).and_yield(<<EOF)
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--sync', '-gg']).and_yield(<<EOF)
 group1 package1
 group1 package2
 EOF
@@ -315,10 +304,10 @@ EOF
     end
 
     it "should not return partially installed packages" do
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Q']).and_yield(<<EOF)
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--query']).and_yield(<<EOF)
 package1 1.00
 EOF
-      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '-Sgg']).and_yield(<<EOF)
+      expect(described_class).to receive(:execpipe).with(["/usr/bin/pacman", '--sync', '-gg']).and_yield(<<EOF)
 group1 package1
 group1 package2
 EOF
@@ -334,7 +323,7 @@ EOF
     end
 
     it 'should sort package names for installed groups' do
-      expect(described_class).to receive(:execpipe).with(['/usr/bin/pacman', '-Sgg', 'group1']).and_yield(<<EOF)
+      expect(described_class).to receive(:execpipe).with(['/usr/bin/pacman', '--sync', '-gg', 'group1']).and_yield(<<EOF)
 group1 aa
 group1 b
 group1 a
@@ -365,7 +354,7 @@ EOF
     it "should get query pacman for the latest version" do
       expect(executor).to receive(:execute).
         ordered.
-        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', resource[:name]], no_extra_options).
+        with(['/usr/bin/pacman', '--sync', '--print', '--print-format', '%v', resource[:name]], no_extra_options).
         and_return("")
 
       provider.latest
@@ -379,7 +368,7 @@ EOF
 
     it "should return a virtual group version when resource is a package group" do
       allow(described_class).to receive(:group?).and_return(true)
-      expect(executor).to receive(:execute).with(['/usr/bin/pacman', '-Sp', '--print-format', '%n %v', resource[:name]], no_extra_options).ordered.
+      expect(executor).to receive(:execute).with(['/usr/bin/pacman', '--sync', '--print', '--print-format', '%n %v', resource[:name]], no_extra_options).ordered.
         and_return(<<EOF)
 package2 1.0.1
 package1 1.0.0
@@ -394,17 +383,17 @@ EOF
     end
 
     it 'should return false on non-zero pacman exit' do
-      allow(executor).to receive(:execute).with(['/usr/bin/pacman', '-Sg', 'git'], {:failonfail => true, :combine => true, :custom_environment => {}}).and_raise(Puppet::ExecutionFailure, 'error')
+      allow(executor).to receive(:execute).with(['/usr/bin/pacman', '--sync', '--groups', 'git'], {:failonfail => true, :combine => true, :custom_environment => {}}).and_raise(Puppet::ExecutionFailure, 'error')
       expect(described_class.group?('git')).to eq(false)
     end
 
     it 'should return false on empty pacman output' do
-      allow(executor).to receive(:execute).with(['/usr/bin/pacman', '-Sg', 'git'], {:failonfail => true, :combine => true, :custom_environment => {}}).and_return('')
+      allow(executor).to receive(:execute).with(['/usr/bin/pacman', '--sync', '--groups', 'git'], {:failonfail => true, :combine => true, :custom_environment => {}}).and_return('')
       expect(described_class.group?('git')).to eq(false)
     end
 
     it 'should return true on non-empty pacman output' do
-      allow(executor).to receive(:execute).with(['/usr/bin/pacman', '-Sg', 'vim-plugins'], {:failonfail => true, :combine => true, :custom_environment => {}}).and_return('vim-plugins vim-a')
+      allow(executor).to receive(:execute).with(['/usr/bin/pacman', '--sync', '--groups', 'vim-plugins'], {:failonfail => true, :combine => true, :custom_environment => {}}).and_return('vim-plugins vim-a')
       expect(described_class.group?('vim-plugins')).to eq(true)
     end
   end
@@ -414,13 +403,13 @@ EOF
     let(:groups) { [['foo package1'], ['foo package2'], ['bar package3'], ['bar package4'], ['baz package5']] }
 
     it 'should raise an error on non-zero pacman exit without a filter' do
-      expect(executor).to receive(:open).with('| /usr/bin/pacman -Sgg 2>&1').and_return('error!')
+      expect(executor).to receive(:open).with('| /usr/bin/pacman --sync -gg 2>&1').and_return('error!')
       expect(Puppet::Util::Execution).to receive(:exitstatus).and_return(1)
       expect { described_class.get_installed_groups(installed_packages) }.to raise_error(Puppet::ExecutionFailure, 'error!')
     end
 
     it 'should return empty groups on non-zero pacman exit with a filter' do
-      expect(executor).to receive(:open).with('| /usr/bin/pacman -Sgg git 2>&1').and_return('')
+      expect(executor).to receive(:open).with('| /usr/bin/pacman --sync -gg git 2>&1').and_return('')
       expect(Puppet::Util::Execution).to receive(:exitstatus).and_return(1)
       expect(described_class.get_installed_groups(installed_packages, 'git')).to eq({})
     end
@@ -428,7 +417,7 @@ EOF
     it 'should return empty groups on empty pacman output' do
       pipe = double()
       expect(pipe).to receive(:each_line)
-      expect(executor).to receive(:open).with('| /usr/bin/pacman -Sgg 2>&1').and_yield(pipe).and_return('')
+      expect(executor).to receive(:open).with('| /usr/bin/pacman --sync -gg 2>&1').and_yield(pipe).and_return('')
       expect(Puppet::Util::Execution).to receive(:exitstatus).and_return(0)
       expect(described_class.get_installed_groups(installed_packages)).to eq({})
     end
@@ -438,7 +427,7 @@ EOF
       pipe_expectation = receive(:each_line)
       groups.each { |group| pipe_expectation = pipe_expectation.and_yield(*group) }
       expect(pipe).to pipe_expectation
-      expect(executor).to receive(:open).with('| /usr/bin/pacman -Sgg 2>&1').and_yield(pipe).and_return('')
+      expect(executor).to receive(:open).with('| /usr/bin/pacman --sync -gg 2>&1').and_yield(pipe).and_return('')
       expect(Puppet::Util::Execution).to receive(:exitstatus).and_return(0)
       expect(described_class.get_installed_groups(installed_packages)).to eq({'foo' => 'package1 1.0, package2 2.0'})
     end
