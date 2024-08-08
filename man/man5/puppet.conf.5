@@ -63,7 +63,7 @@ Whether to allow a new certificate request to overwrite an existing certificate 
 .IP "" 0
 .
 .SS "allow_pson_serialization"
-Whether when unable to serialize to JSON or other formats, Puppet falls back to PSON\. This option affects both puppetserver\'s configuration management service responses and when the agent saves its cached catalog\. This option is useful in preventing the loss of data because rich data cannot be serialized via PSON\.
+Whether to allow PSON serialization\. When unable to serialize to JSON or other formats, Puppet falls back to PSON\. This option affects the configuration management service responses of Puppet Server and the process by which the agent saves its cached catalog\. With a default value of \fBfalse\fR, this option is useful in preventing the loss of data because rich data cannot be serialized via PSON\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
@@ -164,13 +164,13 @@ The port to use for the certificate authority\.
 .IP "" 0
 .
 .SS "ca_refresh_interval"
-How often the Puppet agent refreshes its local CA certs\. By default the CA certs are refreshed once every 24 hours\. If a different duration is specified, then the agent will refresh its CA certs whenever it next runs and the elapsed time since the certs were last refreshed exceeds the duration\.
+How often the Puppet agent refreshes its local CA certificates\. By default, CA certificates are refreshed every 24 hours\. If a different interval is specified, the agent refreshes its CA certificates during the next agent run if the elapsed time since the certificates were last refreshed exceeds the specified duration\.
 .
 .P
-In general, the duration should be greater than the \fBruninterval\fR\. Setting it to 0 or an equal or lesser value than \fBruninterval\fR, will cause the CA certs to be refreshed on every run\.
+In general, the interval should be greater than the \fBruninterval\fR value\. Setting the \fBca_refresh_interval\fR value to 0 or an equal or lesser value than \fBruninterval\fR causes the CA certificates to be refreshed on every run\.
 .
 .P
-If the agent downloads new CA certs, the agent will use it for subsequent network requests\. If the refresh request fails or if the CA certs are unchanged on the server, then the agent run will continue using the local CA certs it already has\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+If the agent downloads new CA certs, the agent uses those for subsequent network requests\. If the refresh request fails or if the CA certs are unchanged on the server, then the agent run will continue using the local CA certs it already has\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB1d\fR
@@ -406,10 +406,10 @@ Setting a global value for config_version in puppet\.conf is not allowed (but it
 Prints the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\. This setting is deprecated, the \'puppet config\' command replaces this functionality\.
 .
 .SS "crl_refresh_interval"
-How often the Puppet agent refreshes its local CRL\. By default the CRL is refreshed once every 24 hours\. If a different duration is specified, then the agent will refresh its CRL whenever it next runs and the elapsed time since the CRL was last refreshed exceeds the duration\.
+How often the Puppet agent refreshes its local Certificate Revocation List (CRL)\. By default, the CRL is refreshed every 24 hours\. If a different interval is specified, the agent refreshes its CRL on the next Puppet agent run if the elapsed time since the CRL was last refreshed exceeds the specified interval\.
 .
 .P
-In general, the duration should be greater than the \fBruninterval\fR\. Setting it to 0 or an equal or lesser value than \fBruninterval\fR, will cause the CRL to be refreshed on every run\.
+In general, the interval should be greater than the \fBruninterval\fR value\. Setting the \fBcrl_refresh_interval\fR value to 0 or an equal or lesser value than \fBruninterval\fR causes the CRL to be refreshed on every run\.
 .
 .P
 If the agent downloads a new CRL, the agent will use it for subsequent network requests\. If the refresh request fails or if the CRL is unchanged on the server, then the agent run will continue using the local CRL it already has\.This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
@@ -670,7 +670,7 @@ Whether each resource should log when it is being evaluated\. This allows you to
 .IP "" 0
 .
 .SS "exclude_unchanged_resources"
-When set to true, resources that have had no changes after catalog application will not have corresponding unchanged resource status updates listed in the report\.
+Specifies how unchanged resources are listed in reports\. When set to \fBtrue\fR, resources that have had no changes after catalog application will not have corresponding unchanged resource status updates listed in a report\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBtrue\fR
@@ -849,13 +849,13 @@ Where individual hosts store and look for their certificates\.
 .IP "" 0
 .
 .SS "hostcert_renewal_interval"
-When the Puppet agent refreshes its client certificate\. By default the client certificate will refresh 30 days before the certificate expires\. If a different duration is specified, then the agent will refresh its client certificate whenever it next runs and if the client certificate expires within the duration specified\.
+How often the Puppet agent renews its client certificate\. By default, the client certificate is renewed 30 days before the certificate expires\. If a different interval is specified, the agent renews its client certificate during the next agent run, assuming that the client certificate has expired within the specified duration\.
 .
 .P
-In general, the duration should be greater than the \fBruninterval\fR\. Setting it to 0 will disable automatic renewal\.
+In general, the \fBhostcert_renewal_interval\fR value should be greater than the \fBruninterval\fR value\. Setting the \fBhostcert_renewal_interval\fR value to 0 disables automatic renewal\.
 .
 .P
-If the agent downloads a new certificate, the agent will use it for subsequent network requests\. If the refresh request fails, then the agent run will continue using the certificate it already has\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+If the agent downloads a new certificate, the agent will use it for subsequent network requests\. If the refresh request fails, the agent run continues to use its existing certificate\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB30d\fR
@@ -1002,7 +1002,7 @@ Boolean; whether puppet agent should ignore schedules\. This is useful for initi
 .IP "" 0
 .
 .SS "include_legacy_facts"
-Whether to include legacy facts when requesting a catalog\. This option can be set to false provided all puppet manifests, hiera\.yaml and hiera configuration layers no longer access legacy facts, such as \fB$osfamily\fR, and instead access structured facts, such as \fB$facts[\'os\'][\'family\']\fR\.
+Whether to include legacy facts when requesting a catalog\. This option can be set to \fBfalse\fR if all puppet manifests, hiera\.yaml, and hiera configuration layers no longer access legacy facts, such as \fB$osfamily\fR, and instead access structured facts, such as \fB$facts[\'os\'][\'family\']\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
@@ -1539,7 +1539,7 @@ The preferred means of serializing ruby instances for passing over the wire\. Th
 .IP "" 0
 .
 .SS "preprocess_deferred"
-Whether puppet should call deferred functions before applying the catalog\. If set to \fBtrue\fR, then all prerequisites needed for the deferred function must be satisfied prior to puppet running\. If set to \fBfalse\fR, then deferred functions will follow puppet relationships and ordering\. This allows puppet to install prerequisites needed for a deferred function and call the deferred function in the same run\.
+Whether Puppet should call deferred functions before applying the catalog\. If set to \fBtrue\fR, all prerequisites required for the deferred function must be satisfied before the Puppet run\. If set to \fBfalse\fR, deferred functions follow Puppet relationships and ordering\. In this way, Puppet can install the prerequisites required for a deferred function and call the deferred function in the same run\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
@@ -1636,10 +1636,10 @@ Whether to send reports after every transaction\.
 .IP "" 0
 .
 .SS "report_configured_environmentpath"
-When versioned_environment_dirs is \fBtrue\fR Puppet will readlink the environmentpath when constructing the environment\'s modulepath\. The full readlinked path is referred to as the "resolved path" and the configured path potentially containing symlinks is the "configured path"\. When reporting where resources come from users may choose between the configured or resolved path\.
+Specifies how environment paths are reported\. When the value of \fBversioned_environment_dirs\fR is \fBtrue\fR, Puppet applies the readlink function to the \fBenvironmentpath\fR setting when constructing the environment\'s modulepath\. The full readlinked path is referred to as the "resolved path," and the configured path potentially containing symlinks is the "configured path\." When reporting where resources come from, users may choose between the configured and resolved path\.
 .
 .P
-When set to false, the resolved paths are reported instead of the configured paths\.
+When set to \fBfalse\fR, the resolved paths are reported instead of the configured paths\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBtrue\fR
@@ -1832,7 +1832,7 @@ Where the CA stores signed certificates\.
 .IP "" 0
 .
 .SS "skip_logging_catalog_request_destination"
-If you wish to suppress the notice of which compiler supplied the catalog
+Specifies whether to suppress the notice of which compiler supplied the catalog\. A value of \fBtrue\fR suppresses the notice\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fBfalse\fR
