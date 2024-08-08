@@ -18,9 +18,9 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     be imported if it does not exist.
   EOT
 
-  defaultfor :osfamily => :solaris
+  defaultfor 'os.family' => :solaris
 
-  confine :osfamily => :solaris
+  confine 'os.family' => :solaris
 
   commands :adm => "/usr/sbin/svcadm",
            :svcs => "/usr/bin/svcs",
@@ -101,14 +101,14 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
   # Returns true if the provider supports incomplete services.
   def supports_incomplete_services?
-    Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value(:operatingsystemrelease), '11.1') >= 0
+    Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('os.release.full'), '11.1') >= 0
   end
 
   # Returns true if the service is complete. A complete service is a service that
   # has the general/complete property defined.
   def complete_service?
     unless supports_incomplete_services?
-      raise Puppet::Error, _("Cannot query if the %{service} service is complete: The concept of complete/incomplete services was introduced in Solaris 11.1. You are on a Solaris %{release} machine.") % { service: @resource[:name], release: Puppet.runtime[:facter].value(:operatingsystemrelease) }
+      raise Puppet::Error, _("Cannot query if the %{service} service is complete: The concept of complete/incomplete services was introduced in Solaris 11.1. You are on a Solaris %{release} machine.") % { service: @resource[:name], release: Puppet.runtime[:facter].value('os.release.full') }
     end
 
     return @complete_service if @complete_service
@@ -138,7 +138,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def restartcmd
-    if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value(:operatingsystemrelease), '11.2') >= 0
+    if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('os.release.full'), '11.2') >= 0
       [command(:adm), :restart, "-s", self.service_fmri]
     else
       # Synchronous restart only supported in Solaris 11.2 and above

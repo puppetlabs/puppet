@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
   :portinfo      => "/usr/sbin/pkg_info"
 
   ## Activate this only once approved by someone important.
-  # defaultfor :operatingsystem => :freebsd
+  # defaultfor 'os.name' => :freebsd
 
   # Remove unwanted environment variables.
   %w{INTERACTIVE UNAME}.each do |var|

@@ -2,7 +2,7 @@ class apache::ssl {
   include apache
 
 
-  case $operatingsystem {
+  case $facts['os']['name'] {
      "centos": {
         package { $apache::params::ssl_package:
            require => Package['httpd'],

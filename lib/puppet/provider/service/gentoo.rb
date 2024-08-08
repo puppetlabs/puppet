@@ -10,7 +10,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
   commands :update => "/sbin/rc-update"
 
-  confine :operatingsystem => :gentoo
+  confine 'os.name' => :gentoo
 
   def disable
       output = update :del, @resource[:name], :default

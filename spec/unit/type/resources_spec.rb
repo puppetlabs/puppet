@@ -124,8 +124,8 @@ describe resources do
       context "on #{os}" do
         before :each do
           allow(Facter).to receive(:value).with(:kernel).and_return(os)
-          allow(Facter).to receive(:value).with(:operatingsystem).and_return(os)
-          allow(Facter).to receive(:value).with(:osfamily).and_return(os)
+          allow(Facter).to receive(:value).with('os.name').and_return(os)
+          allow(Facter).to receive(:value).with('os.family').and_return(os)
           allow(Puppet::FileSystem).to receive(:exist?).with('/etc/login.defs').and_return(false)
           @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
           @res.catalog = Puppet::Resource::Catalog.new

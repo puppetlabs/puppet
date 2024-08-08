@@ -84,16 +84,16 @@ describe Puppet::Confine do
   describe "when requiring" do
     it "does not cache failed requires when always_retry_plugins is true" do
       Puppet[:always_retry_plugins] = true
-      expect(Puppet::Confine).to receive(:require).with('puppet/confine/osfamily').twice.and_raise(LoadError)
-      Puppet::Confine.test(:osfamily)
-      Puppet::Confine.test(:osfamily)
+      expect(Puppet::Confine).to receive(:require).with('puppet/confine/os.family').twice.and_raise(LoadError)
+      Puppet::Confine.test('os.family')
+      Puppet::Confine.test('os.family')
     end
 
     it "caches failed requires when always_retry_plugins is false" do
       Puppet[:always_retry_plugins] = false
-      expect(Puppet::Confine).to receive(:require).with('puppet/confine/osfamily').once.and_raise(LoadError)
-      Puppet::Confine.test(:osfamily)
-      Puppet::Confine.test(:osfamily)
+      expect(Puppet::Confine).to receive(:require).with('puppet/confine/os.family').once.and_raise(LoadError)
+      Puppet::Confine.test('os.family')
+      Puppet::Confine.test('os.family')
     end
   end
 end

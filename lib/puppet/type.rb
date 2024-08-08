@@ -1415,7 +1415,7 @@ class Type
       provide a symbolic title and an explicit namevar value:
 
           file { 'sshdconfig':
-            path => $operatingsystem ? {
+            path => $os['name'] ? {
               solaris => '/usr/local/etc/ssh/sshd_config',
               default => '/etc/ssh/sshd_config',
             },

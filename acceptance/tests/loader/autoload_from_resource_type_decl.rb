@@ -45,7 +45,7 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
     custom_type = <<-END
     Puppet::Type.newtype(:type_tst) do
       newparam(:name, :namevar => true) do
-        fqdn = Facter.value(:fqdn)
+        fqdn = Facter.value('networking.fqdn')
         if fqdn == '#{agent_to_fqdn(master)}'
           File.open("#{execution_log[agent_to_fqdn(master)]}", 'a+') { |f| f.puts("found_type_tst: " + Time.now.to_s) }
         end

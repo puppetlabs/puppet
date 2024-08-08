@@ -20,8 +20,8 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     `install_options` or `uninstall_options` attributes, respectively.  Puppet
     will automatically quote any option that contains spaces."
 
-  confine    :operatingsystem => :windows
-  defaultfor :operatingsystem => :windows
+  confine    'os.name' => :windows
+  defaultfor 'os.name' => :windows
 
   has_feature :installable
   has_feature :uninstallable

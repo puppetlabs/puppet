@@ -5,8 +5,8 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     New functionality provides for changing trusted computing passwords and
     resetting password expirations under trusted computing."
 
-  defaultfor :operatingsystem => "hp-ux"
-  confine :operatingsystem => "hp-ux"
+  defaultfor 'os.name' => "hp-ux"
+  confine 'os.name' => "hp-ux"
 
   commands :modify => "/usr/sam/lbin/usermod.sam", :delete => "/usr/sam/lbin/userdel.sam", :add => "/usr/sam/lbin/useradd.sam"
   options :comment, :method => :gecos

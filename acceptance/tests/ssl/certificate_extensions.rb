@@ -11,8 +11,8 @@ test_name "certificate extensions available as trusted data" do
   initialize_temp_dirs
 
   agent_certnames = []
-  hostname = master.execute('facter hostname')
-  fqdn = master.execute('facter fqdn')
+  hostname = master.execute('facter networking.hostname')
+  fqdn = master.execute('facter networking.fqdn')
 
   teardown do
     step "Cleanup the test agent certs"

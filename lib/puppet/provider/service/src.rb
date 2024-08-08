@@ -13,8 +13,8 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   is not yet supported.
   "
 
-  defaultfor :operatingsystem => :aix
-  confine :operatingsystem => :aix
+  defaultfor 'os.name' => :aix
+  confine 'os.name' => :aix
 
   optional_commands :stopsrc  => "/usr/bin/stopsrc",
                     :startsrc => "/usr/bin/startsrc",

@@ -7,8 +7,8 @@ Puppet::Type.type(:service).provide :openrc, :parent => :base do
 
   EOT
 
-  defaultfor :operatingsystem => :gentoo
-  defaultfor :operatingsystem => :funtoo
+  defaultfor 'os.name' => :gentoo
+  defaultfor 'os.name' => :funtoo
 
   has_command(:rcstatus, '/bin/rc-status') do
     environment :RC_SVCNAME => nil
