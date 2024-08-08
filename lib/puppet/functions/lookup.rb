@@ -97,7 +97,7 @@
 # or `{'strategy' => 'hash'}` --- Same as the string versions of these merge behaviors.
 # * `{'strategy' => 'deep', <DEEP OPTION> => <VALUE>, ...}` --- Same as `'deep'`,
 # but can adjust the merge with additional options. The available options are:
-#     * `'knockout_prefix'` (string or undef) --- A string prefix to indicate a
+#     * `'knockout_prefix'` (string) --- A string prefix to indicate a
 #     value should be _removed_ from the final result. If a value is exactly equal
 #     to the prefix, it will knockout the entire element. Defaults to `undef`, which
 #     disables this feature.

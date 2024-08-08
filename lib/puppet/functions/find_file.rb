@@ -7,6 +7,10 @@
 # directory. (For example, the reference `mysql/mysqltuner.pl` will search for the
 # file `<MODULES DIRECTORY>/mysql/files/mysqltuner.pl`.)
 #
+# If this function is run via puppet agent, it checks for file existence on the
+# Puppet Primary server. If run via puppet apply, it checks on the local host.
+# In both cases, the check is performed before any resources are changed.
+#
 # This function can also accept:
 #
 # * An absolute String path, which checks for the existence of a file from anywhere on disk.

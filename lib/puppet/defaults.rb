@@ -7,6 +7,7 @@ module Puppet
     '-u'
   end
 
+  # If you modify this, update puppet/type/file/checksum.rb too
   def self.default_digest_algorithm
     'sha256'
   end
@@ -161,8 +162,8 @@ module Puppet
     :skip_logging_catalog_request_destination => {
       :default => false,
       :type    => :boolean,
-      :desc    => "If you wish to suppress the notice of which compiler supplied the
-        catalog",
+      :desc => "Specifies whether to suppress the notice of which compiler
+        supplied the catalog. A value of `true` suppresses the notice.",
     },
     :merge_dependency_warnings => {
       :default => false,
@@ -417,13 +418,15 @@ module Puppet
       :type     => :boolean,
       :default  => true,
       :desc     => <<-'EOT'
-      When versioned_environment_dirs is `true` Puppet will readlink the environmentpath
-      when constructing the environment's modulepath. The full readlinked path is referred
-      to as the "resolved path" and the configured path potentially containing symlinks is
-      the "configured path". When reporting where resources come from users may choose
-      between the configured or resolved path.
+      Specifies how environment paths are reported. When the value of
+      `versioned_environment_dirs` is `true`, Puppet applies the readlink function to
+      the `environmentpath` setting when constructing the environment's modulepath. The
+      full readlinked path is referred to as the "resolved path," and the configured
+      path potentially containing symlinks is the "configured path." When reporting
+      where resources come from, users may choose between the configured and resolved
+      path.
 
-      When set to false, the resolved paths are reported instead of the configured paths.
+      When set to `false`, the resolved paths are reported instead of the configured paths.
       EOT
     },
     :use_last_environment => {
@@ -1204,17 +1207,18 @@ EOT
     :ca_refresh_interval => {
       :default    => "1d",
       :type       => :duration,
-      :desc       => "How often the Puppet agent refreshes its local CA certs. By
-         default the CA certs are refreshed once every 24 hours. If a different
-         duration is specified, then the agent will refresh its CA certs whenever
-         it next runs and the elapsed time since the certs were last refreshed
-         exceeds the duration.
+      :desc       => "How often the Puppet agent refreshes its local CA
+         certificates. By default, CA certificates are refreshed every 24 hours. If a
+         different interval is specified, the agent refreshes its CA certificates during
+         the next agent run if the elapsed time since the certificates were last
+         refreshed exceeds the specified duration.
 
-         In general, the duration should be greater than the `runinterval`.
-         Setting it to 0 or an equal or lesser value than `runinterval`,
-         will cause the CA certs to be refreshed on every run.
+         In general, the interval should be greater than the `runinterval`
+         value. Setting the `ca_refresh_interval` value to 0 or an equal or
+         lesser value than `runinterval` causes the CA certificates to be
+         refreshed on every run.
 
-         If the agent downloads new CA certs, the agent will use it for subsequent
+         If the agent downloads new CA certs, the agent uses those for subsequent
          network requests. If the refresh request fails or if the CA certs are
          unchanged on the server, then the agent run will continue using the
          local CA certs it already has. #{AS_DURATION}",
@@ -1222,15 +1226,15 @@ EOT
     :crl_refresh_interval => {
       :default    => "1d",
       :type       => :duration,
-      :desc       => "How often the Puppet agent refreshes its local CRL. By
-         default the CRL is refreshed once every 24 hours. If a different
-         duration is specified, then the agent will refresh its CRL whenever
-         it next runs and the elapsed time since the CRL was last refreshed
-         exceeds the duration.
+      :desc       => "How often the Puppet agent refreshes its local Certificate
+         Revocation List (CRL). By default, the CRL is refreshed every 24 hours. If
+         a different interval is specified, the agent refreshes its CRL on the next
+         Puppet agent run if the elapsed time since the CRL was last refreshed
+         exceeds the specified interval.
 
-         In general, the duration should be greater than the `runinterval`.
-         Setting it to 0 or an equal or lesser value than `runinterval`,
-         will cause the CRL to be refreshed on every run.
+         In general, the interval should be greater than the `runinterval` value.
+         Setting the `crl_refresh_interval` value to 0 or an equal or lesser value
+         than `runinterval` causes the CRL to be refreshed on every run.
 
          If the agent downloads a new CRL, the agent will use it for subsequent
          network requests. If the refresh request fails or if the CRL is
@@ -1240,18 +1244,19 @@ EOT
     :hostcert_renewal_interval => {
       :default => "30d",
       :type    => :duration,
-      :desc    => "When the Puppet agent refreshes its client certificate.
-         By default the client certificate will refresh 30 days before the certificate
-         expires. If a different duration is specified, then the agent will refresh its
-         client certificate whenever it next runs and if the client certificate expires
-         within the duration specified.
+      :desc => "How often the Puppet agent renews its client certificate. By
+         default, the client certificate is renewed 30 days before the certificate
+         expires. If a different interval is specified, the agent renews its client
+         certificate during the next agent run, assuming that the client certificate has
+         expired within the specified duration.
 
-         In general, the duration should be greater than the `runinterval`.
-         Setting it to 0 will disable automatic renewal.
+         In general, the `hostcert_renewal_interval` value should be greater than the
+         `runinterval` value. Setting the `hostcert_renewal_interval` value to 0 disables
+         automatic renewal.
 
-         If the agent downloads a new certificate, the agent will use it for subsequent
-         network requests. If the refresh request fails, then the agent run will continue using the
-         certificate it already has. #{AS_DURATION}",
+         If the agent downloads a new certificate, the agent will use it
+         for subsequent network requests. If the refresh request fails, the agent run
+         continues to use its existing certificate. #{AS_DURATION}",
     },
     :keylength => {
       :default    => 4096,
@@ -1492,8 +1497,10 @@ EOT
     :exclude_unchanged_resources => {
       :default => true,
       :type => :boolean,
-      :desc => 'When set to true, resources that have had no changes after catalog application
-        will not have corresponding unchanged resource status updates listed in the report.'
+      :desc => "Specifies how unchanged resources are listed in reports. When
+        set to `true`, resources that have had no changes after catalog application
+        will not have corresponding unchanged resource status updates listed in a
+        report."
     },
     :reportdir => {
       :default => "$vardir/reports",
@@ -1745,11 +1752,12 @@ EOT
     :allow_pson_serialization => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether when unable to serialize to JSON or other formats,
-        Puppet falls back to PSON. This option affects both puppetserver's
-        configuration management service responses and when the agent saves its
-        cached catalog. This option is useful in preventing the loss of data because
-        rich data cannot be serialized via PSON.",
+      :desc => "Whether to allow PSON serialization. When unable to serialize to
+        JSON or other formats, Puppet falls back to PSON. This option affects the
+        configuration management service responses of Puppet Server and the process by
+        which the agent saves its cached catalog. With a default value of `false`, this
+        option is useful in preventing the loss of data because rich data cannot be
+        serialized via PSON.",
     },
     :agent_catalog_run_lockfile => {
       :default    => "$statedir/agent_catalog_run.lock",
@@ -1775,7 +1783,7 @@ EOT
       :type       => :boolean,
       :default    => false,
       :desc       => "Whether to include legacy facts when requesting a catalog. This
-        option can be set to false provided all puppet manifests, hiera.yaml and hiera
+        option can be set to `false` if all puppet manifests, hiera.yaml, and hiera
         configuration layers no longer access legacy facts, such as `$osfamily`, and
         instead access structured facts, such as `$facts['os']['family']`."
     },
@@ -2091,12 +2099,12 @@ EOT
     :preprocess_deferred => {
       :default => false,
       :type => :boolean,
-      :desc => "Whether puppet should call deferred functions before applying
-        the catalog. If set to `true`, then all prerequisites needed for the
-        deferred function must be satisfied prior to puppet running. If set to
-        `false`, then deferred functions will follow puppet relationships and
-        ordering. This allows puppet to install prerequisites needed for a
-        deferred function and call the deferred function in the same run."
+      :desc => "Whether Puppet should call deferred functions before applying
+        the catalog. If set to `true`, all prerequisites required for the
+        deferred function must be satisfied before the Puppet run. If set to
+        `false`, deferred functions follow Puppet relationships and
+        ordering. In this way, Puppet can install the prerequisites required for a
+        deferred function and call the deferred function in the same run.",
     },
     :summarize => {
         :default  => false,

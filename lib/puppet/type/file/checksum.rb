@@ -7,11 +7,13 @@ require_relative '../../../puppet/util/checksums'
 Puppet::Type.type(:file).newparam(:checksum) do
   include Puppet::Util::Checksums
 
+  # The default is defined in Puppet.default_digest_algorithm
   desc "The checksum type to use when determining whether to replace a file's contents.
 
-    The default checksum type is #{Puppet.default_digest_algorithm}."
+    The default checksum type is sha256."
 
-  newvalues(*Puppet::Util::Checksums.known_checksum_types)
+  # The values are defined in Puppet::Util::Checksums.known_checksum_types
+  newvalues(:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, :mtime, :ctime, :none)
 
   defaultto do
     Puppet[:digest_algorithm].to_sym

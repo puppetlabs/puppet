@@ -301,12 +301,13 @@ module Puppet
             command  => '/opt/ruby/bin/gem',
           }
 
-        Each provider defines a package management command; and uses the first
+        Each provider defines a package management command and uses the first
         instance of the command found in the PATH.
 
         Providers supporting the targetable feature allow you to specify the
-        absolute path of the package management command; useful when multiple
-        instances of the command are installed, or the command is not in the PATH.
+        absolute path of the package management command. Specifying the absolute
+        path is useful when multiple instances of the command are installed, or
+        the command is not in the PATH.
       EOT
 
       isnamevar

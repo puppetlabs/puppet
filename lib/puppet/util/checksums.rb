@@ -9,6 +9,7 @@ require 'time'
 module Puppet::Util::Checksums
   module_function
 
+  # If you modify this, update puppet/type/file/checksum.rb too
   KNOWN_CHECKSUMS = [
     :sha256, :sha256lite,
     :md5, :md5lite,

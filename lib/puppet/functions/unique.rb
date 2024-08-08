@@ -65,8 +65,9 @@
 # *first-found* unique value, but for `Hash` it contains associations from a set of keys to the set of values clustered by the
 # equality lambda (or the default value equality if no lambda was given). This makes the `unique` function more versatile for hashes
 # in general, while requiring that the simple computation of "hash's unique set of values" is performed as `$hsh.map |$k, $v| { $v }.unique`.
-# (A unique set of hash keys is in general meaningless (since they are unique by definition) - although if processed with a different
-# lambda for equality that would be different. First map the hash to an array of its keys if such a unique computation is wanted).
+# (Generally, it's meaningless to compute the unique set of hash keys because they are unique by definition. However, the
+# situation can change if the hash keys are processed with a different lambda for equality. For this unique computation,
+# first map the hash to an array of its keys.)
 # If the more advanced clustering is wanted for one of the other data types, simply transform it into a `Hash` as shown in the
 # following example.
 #
