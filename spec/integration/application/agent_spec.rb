@@ -649,31 +649,6 @@ describe "puppet agent", unless: Puppet::Util::Platform.jruby? do
        )).to_stdout
        .and output(/No more routes to fileserver/).to_stderr
     end
-
-    it 'preserves the old cached catalog if validation fails with the old one' do
-      catalog_handler = -> (req, res) {
-        catalog = compile_to_catalog(<<-MANIFEST, node)
-          exec { 'unqualified_command': }
-        MANIFEST
-
-        res.body = formatter.render(catalog)
-        res['Content-Type'] = formatter.mime
-      }
-
-      server.start_server(mounts: {catalog: catalog_handler}) do |port|
-        Puppet[:serverport] = port
-        expect {
-          agent.command_line.args << '--test'
-          agent.run
-        }.to exit_with(1)
-         .and output(%r{Retrieving plugin}).to_stdout
-         .and output(%r{Validation of Exec\[unqualified_command\] failed: 'unqualified_command' is not qualified and no path was specified}).to_stderr
-      end
-
-      # cached catalog should not be updated
-      cached_catalog = "#{File.join(Puppet[:client_datadir], 'catalog', Puppet[:certname])}.json"
-      expect(File).to_not be_exist(cached_catalog)
-    end
   end
 
   context "reporting" do

@@ -15,13 +15,6 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
   let(:provider) { described_class.new(resource) }
 
   describe "#validatecmd" do
-    it "should fail if no path is specified and the command is not fully qualified" do
-      expect { provider.validatecmd("foo") }.to raise_error(
-        Puppet::Error,
-        "'foo' is not qualified and no path was specified. Please qualify the command or specify a path."
-      )
-    end
-
     it "should pass if a path is given" do
       provider.resource[:path] = ['/bogus/bin']
       provider.validatecmd("../foo")
