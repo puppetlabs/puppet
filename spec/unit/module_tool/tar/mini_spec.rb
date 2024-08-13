@@ -61,7 +61,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
 
     expect(Zlib::GzipWriter).to receive(:open).with(destfile).and_yield(writer)
     stats = {:mode => 0222}
-    expect(Archive::Tar::Minitar).to receive(:pack).with(sourcedir, writer).and_yield(:file_start, 'abc', stats)
+    expect(Minitar).to receive(:pack).with(sourcedir, writer).and_yield(:file_start, 'abc', stats)
 
     minitar.pack(sourcedir, destfile)
   end
@@ -70,7 +70,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     writer = double('GzipWriter')
 
     expect(Zlib::GzipWriter).to receive(:open).with(destfile).and_yield(writer)
-    expect(Archive::Tar::Minitar).to receive(:pack).with(sourcedir, writer).
+    expect(Minitar).to receive(:pack).with(sourcedir, writer).
         and_yield(:file_start, 'abc', {:entry => MockFileStatEntry.new(nil)})
 
     minitar.pack(sourcedir, destfile)
@@ -82,7 +82,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     expect(Zlib::GzipReader).to receive(:open).with(sourcefile).and_yield(reader)
     expect(minitar).to receive(:find_valid_files).with(reader).and_return([name])
     entry = MockFileStatEntry.new(mode)
-    expect(Archive::Tar::Minitar).to receive(:unpack).with(reader, destdir, [name], {:fsync => false}).
+    expect(Minitar).to receive(:unpack).with(reader, destdir, [name], {:fsync => false}).
         and_yield(type, name, {:entry => entry})
     entry
   end

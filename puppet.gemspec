@@ -39,6 +39,6 @@ Gem::Specification.new do |spec|
   if platform == 'x64-mingw32' || platform == 'x86-mingw32'
     # ffi 1.16.0 - 1.16.2 are broken on Windows
     spec.add_runtime_dependency('ffi', '>= 1.15.5', '< 1.17.0', '!= 1.16.0', '!= 1.16.1', '!= 1.16.2')
-    spec.add_runtime_dependency('minitar', '~> 0.9')
+    spec.add_runtime_dependency('minitar', '~> 1.0')
   end
 end
