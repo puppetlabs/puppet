@@ -2126,10 +2126,12 @@ EOT
           can produce node information. The command must:
 
           * Take the name of a node as a command-line argument.
+
           * Return a YAML hash with up to three keys:
             * `classes` --- A list of classes, as an array or hash.
             * `environment` --- A string.
             * `parameters` --- A list of top-scope variables to set, as a hash.
+
           * For unknown nodes, exit with a non-zero exit code.
 
           Generally, an ENC script makes requests to an external data source.

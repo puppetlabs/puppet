@@ -26,7 +26,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   deactivate_action(:destroy)
   deactivate_action(:search)
   action(:find) do
-    summary _("Retrieve the catalog for the node from which the comamand is run.")
+    summary _("Retrieve the catalog for the node from which the command is run.")
     arguments "<certname>, <facts>"
     option("--facts_for_catalog") do
       summary _("Not yet implemented for the CLI; facts will be collected internally.")

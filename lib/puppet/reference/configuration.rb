@@ -95,6 +95,5 @@ config.header = <<~EOT
 
   [confguide]: https://puppet.com/docs/puppet/latest/config_about_settings.html
 
-  * * *
 
 EOT
