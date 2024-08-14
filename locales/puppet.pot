@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.8.0-16-g7080b6a57b\n"
+"Project-Id-Version: Puppet automation framework 8.8.0-40-gb8ac6f49a3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2024-07-29 23:51+0000\n"
-"PO-Revision-Date: 2024-07-29 23:51+0000\n"
+"POT-Creation-Date: 2024-08-14 00:21+0000\n"
+"PO-Revision-Date: 2024-08-14 00:21+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -196,35 +196,35 @@ msgstr ""
 
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
-#: ../lib/puppet/application/apply.rb:216 ../lib/puppet/application/apply.rb:343
+#: ../lib/puppet/application/apply.rb:217 ../lib/puppet/application/apply.rb:344
 msgid "For puppet apply"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:224
+#: ../lib/puppet/application/apply.rb:225
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:310 ../lib/puppet/application/script.rb:241
+#: ../lib/puppet/application/apply.rb:311 ../lib/puppet/application/script.rb:241
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:353
+#: ../lib/puppet/application/apply.rb:354
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:374 ../lib/puppet/application/script.rb:148
+#: ../lib/puppet/application/apply.rb:375 ../lib/puppet/application/script.rb:148
 msgid "Could not find facts for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:386 ../lib/puppet/application/script.rb:156
+#: ../lib/puppet/application/apply.rb:387 ../lib/puppet/application/script.rb:156
 msgid "Could not find node %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:400 ../lib/puppet/application/script.rb:140
+#: ../lib/puppet/application/apply.rb:401 ../lib/puppet/application/script.rb:140
 msgid "Could not find file %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:402
+#: ../lib/puppet/application/apply.rb:403
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr ""
 
@@ -342,27 +342,27 @@ msgstr ""
 msgid "Store and retrieve files in a filebucket"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:228
+#: ../lib/puppet/application/filebucket.rb:230
 msgid "You must specify a file to back up"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:232
+#: ../lib/puppet/application/filebucket.rb:234
 msgid "%{file}: no such file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:236
+#: ../lib/puppet/application/filebucket.rb:238
 msgid "%{file}: cannot read file"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:258 ../lib/puppet/application/filebucket.rb:282
+#: ../lib/puppet/application/filebucket.rb:260 ../lib/puppet/application/filebucket.rb:284
 msgid "Need exactly two arguments: filebucket diff <file_a> <file_b>"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:279
+#: ../lib/puppet/application/filebucket.rb:281
 msgid "Comparing %{checksum_a} %{checksum_b} %{file_a} %{file_b}"
 msgstr ""
 
-#: ../lib/puppet/application/filebucket.rb:293
+#: ../lib/puppet/application/filebucket.rb:295
 msgid "Cancelling"
 msgstr ""
 
@@ -744,39 +744,39 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:156
+#: ../lib/puppet/defaults.rb:157
 msgid "Cannot disable unrecognized warning types '%{invalid}'."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:157
+#: ../lib/puppet/defaults.rb:158
 msgid "Valid values are '%{values}'."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:555
+#: ../lib/puppet/defaults.rb:558
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:557
+#: ../lib/puppet/defaults.rb:560
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:751
+#: ../lib/puppet/defaults.rb:754
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:841
+#: ../lib/puppet/defaults.rb:844
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1100 ../lib/puppet/settings/enum_setting.rb:15 ../lib/puppet/settings/symbolic_enum_setting.rb:16
+#: ../lib/puppet/defaults.rb:1103 ../lib/puppet/settings/enum_setting.rb:15 ../lib/puppet/settings/symbolic_enum_setting.rb:16
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:2034
+#: ../lib/puppet/defaults.rb:2042
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -793,7 +793,7 @@ msgid "Compile, save, view, and convert catalogs."
 msgstr ""
 
 #: ../lib/puppet/face/catalog.rb:29
-msgid "Retrieve the catalog for the node from which the comamand is run."
+msgid "Retrieve the catalog for the node from which the command is run."
 msgstr ""
 
 #: ../lib/puppet/face/catalog.rb:32
@@ -6596,7 +6596,7 @@ msgstr ""
 msgid "Source %{source} is not supported by pacman"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:259
+#: ../lib/puppet/provider/package/pacman.rb:258
 msgid "Refusing to install package group %{resource_name}, because allow_virtual is false."
 msgstr ""
 
@@ -7051,51 +7051,51 @@ msgstr ""
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:88
+#: ../lib/puppet/resource/type.rb:98
 msgid "Invalid resource supertype '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:119
+#: ../lib/puppet/resource/type.rb:129
 msgid "%{name} is not a class; cannot add code to it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:120
+#: ../lib/puppet/resource/type.rb:130
 msgid "%{name} is not a class; cannot add code from it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:125
+#: ../lib/puppet/resource/type.rb:135
 msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:129
+#: ../lib/puppet/resource/type.rb:139
 msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:160
+#: ../lib/puppet/resource/type.rb:170
 msgid "Cannot create resources for defined resource types"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:213
+#: ../lib/puppet/resource/type.rb:227
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:344
+#: ../lib/puppet/resource/type.rb:358
 msgid "Parameter '%{name}' is given a type, but is not a valid parameter."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:347
+#: ../lib/puppet/resource/type.rb:361
 msgid "Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:383
+#: ../lib/puppet/resource/type.rb:397
 msgid "Could not find scope for %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:404
+#: ../lib/puppet/resource/type.rb:418
 msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:406
+#: ../lib/puppet/resource/type.rb:420
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
@@ -7930,15 +7930,15 @@ msgstr ""
 msgid " (previously recorded value was %s)"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:238
+#: ../lib/puppet/transaction/resource_harness.rb:239
 msgid "current_value %s, should be %s (noop)"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:247
+#: ../lib/puppet/transaction/resource_harness.rb:251
 msgid "changed %s to %s"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:270
+#: ../lib/puppet/transaction/resource_harness.rb:274
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
@@ -8079,15 +8079,15 @@ msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 #. TRANSLATORS 'creates' is a parameter name and should not be translated
-#: ../lib/puppet/type/exec.rb:455
+#: ../lib/puppet/type/exec.rb:454
 msgid "Checking that 'creates' path '%{creates_path}' exists"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:507 ../lib/puppet/type/exec.rb:570
+#: ../lib/puppet/type/exec.rb:506 ../lib/puppet/type/exec.rb:569
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:673
+#: ../lib/puppet/type/exec.rb:672
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
@@ -8178,7 +8178,7 @@ msgstr ""
 msgid "File written to disk did not match desired checksum; discarding changes (%{content_checksum} vs %{desired_checksum})"
 msgstr ""
 
-#: ../lib/puppet/type/file/checksum.rb:22
+#: ../lib/puppet/type/file/checksum.rb:24
 msgid "MD5 is not supported in FIPS mode"
 msgstr ""
 
@@ -8252,23 +8252,23 @@ msgstr ""
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:420
+#: ../lib/puppet/type/package.rb:421
 msgid "Cannot have both `ensure => disabled` and `flavor`"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:519
+#: ../lib/puppet/type/package.rb:520
 msgid "Cannot have both `enable_only => true` and `flavor`"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:522
+#: ../lib/puppet/type/package.rb:523
 msgid "Cannot have both `ensure => disabled` and `enable_only => true`"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:683
+#: ../lib/puppet/type/package.rb:684
 msgid "Invalid hold value %{value}. %{doc}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:710
+#: ../lib/puppet/type/package.rb:711
 msgid "You cannot use \"mark\" property while \"ensure\" is one of [\"absent\", \"purged\"]"
 msgstr ""
 
@@ -9125,14 +9125,6 @@ msgstr ""
 msgid "%{name} Reference"
 msgstr ""
 
-#: ../lib/puppet/util/reference.rb:87
-msgid ""
-"\n"
-"\n"
-"**This page is autogenerated; any changes will get overwritten**\n"
-"\n"
-msgstr ""
-
 #: ../lib/puppet/util/resource_template.rb:49
 msgid "Template %{file} does not exist"
 msgstr ""
@@ -9145,35 +9137,35 @@ msgstr ""
 msgid "Caught exception %{klass}:%{error} retrying"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:82
+#: ../lib/puppet/util/selinux.rb:74
 msgid "Cannot get default context with nil handle"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:98
+#: ../lib/puppet/util/selinux.rb:94
 msgid "Invalid context to parse: %{context}"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:111
+#: ../lib/puppet/util/selinux.rb:107
 msgid "Invalid SELinux parameter type"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:132
+#: ../lib/puppet/util/selinux.rb:128
 msgid "Can't set SELinux context on file unless the file already has some kind of context"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:146
+#: ../lib/puppet/util/selinux.rb:142
 msgid "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:157
+#: ../lib/puppet/util/selinux.rb:153
 msgid "Failed to set SELinux context %{context} on %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:210
+#: ../lib/puppet/util/selinux.rb:206
 msgid "Could not open SELinux category translation file %{path}."
 msgstr ""
 
-#: ../lib/puppet/util/selinux.rb:298
+#: ../lib/puppet/util/selinux.rb:310
 msgid "got a relative path in SELinux find_fs: %{path}"
 msgstr ""
 
