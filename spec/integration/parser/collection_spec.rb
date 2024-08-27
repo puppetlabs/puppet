@@ -8,7 +8,7 @@ describe 'collectors' do
     catalog = compile_to_catalog(code, node)
     messages = catalog.resources.find_all { |resource| resource.type == 'Notify' }.
                                  collect { |notify| notify[:message] }
-    expect(messages).to include(*expected_messages)
+    expected_messages.each { |message| expect(messages).to include(message) }
   end
 
   def warnings
