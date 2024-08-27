@@ -6,3 +6,15 @@ gem_rdoc_options:
   - --main
   - README.md
   - --line-numbers
+# Array of files to include when building source tarballs
+files:
+  - '[A-Z]*'
+  - install.rb
+  - bin
+  - lib
+  - conf
+  - man
+  - examples
+  - ext
+  - tasks
+  - locales
