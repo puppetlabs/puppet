@@ -268,7 +268,7 @@ describe Puppet::Configurer do
       }
       Puppet::Node::Facts.indirection.save(facts)
 
-      expect(Puppet).to receive(:warning).with(/The current total number of facts: [1-9]* exceeds the number of facts limit: [1-9]*/)
+      expect(Puppet).to receive(:warning).with(/The current total number of fact values: [1-9]* exceeds the fact values limit: [1-9]*/)
       configurer.run
     end
 
