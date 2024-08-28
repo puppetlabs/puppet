@@ -76,10 +76,10 @@ class Puppet::Application::Filebucket < Puppet::Application
       use your local file bucket by specifying '--local', or by specifying
       '--bucket' with a local path.
 
-      **Note**: Enabling and using the backup option, and by extension the
-      filebucket resource, requires appropriate planning and management to ensure
-      that sufficient disk space is available for the file backups. Generally, you
-      can implement this using one of the following two options:
+      **Important**: When you enable and use the backup option, and by extension
+      the filebucket resource, you must ensure that sufficient disk space is
+      available for the file backups. Generally, you can provide the disk space
+      by using one of the following two options:
 
         - Use a `find` command and `crontab` entry to retain only the last X days
         of file backups. For example:
