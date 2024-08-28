@@ -1,6 +1,8 @@
 require 'tempfile'
 
 OUTPUT_DIR = 'references'
+MANDIR = File.join(OUTPUT_DIR, 'man')
+
 CONFIGURATION_ERB = File.join(__dir__, 'references/configuration.erb')
 CONFIGURATION_MD  = File.join(OUTPUT_DIR, 'configuration.md')
 METAPARAMETER_ERB = File.join(__dir__, 'references/metaparameter.erb')
@@ -10,6 +12,9 @@ REPORT_MD         = File.join(OUTPUT_DIR, 'report.md')
 FUNCTIONS_TEMPLATE_ERB = File.join(__dir__, 'references/functions_template.erb')
 FUNCTION_ERB      = File.join(__dir__, 'references/function.erb')
 FUNCTION_MD       = File.join(OUTPUT_DIR, 'function.md')
+MAN_OVERVIEW_ERB  = File.join(__dir__, 'references/man/overview.erb')
+MAN_OVERVIEW_MD   = File.join(MANDIR, "overview.md")
+MAN_ERB           = File.join(__dir__, 'references/man.erb')
 
 def render_erb(erb_file, variables)
   # Create a binding so only the variables we specify will be visible
@@ -99,5 +104,98 @@ namespace :references do
 
     # renders the preamble and list of functions
     generate_reference('function', FUNCTION_ERB, body, FUNCTION_MD)
+  end
+
+  desc "Generate man as markdown references"
+  task :man do
+    FileUtils.mkdir_p(MANDIR)
+
+    begin
+      require 'pandoc-ruby'
+    rescue LoadError
+      abort("Run `bundle config set with documentation` and `bundle update` to install the `pandoc-ruby` gem.")
+    end
+
+    pandoc = %x{which pandoc}.chomp
+    unless File.executable?(pandoc)
+      abort("Please install the `pandoc` package.")
+    end
+
+    sha = %x{git rev-parse HEAD}.chomp
+    now = Time.now
+
+    # This is based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/man.rb#L24-L108
+    core_apps = %w(
+      agent
+      apply
+      lookup
+      module
+      resource
+    )
+    occasional_apps = %w(
+      config
+      describe
+      device
+      doc
+      epp
+      generate
+      help
+      node
+      parser
+      plugin
+      script
+      ssl
+    )
+    weird_apps = %w(
+      catalog
+      facts
+      filebucket
+      report
+    )
+
+    variables = {
+      sha: sha,
+      now: now,
+      title: 'Puppet Man Pages',
+      core_apps: core_apps,
+      occasional_apps: occasional_apps,
+      weird_apps: weird_apps
+    }
+
+    content = render_erb(MAN_OVERVIEW_ERB, variables)
+    File.write(MAN_OVERVIEW_MD, content)
+    puts "Generated #{MAN_OVERVIEW_MD}"
+
+    # Generate manpages in roff
+    Rake::Task[:gen_manpages].invoke
+
+    # Convert the roff formatted man pages to markdown, based on
+    # https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/man.rb#L119-L128
+    files = Pathname.glob(File.join(__dir__, '../man/man8/*.8'))
+    files.each do |f|
+      next if File.basename(f) == "puppet.8"
+
+      app = File.basename(f).delete_prefix('puppet-').delete_suffix(".8")
+
+      body =
+        PandocRuby.convert([f], from: :man, to: :markdown)
+        .gsub(/#(.*?)\n/, '##\1')
+        .gsub(/:\s\s\s\n\n```\{=html\}\n<!--\s-->\n```/, '')
+        .gsub(/\n:\s\s\s\s/, '')
+        .chomp
+
+      variables = {
+        sha: sha,
+        now: now,
+        title: "Man Page: puppet #{app}",
+        canonical: "/puppet/latest/man/#{app}.html",
+        body: body
+      }
+
+      content = render_erb(MAN_ERB, variables)
+      output = File.join(MANDIR, "#{app}.md")
+      File.write(output, content)
+      puts "Generated #{output}"
+    end
   end
 end
