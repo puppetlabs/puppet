@@ -407,4 +407,11 @@ namespace :references do
       end
     end
   end
+
+  desc "Generate all reference documentation"
+  task :all do
+    %w[configuration function report metaparameter man type].each do |ref|
+      Rake::Task["references:#{ref}"].invoke
+    end
+  end
 end
