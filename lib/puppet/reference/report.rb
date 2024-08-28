@@ -21,5 +21,6 @@ for more details.
 
 none
 ----
-Discard all reports received.
+Discard all reports received. This is the default handler when the `reports`
+setting is unset.
 "

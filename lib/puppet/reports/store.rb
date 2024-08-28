@@ -11,8 +11,7 @@ Puppet::Reports.register_report(:store) do
     and this just stores the file on disk, in the `reportdir` directory.
 
     These files collect quickly -- one every half hour -- so it is a good idea
-    to perform some maintenance on them if you use this report (it's the only
-    default report)."
+    to perform some maintenance on them if you use this report."
 
   def process
     validate_host(host)
