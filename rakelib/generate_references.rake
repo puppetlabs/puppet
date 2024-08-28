@@ -5,6 +5,8 @@ CONFIGURATION_ERB = File.join(__dir__, 'references/configuration.erb')
 CONFIGURATION_MD  = File.join(OUTPUT_DIR, 'configuration.md')
 METAPARAMETER_ERB = File.join(__dir__, 'references/metaparameter.erb')
 METAPARAMETER_MD  = File.join(OUTPUT_DIR, 'metaparameter.md')
+REPORT_ERB        = File.join(__dir__, 'references/report.erb')
+REPORT_MD         = File.join(OUTPUT_DIR, 'report.md')
 
 def render_erb(erb_file, variables)
   # Create a binding so only the variables we specify will be visible
@@ -47,5 +49,11 @@ namespace :references do
   task :metaparameter do
     body = puppet_doc('metaparameter')
     generate_reference('metaparameter', METAPARAMETER_ERB, body, METAPARAMETER_MD)
+  end
+
+  desc "Generate report reference"
+  task :report do
+    body = puppet_doc('report')
+    generate_reference('report', REPORT_ERB, body, REPORT_MD)
   end
 end
