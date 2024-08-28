@@ -20,6 +20,7 @@ TYPES_OVERVIEW_ERB = File.join(__dir__, 'references/types/overview.erb')
 TYPES_OVERVIEW_MD  = File.join(TYPES_DIR, 'overview.md')
 UNIFIED_TYPE_ERB = File.join(__dir__, 'references/unified_type.erb')
 UNIFIED_TYPE_MD  = File.join(OUTPUT_DIR, 'type.md')
+SINGLE_TYPE_ERB  = File.join(__dir__, 'references/types/single_type.erb')
 
 def render_erb(erb_file, variables)
   # Create a binding so only the variables we specify will be visible
@@ -332,6 +333,7 @@ namespace :references do
     end
   end
 
+  desc "Generate resource type references"
   task :type do
     FileUtils.mkdir_p(TYPES_DIR)
 
@@ -385,6 +387,24 @@ namespace :references do
       content = render_erb(UNIFIED_TYPE_ERB, variables)
       File.write(UNIFIED_TYPE_MD, content)
       puts "Generated #{UNIFIED_TYPE_MD}"
+
+      # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type.rb#L78-L85
+      # one type per page
+      types.each do |type|
+        variables = {
+          title: "Resource Type: #{type}",
+          type: type,
+          sha: sha,
+          now: now,
+          canonical: "/puppet/latest/types/#{type}.html",
+          body: render_resource_type(type, type_data[type])
+        }
+
+        content = render_erb(SINGLE_TYPE_ERB, variables)
+        output = File.join(TYPES_DIR, "#{type}.md")
+        File.write(output, content)
+        puts "Generated #{output}"
+      end
     end
   end
 end
