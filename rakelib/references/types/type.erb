@@ -1,0 +1,78 @@
+## <%= name %>
+
+* [Attributes](#<%= name %>-attributes)
+<% if !this_type['providers'].empty? -%>
+* [Providers](#<%= name %>-providers)
+<% end -%>
+<% if !this_type['features'].empty? -%>
+* [Provider Features](#<%= name %>-provider-features)
+<% end -%>
+
+### Description {#<%= name %>-description}
+
+<%= this_type['description'] %>
+
+### Attributes {#<%= name %>-attributes}
+
+<pre><code><%= name %> { 'resource title':
+<% sorted_attribute_list.each do |attribute_name| -%>
+  <a href="#<%= name %>-attribute-<%= attribute_name %>"><%= attribute_name %></a><%= ' ' * (longest_attribute_name - attribute_name.length) %> =&gt; <em># <% if this_type['attributes'][attribute_name]['namevar'] %><strong>(namevar)</strong> <% end %><%= this_type['attributes'][attribute_name]['description'][0,49].gsub("\n", ' ').gsub('<', '&lt;').sub(/\W? \S+$/, '...') %></em>
+<% end -%>
+  # ...plus any applicable <a href="https://puppet.com/docs/puppet/latest/metaparameter.html">metaparameters</a>.
+}</code></pre>
+
+<% sorted_attribute_list.each do |attribute_name| -%>
+
+#### <%= attribute_name %> {#<%= name %>-attribute-<%= attribute_name %>}
+
+<% if this_type['attributes'][attribute_name]['namevar'] -%>
+<% if attribute_name != 'provider' %>_(**Namevar:** If omitted, this attribute's value defaults to the resource's title.)_<%= "\n\n" -%>
+<% elsif attribute_name == 'provider' %>_(**Secondary namevar:** This resource type allows you to manage multiple resources with the same name as long as their providers are different.)_<%= "\n\n" -%>
+<% end -%>
+<% end -%>
+<% if this_type['attributes'][attribute_name]['kind'] == 'property' %>_(**Property:** This attribute represents concrete state on the target system.)_<%= "\n\n" %><% end -%>
+<%= this_type['attributes'][attribute_name]['description'] %>
+<% if this_type['attributes'][attribute_name]['required_features'] -%>
+
+Requires features <%= this_type['attributes'][attribute_name]['required_features'] %>.
+<% end -%>
+
+<% if attribute_name == 'provider' and !this_type['providers'].empty? -%>Available providers are:<%= "\n\n" %><%= this_type['providers'].keys.sort.collect {|prov| "* [`#{prov}`](##{name}-provider-#{prov})"}.sort.join("\n") %><%= "\n\n" %><% end -%>
+([↑ Back to <%= name %> attributes](#<%= name %>-attributes))
+
+<% end # of attribute details
+-%>
+
+<% if !this_type['providers'].empty? -%>
+### Providers {#<%= name %>-providers}
+
+<% end -%>
+<% this_type['providers'].keys.sort.each do |provider_name| -%>
+#### <%= provider_name %> {#<%= name %>-provider-<%= provider_name %>}
+
+<%= this_type['providers'][provider_name]['description'] %>
+
+<% end -%>
+<% if !this_type['features'].empty? -%>
+### Provider Features {#<%= name %>-provider-features}
+
+Available features:
+
+<% sorted_feature_list.each do |feature| -%>
+* `<%= feature %>` --- <%= this_type['features'][feature].gsub("\n", ' ') %>
+<% end -%>
+
+<% if !this_type['providers'].empty? -%>
+Provider support:
+
+<%- this_type['providers'].keys.sort.each do |provider_name| -%>
+* **<%= provider_name %>** - <% if !this_type['providers'][provider_name]['features'].empty? -%>
+_<%=this_type['providers'][provider_name]['features'].join(', ').gsub('_', ' ') %>_
+<% else %>No supported Provider features
+<% end %><%- end -%>  
+
+<% end # provider support table
+-%>
+<% end # features section
+-%>
+

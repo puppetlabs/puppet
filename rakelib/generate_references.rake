@@ -18,6 +18,8 @@ MAN_OVERVIEW_MD   = File.join(MANDIR, "overview.md")
 MAN_ERB           = File.join(__dir__, 'references/man.erb')
 TYPES_OVERVIEW_ERB = File.join(__dir__, 'references/types/overview.erb')
 TYPES_OVERVIEW_MD  = File.join(TYPES_DIR, 'overview.md')
+UNIFIED_TYPE_ERB = File.join(__dir__, 'references/unified_type.erb')
+UNIFIED_TYPE_MD  = File.join(OUTPUT_DIR, 'type.md')
 
 def render_erb(erb_file, variables)
   # Create a binding so only the variables we specify will be visible
@@ -44,6 +46,36 @@ def generate_reference(reference, erb, body, output)
   content = render_erb(erb, variables)
   File.write(output, content)
   puts "Generated #{output}"
+end
+
+# Render type information for the specified resource type
+# Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type.rb#L87-L112
+def render_resource_type(name, this_type)
+  sorted_attribute_list = this_type['attributes'].keys.sort {|a,b|
+    # Float namevar(s) to the top and ensure after
+    # followed by the others in sort order
+    if this_type['attributes'][a]['namevar']
+      -1
+    elsif this_type['attributes'][b]['namevar']
+      1
+    elsif a == 'ensure'
+      -1
+    elsif b == 'ensure'
+      1
+    else
+      a <=> b
+    end
+  }
+
+  variables = {
+    name: name,
+    this_type: this_type,
+    sorted_attribute_list: sorted_attribute_list,
+    sorted_feature_list: this_type['features'].keys.sort,
+    longest_attribute_name: sorted_attribute_list.collect{|attr| attr.length}.max
+  }
+  erb = File.join(__dir__, 'references/types/type.erb')
+  render_erb(erb, variables)
 end
 
 # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type_strings.rb#L19-L99
@@ -128,6 +160,19 @@ def extract_resource_types(strings_data)
           })
     }
     memo
+  end
+end
+
+# Extract type documentation from the current version of puppet. Based on
+# https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type.rb#L52
+#
+# REMIND This is kind of convoluted and means we're using two completely different
+# code paths to generate the overview and unified page of types.
+def unified_page_resource_types
+  type_json = %x{ruby #{File.join(__dir__, 'references/get_typedocs.rb')}}
+  type_data = JSON.load(type_json)
+  type_data.keys.sort.map do |name|
+    render_resource_type(name, type_data[name])
   end
 end
 
@@ -299,6 +344,7 @@ namespace :references do
     end
 
     sha = %x{git rev-parse HEAD}.chomp
+    now = Time.now
 
     # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/strings.rb#L25-L26
     Tempfile.create do |tmpfile|
@@ -316,9 +362,9 @@ namespace :references do
       end
 
       variables = {
-        sha: sha,
-        now: Time.now,
         title: 'Resource types overview',
+        sha: sha,
+        now: now,
         types: types
       }
 
@@ -326,6 +372,19 @@ namespace :references do
       content = render_erb(TYPES_OVERVIEW_ERB, variables)
       File.write(TYPES_OVERVIEW_MD, content)
       puts "Generated #{TYPES_OVERVIEW_MD}"
+
+      # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type.rb#L55-L70
+      # unified page of types
+      variables = {
+        title: 'Resource Type Reference (Single-Page)',
+        sha: sha,
+        now: now,
+        types: unified_page_resource_types
+      }
+
+      content = render_erb(UNIFIED_TYPE_ERB, variables)
+      File.write(UNIFIED_TYPE_MD, content)
+      puts "Generated #{UNIFIED_TYPE_MD}"
     end
   end
 end
