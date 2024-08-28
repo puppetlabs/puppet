@@ -2,6 +2,7 @@ require 'tempfile'
 
 OUTPUT_DIR = 'references'
 MANDIR = File.join(OUTPUT_DIR, 'man')
+TYPES_DIR = File.join(OUTPUT_DIR, 'types')
 
 CONFIGURATION_ERB = File.join(__dir__, 'references/configuration.erb')
 CONFIGURATION_MD  = File.join(OUTPUT_DIR, 'configuration.md')
@@ -15,6 +16,8 @@ FUNCTION_MD       = File.join(OUTPUT_DIR, 'function.md')
 MAN_OVERVIEW_ERB  = File.join(__dir__, 'references/man/overview.erb')
 MAN_OVERVIEW_MD   = File.join(MANDIR, "overview.md")
 MAN_ERB           = File.join(__dir__, 'references/man.erb')
+TYPES_OVERVIEW_ERB = File.join(__dir__, 'references/types/overview.erb')
+TYPES_OVERVIEW_MD  = File.join(TYPES_DIR, 'overview.md')
 
 def render_erb(erb_file, variables)
   # Create a binding so only the variables we specify will be visible
@@ -41,6 +44,91 @@ def generate_reference(reference, erb, body, output)
   content = render_erb(erb, variables)
   File.write(output, content)
   puts "Generated #{output}"
+end
+
+# Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type_strings.rb#L19-L99
+def extract_resource_types(strings_data)
+  strings_data['resource_types'].reduce(Hash.new) do |memo, type|
+    memo[ type['name'] ] = {
+      'description' => type['docstring']['text'],
+      'features' => (type['features'] || []).reduce(Hash.new) {|memo, feature|
+        memo[feature['name']] = feature['description']
+        memo
+      },
+      'providers' => strings_data['providers'].select {|provider|
+        provider['type_name'] == type['name']
+      }.reduce(Hash.new) {|memo, provider|
+        description = provider['docstring']['text']
+        if provider['commands'] || provider['confines'] || provider['defaults']
+          description = description + "\n"
+        end
+        if provider['commands']
+          description = description + "\n* Required binaries: `#{provider['commands'].values.sort.join('`, `')}`"
+        end
+        if provider['confines']
+          description = description + "\n* Confined to: `#{provider['confines'].map{|fact,val| "#{fact} == #{val}"}.join('`, `')}`"
+        end
+        if provider['defaults']
+          description = description + "\n* Default for: `#{provider['defaults'].map{|fact,val| "#{fact} == #{val}"}.join('`, `')}`"
+        end
+        if provider['features']
+          description = description + "\n* Supported features: `#{provider['features'].sort.join('`, `')}`"
+        end
+        memo[provider['name']] = {
+          'features' => (provider['features'] || []),
+          'description' => description
+        }
+        memo
+      },
+      'attributes' => (type['parameters'] || []).reduce(Hash.new) {|memo, attribute|
+        description = attribute['description'] || ''
+        if attribute['default']
+          description = description + "\n\nDefault: `#{attribute['default']}`"
+        end
+        if attribute['values']
+          description = description + "\n\nAllowed values:\n\n" + attribute['values'].map{|val| "* `#{val}`"}.join("\n")
+        end
+        memo[attribute['name']] = {
+          'description' => description,
+          'kind' => 'parameter',
+          'namevar' => attribute['isnamevar'] ? true : false,
+          'required_features' => attribute['required_features'],
+        }
+        memo
+      }.merge( (type['properties'] || []).reduce(Hash.new) {|memo, attribute|
+          description = attribute['description'] || ''
+          if attribute['default']
+            description = description + "\n\nDefault: `#{attribute['default']}`"
+          end
+          if attribute['values']
+            description = description + "\n\nAllowed values:\n\n" + attribute['values'].map{|val| "* `#{val}`"}.join("\n")
+          end
+          memo[attribute['name']] = {
+            'description' => description,
+            'kind' => 'property',
+            'namevar' => false,
+            'required_features' => attribute['required_features'],
+          }
+          memo
+        }).merge( (type['checks'] || []).reduce(Hash.new) {|memo, attribute|
+            description = attribute['description'] || ''
+            if attribute['default']
+              description = description + "\n\nDefault: `#{attribute['default']}`"
+            end
+            if attribute['values']
+              description = description + "\n\nAllowed values:\n\n" + attribute['values'].map{|val| "* `#{val}`"}.join("\n")
+            end
+            memo[attribute['name']] = {
+              'description' => description,
+              'kind' => 'check',
+              'namevar' => false,
+              'required_features' => attribute['required_features'],
+            }
+            memo
+          })
+    }
+    memo
+  end
 end
 
 namespace :references do
@@ -196,6 +284,48 @@ namespace :references do
       output = File.join(MANDIR, "#{app}.md")
       File.write(output, content)
       puts "Generated #{output}"
+    end
+  end
+
+  task :type do
+    FileUtils.mkdir_p(TYPES_DIR)
+
+    # Locate puppet-strings
+    begin
+      require 'puppet-strings'
+      require 'puppet-strings/version'
+    rescue LoadError
+      abort("Run `bundle config set with documentation` and `bundle update` to install the `puppet-strings` gem.")
+    end
+
+    sha = %x{git rev-parse HEAD}.chomp
+
+    # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/strings.rb#L25-L26
+    Tempfile.create do |tmpfile|
+      puts "Running puppet strings #{PuppetStrings::VERSION}"
+      PuppetStrings.generate(['lib/puppet/type/*.rb'], json: true, path: tmpfile.path)
+      strings_data = JSON.load_file(tmpfile.path)
+
+      # convert strings output to data the overview ERB template expects
+      type_data = extract_resource_types(strings_data)
+
+      # Generate overview.md
+      # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/type.rb#L40-L47
+      types = type_data.keys.reject do |type|
+        type == 'component' || type == 'whit'
+      end
+
+      variables = {
+        sha: sha,
+        now: Time.now,
+        title: 'Resource types overview',
+        types: types
+      }
+
+      # Render overview page
+      content = render_erb(TYPES_OVERVIEW_ERB, variables)
+      File.write(TYPES_OVERVIEW_MD, content)
+      puts "Generated #{TYPES_OVERVIEW_MD}"
     end
   end
 end
