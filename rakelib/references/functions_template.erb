@@ -1,0 +1,47 @@
+<% functions.sort{|a,b| a['name'] <=> b['name'] }.each do |func| -%>
+## `<%= func['name'] %>`
+
+<%= func['docstring']['text'] %>
+
+<% func_signatures = func['signatures']
+multiple_signatures = func_signatures.count > 1
+if func_signatures
+func['signatures'].each_with_index do |signature, index| -%>
+
+<% if multiple_signatures -%>
+Signature <%= index+1 %>
+
+<% end -%>
+`<%= signature['signature'] %>`
+<% has_parameters = signature.dig('docstring', 'tags')&.detect {|tag| tag['tag_name'] == 'param' && tag['text'] != '' && tag['text'] != nil } || false
+if has_parameters -%>
+
+### Parameters
+
+<% signature['docstring']['tags'].select {|tag| tag['tag_name'] == 'param' && tag['text'] != '' && tag['text'] != nil}.each do |param| -%>
+
+* `<%= param['name'] %>` --- <%= param['text'] %>
+<% end # each param
+
+return_types = signature['docstring']['tags'].detect {|tag| tag['tag_name'] == 'return'}
+if return_types -%>
+
+Return type(s): <%= return_types['types'].map {|t| "`#{t}`"}.join(', ') %>. <%= return_types['text'] %>
+<% end # if return_types
+has_examples = signature['docstring']['tags'].detect {|tag| tag['tag_name'] == 'example' && tag['text'] != '' && tag['text'] != nil }
+if has_examples %>
+
+### Examples
+
+<% signature['docstring']['tags'].select {|tag| tag['tag_name'] == 'example' && tag['text'] != '' && tag['text'] != nil}.each do |example| -%>
+<%= example['name'] %>
+
+<%= example['text'] %>
+
+<% end # each example
+end # if has_examples
+end-%>
+<% end # each signature
+end -%>
+
+<% end -%>

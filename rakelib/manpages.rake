@@ -9,6 +9,8 @@ task :gen_manpages do
   bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications
   faces = Puppet::Face.faces.map(&:to_s)
+  # exclude puppet-strings
+  faces.delete('strings')
   apps = non_face_applications + faces
 
   ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." --roff'

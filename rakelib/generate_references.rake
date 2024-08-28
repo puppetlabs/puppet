@@ -7,6 +7,9 @@ METAPARAMETER_ERB = File.join(__dir__, 'references/metaparameter.erb')
 METAPARAMETER_MD  = File.join(OUTPUT_DIR, 'metaparameter.md')
 REPORT_ERB        = File.join(__dir__, 'references/report.erb')
 REPORT_MD         = File.join(OUTPUT_DIR, 'report.md')
+FUNCTIONS_TEMPLATE_ERB = File.join(__dir__, 'references/functions_template.erb')
+FUNCTION_ERB      = File.join(__dir__, 'references/function.erb')
+FUNCTION_MD       = File.join(OUTPUT_DIR, 'function.md')
 
 def render_erb(erb_file, variables)
   # Create a binding so only the variables we specify will be visible
@@ -55,5 +58,46 @@ namespace :references do
   task :report do
     body = puppet_doc('report')
     generate_reference('report', REPORT_ERB, body, REPORT_MD)
+  end
+
+  desc "Generate function reference"
+  task :function do
+    # Locate puppet-strings
+    begin
+      require 'puppet-strings'
+      require 'puppet-strings/version'
+    rescue LoadError
+      abort("Run `bundle config set with documentation` and `bundle update` to install the `puppet-strings` gem.")
+    end
+
+    strings_data = {}
+    Tempfile.create do |tmpfile|
+      puts "Running puppet strings #{PuppetStrings::VERSION}"
+      PuppetStrings.generate(['lib/puppet/{functions,parser/functions}/**/*.rb'], json: true, path: tmpfile.path)
+      strings_data = JSON.load_file(tmpfile.path)
+    end
+
+    # Based on https://github.com/puppetlabs/puppet-docs/blob/1a13be3fc6981baa8a96ff832ab090abc986830e/lib/puppet_references/puppet/functions.rb#L24-L56
+    functions = strings_data['puppet_functions']
+
+    # Deal with the duplicate 3.x and 4.x functions
+    # 1. Figure out which functions are duplicated.
+    names = functions.map { |func| func['name'] }
+    duplicates = names.uniq.select { |name| names.count(name) > 1 }
+    # 2. Reject the 3.x version of any dupes.
+    functions = functions.reject do |func|
+      duplicates.include?(func['name']) && func['type'] != 'ruby4x'
+    end
+
+    # renders the list of functions
+    body = render_erb(FUNCTIONS_TEMPLATE_ERB, functions: functions)
+
+    # This substitution could potentially make things a bit brittle, but it has to be done because the jump
+    # From H2s to H4s is causing issues with the DITA-OT, which sees this as a rule violation. If it
+    # Does become an issue, we should return to this and figure out a better way to generate the functions doc.
+    body.gsub!(/#####\s(.*?:)/,'**\1**').gsub!(/####\s/,'### ').chomp!
+
+    # renders the preamble and list of functions
+    generate_reference('function', FUNCTION_ERB, body, FUNCTION_MD)
   end
 end
