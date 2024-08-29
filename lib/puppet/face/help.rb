@@ -151,6 +151,33 @@ Puppet::Face.define(:help, '0.0.1') do
     end.sort
   end
 
+  def generate_summary(appname)
+    if is_face_app?(appname)
+      begin
+        face = Puppet::Face[appname, :current]
+        # Add deprecation message to summary if the face is deprecated
+        summary = face.deprecated? ? face.summary + ' ' + _("(Deprecated)") : face.summary
+        [appname, summary, '  ']
+      rescue StandardError, LoadError
+        error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
+        error_message += ' ' + _("Check error logs.")
+        [error_message, '', '  ']
+      end
+    else
+      begin
+        summary = Puppet::Application[appname].summary
+        if summary.empty?
+          summary = horribly_extract_summary_from(appname)
+        end
+        [appname, summary, '  ']
+      rescue StandardError, LoadError
+        error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
+        error_message += ' ' + _("Check error logs.")
+        [error_message, '', '  ']
+      end
+    end
+  end
+
   # Return a list of all applications (both legacy and Face applications), along with a summary
   #  of their functionality.
   # @return [Array] An Array of Arrays.  The outer array contains one entry per application; each
@@ -162,29 +189,8 @@ Puppet::Face.define(:help, '0.0.1') do
 
       if appname == COMMON || appname == SPECIALIZED || appname == BLANK
         result << appname
-      elsif is_face_app?(appname)
-        begin
-          face = Puppet::Face[appname, :current]
-          # Add deprecation message to summary if the face is deprecated
-          summary = face.deprecated? ? face.summary + ' ' + _("(Deprecated)") : face.summary
-          result << [appname, summary, '  ']
-        rescue StandardError, LoadError
-          error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
-          error_message += ' ' + _("Check error logs.")
-          result << [error_message, '', '  ']
-        end
       else
-        begin
-          summary = Puppet::Application[appname].summary
-          if summary.empty?
-            summary = horribly_extract_summary_from(appname)
-          end
-          result << [appname, summary, '  ']
-        rescue StandardError, LoadError
-          error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
-          error_message += ' ' + _("Check error logs.")
-          result << [error_message, '', '  ']
-        end
+        result << generate_summary(appname)
       end
     end
   end
@@ -192,13 +198,27 @@ Puppet::Face.define(:help, '0.0.1') do
   COMMON = 'Common:'
   SPECIALIZED = 'Specialized:'
   BLANK = "\n"
+  COMMON_APPS = %w[apply agent config help lookup module resource]
   def available_application_names_special_sort
     full_list = Puppet::Application.available_application_names
-    a_list = full_list & %w[apply agent config help lookup module resource]
+    a_list = full_list & COMMON_APPS
     a_list = a_list.sort
     also_ran = full_list - a_list
     also_ran = also_ran.sort
     [[COMMON], a_list, [BLANK], [SPECIALIZED], also_ran].flatten(1)
+  end
+
+  def common_app_summaries
+    COMMON_APPS.map do |appname|
+      generate_summary(appname)
+    end
+  end
+
+  def specialized_app_summaries
+    specialized_apps = Puppet::Application.available_application_names - COMMON_APPS
+    specialized_apps.filter_map do |appname|
+      generate_summary(appname) unless exclude_from_docs?(appname)
+    end
   end
 
   def horribly_extract_summary_from(appname)
