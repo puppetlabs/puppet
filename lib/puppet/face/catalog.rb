@@ -29,7 +29,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     summary _("Retrieve the catalog for the node from which the command is run.")
     arguments "<certname>, <facts>"
     option("--facts_for_catalog") do
-      summary _("Not yet implemented for the CLI; facts will be collected internally.")
+      summary _("Not implemented for the CLI; facts are collected internally.")
     end
     returns <<-'EOT'
       A serialized catalog. When used from the Ruby API, returns a
