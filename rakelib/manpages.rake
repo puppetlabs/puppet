@@ -6,7 +6,6 @@ task :gen_manpages do
   Puppet.initialize_settings
   helpface = Puppet::Face[:help, '0.0.1']
 
-  bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications
   faces = Puppet::Face.faces.map(&:to_s)
   apps = non_face_applications + faces
@@ -30,19 +29,28 @@ task :gen_manpages do
     abort("Ronn does not appear to be installed")
   end
 
+  # ronn shells out to groff
+  groff = %x{which groff}.chomp
+  unless File.executable?(groff)
+    abort("Groff does not appear to be installed")
+  end
+
   %x{mkdir -p ./man/man5 ./man/man8}
   %x{RUBYLIB=./lib:$RUBYLIB bin/puppet doc --reference configuration > ./man/man5/puppetconf.5.ronn}
   %x{#{ronn} #{ronn_args} ./man/man5/puppetconf.5.ronn}
   FileUtils.mv("./man/man5/puppetconf.5", "./man/man5/puppet.conf.5")
   FileUtils.rm("./man/man5/puppetconf.5.ronn")
 
-  # Create LEGACY binary man pages (i.e. delete me for 2.8.0)
-  bins.each do |bin|
-    b = bin.gsub( /^s?bin\//, "")
-    %x{RUBYLIB=./lib:$RUBYLIB #{bin} --help > ./man/man8/#{b}.8.ronn}
-    %x{#{ronn} #{ronn_args} ./man/man8/#{b}.8.ronn}
-    FileUtils.rm("./man/man8/#{b}.8.ronn")
-  end
+  # Create puppet binary man page
+  # puppet --help outputs raw text, not ronn, so trying to convert that to roff
+  # fails miserably. Render valid ronn so we can convert to roff
+  common = helpface.common_app_summaries
+  specialized = helpface.specialized_app_summaries
+  template_binding = OpenStruct.new(common: common, specialized: specialized).instance_eval {binding}
+  content = ERB.new(File.read(File.join(__dir__, 'man/puppet.erb')), trim_mode: '-').result(template_binding)
+  File.write("./man/man8/puppet.8.ronn", content)
+  %x{#{ronn} #{ronn_args} ./man/man8/puppet.8.ronn}
+  FileUtils.rm("./man/man8/puppet.8.ronn")
 
   apps.each do |app|
     %x{RUBYLIB=./lib:$RUBYLIB bin/puppet help #{app} --ronn > ./man/man8/puppet-#{app}.8.ronn}

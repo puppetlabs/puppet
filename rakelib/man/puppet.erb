@@ -1,0 +1,34 @@
+puppet(8) - an automated configuration management tool
+=========
+
+## SYNOPSIS
+
+`puppet` <subcommand> [options] <action> [options]
+
+## DESCRIPTION
+
+Puppet, an automated administrative engine for your Linux, Unix, and Windows systems, performs administrative tasks
+(such as adding users, installing packages, and updating server configurations) based on a centralized specification.
+
+## COMMANDS
+
+### Common
+
+<% common.each do |appname, summary, _| -%>
+`<%= appname.to_s %>`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<%= summary %>
+
+<% end -%>
+
+### Specialized
+
+<% specialized.each do |appname, summary, _| -%>
+`<%= appname.to_s %>`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<%= summary %>
+
+<% end -%>
+
+## SEE ALSO
+See `puppet help <subcommand>` for help on a specific subcommand.
+
+See `puppet help <subcommand> <action>` for help on a specific subcommand action.

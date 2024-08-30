@@ -43,6 +43,8 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
       val = "the Host's fully qualified domain name, as determined by Facter"
     when 'srv_domain'
       val = 'example.com'
+    when 'http_user_agent'
+      val = 'Puppet/<version> Ruby/<version> (<architecture>)'
     end
 
     # Leave out the section information; it was apparently confusing people.

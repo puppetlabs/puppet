@@ -4,25 +4,138 @@
 .TH "PUPPET" "8" "August 2024" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
-\fBpuppet\fR
+\fBpuppet\fR \- an automated configuration management tool
 .
-.P
-Usage: puppet \fIsubcommand\fR [options] \fIaction\fR [options]
+.SH "SYNOPSIS"
+\fBpuppet\fR \fIsubcommand\fR [options] \fIaction\fR [options]
 .
-.P
-Available subcommands:
+.SH "DESCRIPTION"
+Puppet, an automated administrative engine for your Linux, Unix, and Windows systems, performs administrative tasks (such as adding users, installing packages, and updating server configurations) based on a centralized specification\.
 .
-.P
-Common:
+.SH "COMMANDS"
 .
-.br
-agent The puppet agent daemon apply Apply Puppet manifests locally config Interact with Puppet\'s settings\. help Display Puppet help\. lookup Interactive Hiera lookup module Creates, installs and searches for modules on the Puppet Forge\. resource The resource abstraction layer shell
-.
-.P
-Specialized:
+.SS "Common"
+\fBapply\fR
 .
 .br
-catalog Compile, save, view, and convert catalogs\. describe Display help about resource types device Manage remote network devices doc Generate Puppet references epp Interact directly with the EPP template parser/renderer\. facts Retrieve and store facts\. filebucket Store and retrieve files in a filebucket generate Generates Puppet code from Ruby definitions\. node View and manage node definitions\. parser Interact directly with the parser\. plugin Interact with the Puppet plugin system\. script Run a puppet manifests as a script without compiling a catalog ssl Manage SSL keys and certificates for puppet SSL clients
+\~\~\~\~Apply Puppet manifests locally
 .
 .P
-See \'puppet help \fIsubcommand\fR \fIaction\fR\' for help on a specific subcommand action\. See \'puppet help \fIsubcommand\fR\' for help on a specific subcommand\. Puppet v8\.9\.0
+\fBagent\fR
+.
+.br
+\~\~\~\~The puppet agent daemon
+.
+.P
+\fBconfig\fR
+.
+.br
+\~\~\~\~Interact with Puppet\'s settings\.
+.
+.P
+\fBhelp\fR
+.
+.br
+\~\~\~\~Display Puppet help\.
+.
+.P
+\fBlookup\fR
+.
+.br
+\~\~\~\~Interactive Hiera lookup
+.
+.P
+\fBmodule\fR
+.
+.br
+\~\~\~\~Creates, installs and searches for modules on the Puppet Forge\.
+.
+.P
+\fBresource\fR
+.
+.br
+\~\~\~\~The resource abstraction layer shell
+.
+.SS "Specialized"
+\fBcatalog\fR
+.
+.br
+\~\~\~\~Compile, save, view, and convert catalogs\.
+.
+.P
+\fBdescribe\fR
+.
+.br
+\~\~\~\~Display help about resource types
+.
+.P
+\fBdevice\fR
+.
+.br
+\~\~\~\~Manage remote network devices
+.
+.P
+\fBdoc\fR
+.
+.br
+\~\~\~\~Generate Puppet references
+.
+.P
+\fBepp\fR
+.
+.br
+\~\~\~\~Interact directly with the EPP template parser/renderer\.
+.
+.P
+\fBfacts\fR
+.
+.br
+\~\~\~\~Retrieve and store facts\.
+.
+.P
+\fBfilebucket\fR
+.
+.br
+\~\~\~\~Store and retrieve files in a filebucket
+.
+.P
+\fBgenerate\fR
+.
+.br
+\~\~\~\~Generates Puppet code from Ruby definitions\.
+.
+.P
+\fBnode\fR
+.
+.br
+\~\~\~\~View and manage node definitions\.
+.
+.P
+\fBparser\fR
+.
+.br
+\~\~\~\~Interact directly with the parser\.
+.
+.P
+\fBplugin\fR
+.
+.br
+\~\~\~\~Interact with the Puppet plugin system\.
+.
+.P
+\fBscript\fR
+.
+.br
+\~\~\~\~Run a puppet manifests as a script without compiling a catalog
+.
+.P
+\fBssl\fR
+.
+.br
+\~\~\~\~Manage SSL keys and certificates for puppet SSL clients
+.
+.SH "SEE ALSO"
+See \fBpuppet help <subcommand>\fR for help on a specific subcommand\.
+.
+.P
+See \fBpuppet help <subcommand> <action>\fR for help on a specific subcommand action\.
