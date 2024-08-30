@@ -81,11 +81,11 @@ class Puppet::Settings
   end
 
   def self.hostname_fact
-    ENV['PUPPET_REFERENCES_HOSTNAME'] || Puppet.runtime[:facter].value('networking.hostname')
+    Puppet.runtime[:facter].value('networking.hostname')
   end
 
   def self.domain_fact
-    ENV['PUPPET_REFERENCES_DOMAIN'] || Puppet.runtime[:facter].value('networking.domain')
+    Puppet.runtime[:facter].value('networking.domain')
   end
 
   def self.default_config_file_name

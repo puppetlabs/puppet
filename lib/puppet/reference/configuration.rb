@@ -41,6 +41,10 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
       val = '$confdir/hiera.yaml. However, for backwards compatibility, if a file exists at $codedir/hiera.yaml, Puppet uses that instead.'
     when 'certname'
       val = "the Host's fully qualified domain name, as determined by Facter"
+    when 'hostname'
+      val = "(the system's fully qualified hostname)"
+    when 'domain'
+      val = "(the system's own domain)"
     when 'srv_domain'
       val = 'example.com'
     when 'http_user_agent'

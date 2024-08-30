@@ -41,9 +41,6 @@ end
 namespace :references do
   desc "Generate configuration reference"
   task :configuration do
-    ENV['PUPPET_REFERENCES_HOSTNAME'] = "(the system's fully qualified hostname)"
-    ENV['PUPPET_REFERENCES_DOMAIN'] = "(the system's own domain)"
-
     body = puppet_doc('configuration')
     generate_reference('configuration', CONFIGURATION_ERB, body, CONFIGURATION_MD)
   end
