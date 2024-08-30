@@ -29,12 +29,6 @@ task :gen_manpages do
     abort("Ronn does not appear to be installed")
   end
 
-  # ronn shells out to groff
-  groff = %x{which groff}.chomp
-  unless File.executable?(groff)
-    abort("Groff does not appear to be installed")
-  end
-
   %x{mkdir -p ./man/man5 ./man/man8}
   %x{RUBYLIB=./lib:$RUBYLIB bin/puppet doc --reference configuration > ./man/man5/puppetconf.5.ronn}
   %x{#{ronn} #{ronn_args} ./man/man5/puppetconf.5.ronn}
