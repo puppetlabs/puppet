@@ -1,0 +1,37 @@
+---
+layout: default
+built_from_commit: <%= sha %>
+title: Built-in function reference
+canonical: "/puppet/latest/function.html"
+toc_levels: 2
+toc: columns
+---
+
+# Built-in function reference
+
+> **NOTE:** This page was generated from the Puppet source code on <%= now %>
+
+
+
+This page is a list of Puppet's built-in functions, with descriptions of what they do and how to use them.
+
+Functions are plugins you can call during catalog compilation. A call to any function is an expression that resolves to a value. For more information on how to call functions, see [the language reference page about function calls.](lang_functions.dita) 
+
+Many of these function descriptions include auto-detected _signatures,_ which are short reminders of the function's allowed arguments. These signatures aren't identical to the syntax you use to call the function; instead, they resemble a parameter list from a Puppet [class](lang_classes.dita), [defined resource type](lang_defined_types.dita), [function](lang_write_functions_in_puppet.dita), or [lambda](lang_lambdas.dita). The syntax of a signature is:
+
+```
+<FUNCTION NAME>(<DATA TYPE> <ARGUMENT NAME>, ...)
+```
+
+The `<DATA TYPE>` is a [Puppet data type value](lang_data_type.dita), like `String` or `Optional[Array[String]]`. The `<ARGUMENT NAME>` is a descriptive name chosen by the function's author to indicate what the argument is used for.
+
+* Any arguments with an `Optional` data type can be omitted from the function call.
+* Arguments that start with an asterisk (like `*$values`) can be repeated any number of times.
+* Arguments that start with an ampersand (like `&$block`) aren't normal arguments; they represent a code block, provided with [Puppet's lambda syntax.](lang_lambdas.dita)
+
+## `undef` values in Puppet 6
+
+In Puppet 6, many Puppet types were moved out of the Puppet codebase, and into modules on the Puppet Forge. The new functions handle `undef` values more strictly than their stdlib counterparts. In Puppet 6, code that relies on `undef` values being implicitly treated as other types will return an evaluation error. For more information on which types were moved into modules, see the [Puppet 6 release notes](https://puppet.com/docs/puppet/6.0/release_notes_puppet.html#select-types-moved-to-modules).
+
+
+<%= body %>
