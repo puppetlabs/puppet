@@ -965,8 +965,13 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
 
     context 'and rich_data is disabled' do
       before(:each) do
-        Puppet[:rich_data] = false 
         Puppet[:strict] = :warning # do not want to stub out behavior in tests
+      end
+
+      around(:each) do |test|
+        Puppet.override(rich_data: false) do
+          test.run
+        end
       end
 
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }

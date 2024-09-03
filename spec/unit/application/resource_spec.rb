@@ -170,11 +170,13 @@ describe Puppet::Application::Resource do
       expect { @resource_app.main }.not_to raise_error
     end
 
-    it "should raise an error when printing yaml by default" do
+    it "should raise an error when printing yaml if rich_data is off" do
       @resource_app.options[:to_yaml] = true
       allow(@resource_app.command_line).to receive(:args).and_return(['stringify', 'hello', 'ensure=present', 'string=asd'])
-      expect { @resource_app.main }.to raise_error( Puppet::PreformattedError,
-        /Stringify\[hello\]\['string'\] contains a Puppet::Util::Execution::ProcessOutput value. It will be converted to the String 'test'/)
+      Puppet.override(rich_data: false) do
+        expect { @resource_app.main }.to raise_error( Puppet::PreformattedError,
+          /Stringify\[hello\]\['string'\] contains a Puppet::Util::Execution::ProcessOutput value. It will be converted to the String 'test'/)
+      end
     end
 
     it "should ensure all values to be printed are in the external encoding" do

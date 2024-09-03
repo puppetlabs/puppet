@@ -155,7 +155,9 @@ class Puppet::Application::Resource < Puppet::Application
 
       if options[:to_yaml]
         data = resources.map do |resource|
-          resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
+          Puppet.override(rich_data: false) do
+            resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
+          end
         end.inject(:merge!)
         text = YAML.dump(type.downcase => data)
       else

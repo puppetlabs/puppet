@@ -447,6 +447,12 @@ class amod::bad_type {
         Puppet[:strict] = :warning
       end
 
+      around :each do |test|
+        Puppet.override(rich_data: false) do
+          test.run
+        end
+      end
+
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
         apply.command_line.args = ['--catalog', file_containing('manifest', catalog.to_json)]

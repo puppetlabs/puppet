@@ -237,7 +237,7 @@ module Puppet
       :ssl_context => proc { Puppet.runtime[:http].default_ssl_context },
       :http_session => proc { Puppet.runtime[:http].create_session },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
-      :rich_data => false
+      :rich_data => Puppet[:rich_data]
     }
   end
 
