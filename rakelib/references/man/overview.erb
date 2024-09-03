@@ -1,0 +1,47 @@
+---
+layout: default
+built_from_commit: <%= sha %>
+title: <%= title %>
+canonical: "/puppet/latest/man/overview.html"
+---
+
+# <%= title %>
+
+> **NOTE:** This page was generated from the Puppet source code on <%= now %>
+
+
+
+Puppet's command line tools consist of a single `puppet` binary with many subcommands. The following subcommands are available in this version of Puppet:
+
+Core Tools
+-----
+
+These subcommands form the core of Puppet's tool set, and every user should understand what they do.
+
+<% core_apps.each do |app| -%>
+- [puppet <%= app %>](<%= app %>.md)
+<% end -%>
+
+
+> Note: The `puppet cert` command is available only in Puppet versions prior to 6.0. For 6.0 and later, use the [`puppetserver cert`command](https://puppet.com/docs/puppet/6/puppet_server_ca_cli.html).
+
+Secondary subcommands
+-----
+
+Many or most users need to use these subcommands at some point, but they aren't needed for daily use the way the core tools are.
+
+<% occasional_apps.each do |app| -%>
+- [puppet <%= app %>](<%= app %>.md)
+<% end -%>
+
+
+Niche subcommands
+-----
+
+Most users can ignore these subcommands. They're only useful for certain niche workflows, and most of them are interfaces to Puppet's internal subsystems.
+
+<% weird_apps.each do |app| -%>
+- [puppet <%= app %>](<%= app %>.md)
+<% end -%>
+
+
