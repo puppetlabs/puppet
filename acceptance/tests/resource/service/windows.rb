@@ -50,13 +50,13 @@ MANIFEST
   fresh_user_manifest = <<-MANIFEST
     user { '#{fresh_user}':
       ensure => present,
-      password => 'freshUserPassword',
+      password => 'freshUserPassword#123',
       roles => 'SeServiceLogonRight'
     }
 
     service { '#{mock_service_nofail[:name]}':
       logonaccount => '#{fresh_user}',
-      logonpassword => 'freshUserPassword',
+      logonpassword => 'freshUserPassword#123',
       require => User['#{fresh_user}']
     }
   MANIFEST
@@ -161,7 +161,7 @@ MANIFEST
     end
 
     step "Create a new user named #{new_user}" do
-      on(agent, puppet("resource user #{new_user} ensure=present password=firstPassword")) do |result|
+      on(agent, puppet("resource user #{new_user} ensure=present password=firstPassword#123")) do |result|
         assert_match(/User\[#{new_user}\]\/ensure: created/, result.stdout)
       end
     end
@@ -187,7 +187,7 @@ MANIFEST
 
     step "Verify that #{new_user} can be set as logonaccount and service is still running" do
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: 'LocalSystem')
-      on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=#{new_user} logonpassword=firstPassword ensure=running --debug")) do |result|
+      on(agent, puppet("resource service #{mock_service_nofail[:name]} logonaccount=#{new_user} logonpassword=firstPassword#123 ensure=running --debug")) do |result|
         assert_match(/Service\[#{mock_service_nofail[:name]}\]\/logonaccount: logonaccount changed 'LocalSystem' to '.\\#{new_user}'/, result.stdout)
         assert_match(/Transitioning the #{mock_service_nofail[:name]} service from SERVICE_RUNNING to SERVICE_STOPPED/, result.stdout)
         assert_match(/Successfully started the #{mock_service_nofail[:name]} service/, result.stdout)
@@ -196,14 +196,14 @@ MANIFEST
     end
 
     step "Change password for #{new_user} and verify that service state isn't yet affected by this" do
-      on(agent, puppet("resource user #{new_user} ensure=present password=secondPassword")) do |result|
+      on(agent, puppet("resource user #{new_user} ensure=present password=secondPassword#123")) do |result|
         assert_match(/User\[#{new_user}\]\/password: changed \[redacted\] to \[redacted\]/, result.stdout)
       end
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
     end
 
     step 'Verify that setting logonpassword fails when using old password and service remains running' do
-      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: new_user, logonpassword: 'firstPassword'), :acceptable_exit_codes => [1]) do |result|
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], logonaccount: new_user, logonpassword: 'firstPassword#123'), :acceptable_exit_codes => [1]) do |result|
         assert_match(/The given password is invalid for user/, result.stderr)
       end
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
@@ -211,7 +211,7 @@ MANIFEST
 
     step 'Verify that setting the new logonpassword does not report any changes' do
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
-      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user, logonpassword: 'secondPassword'), catch_changes: true)
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], logonaccount: new_user, logonpassword: 'secondPassword#123'), catch_changes: true)
       assert_service_properties_on(agent, mock_service_nofail[:name], StartName: new_user, State: 'Running')
     end
 
