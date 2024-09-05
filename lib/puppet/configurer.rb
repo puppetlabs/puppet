@@ -132,7 +132,7 @@ class Puppet::Configurer
   end
 
   def warn_number_of_facts(size, max_number)
-    Puppet.warning _("The current total number of facts: %{size} exceeds the number of facts limit: %{max_size}") % { size: size, max_size: max_number }
+    Puppet.warning _("The current total number of fact values: %{size} exceeds the fact values limit: %{max_size}") % { size: size, max_size: max_number }
   end
 
   def warn_fact_name_length(name, max_length)

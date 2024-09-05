@@ -1805,7 +1805,9 @@ EOT
     :number_of_facts_soft_limit => {
       :default    => 2048,
       :type       => :integer,
-      :desc       => "The soft limit for the total number of facts.",
+      :desc       => "The soft limit for the total number of fact values. This counts the
+        child elements of all facts (e.g. all items of an array or a hash), not just top
+        level facts.",
     },
     :payload_soft_limit => {
       :default    => 16 * 1024 * 1024,
