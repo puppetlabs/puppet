@@ -1429,7 +1429,7 @@ When running in noop mode, Puppet will check whether each resource is in sync, l
 .IP "" 0
 .
 .SS "number_of_facts_soft_limit"
-The soft limit for the total number of facts\.
+The soft limit for the total number of fact values\. This counts the child elements of all facts (e\.g\. all items of an array or a hash), not just top level facts\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: \fB2048\fR
