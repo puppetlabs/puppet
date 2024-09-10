@@ -928,6 +928,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Wait)
       end
 
+      it 'transitions to Error if the server returns 500' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 500)
+
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to match(/Failed to retrieve certificate/)
+      end
+
       it "verifies the server's certificate when getting the client cert" do
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
         allow(cert_provider).to receive(:save_client_cert)

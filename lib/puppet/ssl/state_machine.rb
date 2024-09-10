@@ -358,7 +358,7 @@ class Puppet::SSL::StateMachine
         Wait.new(@machine)
       else
         to_error(_("Failed to retrieve certificate for %{certname}: %{message}") %
-                 { certname: Puppet[:certname], message: e.response.message }, e)
+                 { certname: Puppet[:certname], message: e.message }, e)
       end
     end
   end
@@ -391,7 +391,7 @@ class Puppet::SSL::StateMachine
       end
       Done.new(@machine, @ssl_context)
     rescue => e
-      Puppet.warning(_("Unable to automatically renew certificate: %{message}") % { message: e })
+      Puppet.warning(_("Unable to automatically renew certificate: %{message}") % { message: e.message })
       Done.new(@machine, @ssl_context)
     end
   end
