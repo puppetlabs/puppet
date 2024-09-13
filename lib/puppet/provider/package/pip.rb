@@ -160,7 +160,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     command = resource_or_provider_command
     self.class.validate_command(command)
 
-    command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}==versionplease"]
+    command_and_options = [self.class.quote(command), 'install', "#{@resource[:name]}==9!0dev0+x"]
     extra_arg = list_extra_flags(command_version)
     command_and_options << extra_arg if extra_arg
     command_and_options << install_options if @resource[:install_options]
