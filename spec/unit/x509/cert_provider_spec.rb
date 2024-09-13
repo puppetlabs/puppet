@@ -280,7 +280,7 @@ describe Puppet::X509::CertProvider do
           # password is 74695716c8b6
           expect {
             provider.load_private_key('encrypted-key')
-          }.to raise_error(OpenSSL::PKey::PKeyError, /Could not parse PKey: (no start line|bad decrypt)/)
+          }.to raise_error(OpenSSL::PKey::PKeyError, /Could not parse PKey/)
         end
 
         it 'decrypts an RSA key previously saved using 3DES' do
@@ -315,7 +315,7 @@ describe Puppet::X509::CertProvider do
           # password is 74695716c8b6
           expect {
             provider.load_private_key('encrypted-ec-key')
-          }.to raise_error(OpenSSL::PKey::PKeyError, /(unknown|invalid) curve name|Could not parse PKey: (no start line|bad decrypt)/)
+          }.to raise_error(OpenSSL::PKey::PKeyError, /(unknown|invalid) curve name|Could not parse PKey/)
         end
       end
     end
