@@ -155,7 +155,7 @@ class Puppet::Application::Resource < Puppet::Application
 
       if options[:to_yaml]
         data = resources.map do |resource|
-          Puppet.override(rich_data: false) do
+          Puppet.override(stringify_rich: true) do
             resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
           end
         end.inject(:merge!)
