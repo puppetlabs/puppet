@@ -112,7 +112,7 @@ class Puppet::Resource
     # To get stringified parameter values the flag :stringify_rich can be set
     # in the puppet context.
     #
-    stringify = Puppet.lookup(:stringify_rich) { false }
+    stringify = Puppet.lookup(:stringify_rich)
     converter = stringify ? Puppet::Pops::Serialization::ToStringifiedConverter.new : nil
 
     params = {}
