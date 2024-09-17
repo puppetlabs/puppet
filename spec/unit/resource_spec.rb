@@ -910,14 +910,15 @@ describe Puppet::Resource do
     require 'puppet_spec/compiler'
     include PuppetSpec::Compiler
 
-    it 'should do something' do
+    it 'serializes rich data' do
       resource = compile_to_catalog('notify {"foo": message => Deferred("func", ["a", "b", "c"])}')
 
-      # This should be true by default
-      if Puppet[:rich_data]
-        expect(resource.to_data_hash.class).to be(Hash)
-      end
+      # This assume rich_data is true by default
+      expect(resource.to_data_hash.class).to be(Hash)
+    end
 
+    it 'raises when rich data is disabled' do
+      resource = compile_to_catalog('notify {"foo": message => Deferred("func", ["a", "b", "c"])}')
       expect {
         Puppet.override(rich_data: false) do
           resource.to_data_hash
