@@ -237,7 +237,11 @@ module Puppet
       :ssl_context => proc { Puppet.runtime[:http].default_ssl_context },
       :http_session => proc { Puppet.runtime[:http].create_session },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
-      :rich_data => false
+      :rich_data => Puppet[:rich_data],
+      # `stringify_rich` controls whether `rich_data` is stringified into a lossy format
+      # instead of a lossless format. Catalogs should not be stringified, though to_yaml
+      # and the resource application have uses for a lossy, user friendly format.
+      :stringify_rich => false
     }
   end
 

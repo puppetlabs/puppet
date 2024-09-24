@@ -906,6 +906,27 @@ describe Puppet::Resource do
     # Note: to_stringified_spec.rb has tests for all other data types
   end
 
+  describe 'when serializing resources' do
+    require 'puppet_spec/compiler'
+    include PuppetSpec::Compiler
+
+    it 'serializes rich data' do
+      resource = compile_to_catalog('notify {"foo": message => Deferred("func", ["a", "b", "c"])}')
+
+      # This assume rich_data is true by default
+      expect(resource.to_data_hash.class).to be(Hash)
+    end
+
+    it 'raises when rich data is disabled' do
+      resource = compile_to_catalog('notify {"foo": message => Deferred("func", ["a", "b", "c"])}')
+      expect {
+        Puppet.override(rich_data: false) do
+          resource.to_data_hash
+        end
+      }.to raise_error(Puppet::PreformattedError)
+    end
+  end
+
   describe "when converting from json" do
     before do
       @data = {

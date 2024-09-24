@@ -146,7 +146,11 @@ class Puppet::Application::Resource < Puppet::Application
     # If the specified environment does not exist locally, fall back to the default (production) environment
     env = Puppet.lookup(:environments).get(Puppet[:environment]) || create_default_environment
 
-    Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+    Puppet.override(
+      current_environment: env,
+      loaders: Puppet::Pops::Loaders.new(env),
+      stringify_rich: true
+    ) do
       type, name, params = parse_args(command_line.args)
 
       raise _("Editing with Yaml output is not supported") if options[:edit] and options[:to_yaml]
