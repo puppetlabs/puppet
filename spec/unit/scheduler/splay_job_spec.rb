@@ -44,4 +44,8 @@ describe Puppet::Scheduler::SplayJob do
     job.splay_limit = splay_limit + 1
     expect(job.splay).to eq(new_splay)
   end
+
+  it "returns the splay_limit" do
+    expect(job.splay_limit).to eq(splay_limit)
+  end
 end

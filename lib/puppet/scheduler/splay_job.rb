@@ -2,7 +2,7 @@
 
 module Puppet::Scheduler
   class SplayJob < Job
-    attr_reader :splay
+    attr_reader :splay, :splay_limit
 
     def initialize(run_interval, splay_limit, &block)
       @splay, @splay_limit = calculate_splay(splay_limit)

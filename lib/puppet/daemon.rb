@@ -157,7 +157,13 @@ class Puppet::Daemon
 
   # Loop forever running events - or, at least, until we exit.
   def run_event_loop
-    agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], Puppet[:splay], Puppet[:splaylimit]) do
+    agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], Puppet[:splay], Puppet[:splaylimit]) do |job|
+      if job.splay != 0
+        Puppet.info "Running agent every #{job.run_interval} seconds with splay #{job.splay} of #{job.splay_limit} seconds"
+      else
+        Puppet.info "Running agent every #{job.run_interval} seconds"
+      end
+
       # Splay for the daemon is handled in the scheduler
       agent.run(:splay => false)
     end
