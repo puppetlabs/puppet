@@ -83,6 +83,11 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
       expect(reparse_run).not_to be_enabled
     end
 
+    it "does not splay the agent run by default" do
+      daemon.start
+      expect(agent_run).to be_an_instance_of(Puppet::Scheduler::Job)
+    end
+
     describe "and calculating splay" do
       before do
         # Set file timeout so the daemon reparses
@@ -91,12 +96,24 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
       end
 
       it "recalculates when splaylimit changes" do
-        allow(agent).to receive(:run)
         daemon.start
-        first_splay = agent_run.splay
-        allow(Kernel).to receive(:rand).and_return(1738)
+
+        Puppet[:splaylimit] = 60
+        init_splay = agent_run.splay
+        next_splay = init_splay + 1
+        allow(agent_run).to receive(:rand).and_return(next_splay)
         reparse_run.run(Time.now)
-        expect(agent_run.splay).to_not eq(first_splay)
+
+        expect(agent_run.splay).to eq(next_splay)
+      end
+
+      it "does not change splay if splaylimit is unmodified" do
+        daemon.start
+
+        init_splay = agent_run.splay
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(init_splay)
       end
     end
   end

@@ -31,4 +31,17 @@ describe Puppet::Scheduler::SplayJob do
     expect(job).to receive(:splay).and_return(6)
     expect(job.ready?(start_time)).not_to be
   end
+
+  it "does not apply a splay if the splaylimit is unchanged" do
+    old_splay = job.splay
+    job.splay_limit = splay_limit
+    expect(job.splay).to eq(old_splay)
+  end
+
+  it "applies a splay if the splaylimit is changed" do
+    new_splay = 999
+    allow(job).to receive(:rand).and_return(new_splay)
+    job.splay_limit = splay_limit + 1
+    expect(job.splay).to eq(new_splay)
+  end
 end

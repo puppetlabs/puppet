@@ -182,6 +182,7 @@ class Puppet::Daemon
 
     reparse_run.disable if Puppet[:filetimeout] == 0
 
+    # these are added in a different order than they are defined
     @scheduler.run_loop([reparse_run, agent_run, signal_loop])
   end
 end
