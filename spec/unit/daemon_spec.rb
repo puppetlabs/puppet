@@ -85,7 +85,7 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
 
     it "does not splay the agent run by default" do
       daemon.start
-      expect(agent_run).to be_an_instance_of(Puppet::Scheduler::Job)
+      expect(agent_run.splay).to eq(0)
     end
 
     describe "and calculating splay" do
@@ -114,6 +114,26 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
         reparse_run.run(Time.now)
 
         expect(agent_run.splay).to eq(init_splay)
+      end
+
+      it "recalculates when splay is enabled later" do
+        Puppet[:splay] = false
+        daemon.start
+
+        Puppet[:splay] = true
+        allow(agent_run).to receive(:rand).and_return(999)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(999)
+      end
+
+      it "sets splay to 0 when splay is disabled" do
+        daemon.start
+
+        Puppet[:splay] = false
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(0)
       end
     end
   end
