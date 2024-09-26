@@ -2,8 +2,4 @@
 
 require_relative '../../puppet/util/feature'
 
-Puppet.features.add :telnet do
-  require 'net/telnet'
-rescue LoadError
-  false
-end
+Puppet.features.add(:telnet, :libs => %(net/telnet))
