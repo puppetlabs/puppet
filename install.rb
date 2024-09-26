@@ -36,6 +36,18 @@ require 'optparse'
 require 'ostruct'
 
 require_relative 'lib/puppet/util/platform'
+require_relative 'lib/puppet/util/run_mode'
+
+module ForcedRoot
+  private
+
+  # Override the installation to always assume system installations
+  # This also removes the dependency on Puppet.features.root?
+  def which_dir(system, user)
+    system
+  end
+end
+Puppet::Util::RunMode.prepend(ForcedRoot)
 
 InstallOptions = OpenStruct.new
 
@@ -112,38 +124,15 @@ def prepare_installation
     RbConfig::CONFIG['bindir'] = "/usr/bin"
   end
 
+  run_mode = Puppet::Util::RunMode[:agent]
   InstallOptions.configs = true
   InstallOptions.destdir = ''
-  InstallOptions.configdir = if Puppet::Util::Platform.windows?
-                               File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "etc")
-                             else
-                               "/etc/puppetlabs/puppet"
-                             end
-  InstallOptions.codedir = if Puppet::Util::Platform.windows?
-                             File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "code")
-                           else
-                             "/etc/puppetlabs/code"
-                           end
-  InstallOptions.vardir = if Puppet::Util::Platform.windows?
-                            File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "cache")
-                          else
-                            "/opt/puppetlabs/puppet/cache"
-                          end
-  InstallOptions.publicdir = if Puppet::Util::Platform.windows?
-                               File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "public")
-                             else
-                               "/opt/puppetlabs/puppet/public"
-                             end
-  InstallOptions.rundir = if Puppet::Util::Platform.windows?
-                            File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "run")
-                          else
-                            "/var/run/puppetlabs"
-                          end
-  InstallOptions.logdir = if Puppet::Util::Platform.windows?
-                            File.join(ENV['ALLUSERSPROFILE'], "PuppetLabs", "puppet", "var", "log")
-                          else
-                            "/var/log/puppetlabs/puppet"
-                          end
+  InstallOptions.configdir = run_mode.conf_dir
+  InstallOptions.codedir = run_mode.code_dir
+  InstallOptions.vardir = run_mode.var_dir
+  InstallOptions.publicdir = run_mode.public_dir
+  InstallOptions.rundir = run_mode.run_dir
+  InstallOptions.logdir = run_mode.log_dir
   InstallOptions.bindir = RbConfig::CONFIG['bindir']
 
   InstallOptions.localedir = if Puppet::Util::Platform.windows?
