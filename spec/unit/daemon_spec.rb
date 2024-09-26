@@ -135,6 +135,30 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
 
         expect(agent_run.splay).to eq(0)
       end
+
+      it "recalculates splay when runinterval is decreased" do
+        Puppet[:runinterval] = 60
+        daemon.start
+
+        Puppet[:runinterval] = Puppet[:runinterval] - 30
+        new_splay = agent_run.splay + 1
+        allow(agent_run).to receive(:rand).and_return(new_splay)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(new_splay)
+      end
+
+      it "recalculates splay when runinterval is increased" do
+        Puppet[:runinterval] = 60
+        daemon.start
+
+        Puppet[:runinterval] = Puppet[:runinterval] + 30
+        new_splay = agent_run.splay - 1
+        allow(agent_run).to receive(:rand).and_return(new_splay)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(new_splay)
+      end
     end
   end
 
