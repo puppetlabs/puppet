@@ -60,6 +60,9 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   end
 
   describe "when starting" do
+    let(:reparse_run) { scheduler.jobs[0] }
+    let(:agent_run) { scheduler.jobs[1] }
+
     before do
       allow(daemon).to receive(:set_signal_traps)
     end
@@ -77,19 +80,24 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
     it "disables the reparse of configs if the filetimeout is 0" do
       Puppet[:filetimeout] = 0
       daemon.start
-      expect(scheduler.jobs[0]).not_to be_enabled
+      expect(reparse_run).not_to be_enabled
     end
 
-    it "recalculates splay if splaylimit changes" do
-      # Set file timeout so the daemon reparses
-      Puppet[:filetimeout] = 1
-      Puppet[:splay] = true
-      allow(agent).to receive(:run)
-      daemon.start
-      first_splay = scheduler.jobs[1].splay
-      allow(Kernel).to receive(:rand).and_return(1738)
-      scheduler.jobs[0].run(Time.now)
-      expect(scheduler.jobs[1].splay).to_not eq(first_splay)
+    describe "and calculating splay" do
+      before do
+        # Set file timeout so the daemon reparses
+        Puppet[:filetimeout] = 1
+        Puppet[:splay] = true
+      end
+
+      it "recalculates when splaylimit changes" do
+        allow(agent).to receive(:run)
+        daemon.start
+        first_splay = agent_run.splay
+        allow(Kernel).to receive(:rand).and_return(1738)
+        reparse_run.run(Time.now)
+        expect(agent_run.splay).to_not eq(first_splay)
+      end
     end
   end
 
