@@ -30,7 +30,6 @@
 #++
 
 require 'rbconfig'
-require 'find'
 require 'fileutils'
 require 'tempfile'
 require 'optparse'
