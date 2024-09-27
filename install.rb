@@ -37,9 +37,6 @@ require 'ostruct'
 
 require_relative 'lib/puppet/util/platform'
 
-PREREQS = %w{openssl facter cgi}
-MIN_FACTER_VERSION = 1.5
-
 InstallOptions = OpenStruct.new
 
 def glob(list)
@@ -83,8 +80,7 @@ def do_man(man, strip = 'man/')
     FileUtils.makedirs(om, mode: 0755, verbose: true)
     FileUtils.chmod(0755, om)
     FileUtils.install(mf, omf, mode: 0644, preserve: true, verbose: true)
-    # Solaris does not support gzipped man pages. When called with
-    # --no-check-prereqs/without facter the default gzip behavior still applies
+    # Solaris does not support gzipped man pages
     unless Puppet::Util::Platform.solaris?
       gzip = %x{which gzip}
       gzip.chomp!
@@ -104,33 +100,11 @@ def do_locales(locale, strip = 'locales/')
   end
 end
 
-# Verify that all of the prereqs are installed
-def check_prereqs
-  PREREQS.each { |pre|
-    begin
-      require pre
-      if pre == "facter"
-        # to_f isn't quite exact for strings like "1.5.1" but is good
-        # enough for this purpose.
-        facter_version = Facter.version.to_f
-        if facter_version < MIN_FACTER_VERSION
-          puts "Facter version: #{facter_version}; minimum required: #{MIN_FACTER_VERSION}; cannot install"
-          exit(-1)
-        end
-      end
-    rescue LoadError
-      puts "Could not load #{pre}; cannot install"
-      exit(-1)
-    end
-  }
-end
-
 ##
 # Prepare the file installation.
 #
 def prepare_installation
   InstallOptions.configs = true
-  InstallOptions.check_prereqs = true
   InstallOptions.batch_files = true
 
   ARGV.options do |opts|
@@ -175,8 +149,8 @@ def prepare_installation
     opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides RbConfig::CONFIG["mandir"]') do |mandir|
       InstallOptions.mandir = mandir
     end
-    opts.on('--[no-]check-prereqs', 'Prevents validation of prerequisite libraries', 'Default on') do |prereq|
-      InstallOptions.check_prereqs = prereq
+    opts.on('--[no-]check-prereqs', 'Removed option. Remains for compatibility') do
+      warn "--check-prereqs has been removed"
     end
     opts.on('--no-batch-files', 'Prevents installation of batch files for windows', 'Default off') do |batch_files|
       InstallOptions.batch_files = false
@@ -200,10 +174,6 @@ def prepare_installation
   # These settings are appropriate defaults for all OS X versions.
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
     RbConfig::CONFIG['bindir'] = "/usr/bin"
-  end
-
-  if InstallOptions.check_prereqs
-    check_prereqs
   end
 
   if not InstallOptions.configdir.nil?
