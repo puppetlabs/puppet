@@ -1,5 +1,6 @@
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
+extend Beaker::HostPrebuiltSteps
 
 test_name "certificate extensions available as trusted data" do
   skip_test "Test requires at least one non-master agent" if hosts.length == 1
@@ -77,6 +78,8 @@ test_name "certificate extensions available as trusted data" do
   with_puppet_running_on(master, master_config) do
     agents.each do |agent|
       next if agent == master
+      # Temporarily sync time on AIX to account for incorrect system time (PA-7090)
+      timesync(agent, {:logger => logger}) if agent.platform.start_with?('aix')
 
       step "Create agent csr_attributes.yaml on #{agent}"
       agent_csr_attributes = get_test_file_path(agent, "csr_attributes.yaml")
