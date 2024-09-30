@@ -2,10 +2,10 @@
 
 module Puppet::Scheduler
   class SplayJob < Job
-    attr_reader :splay
+    attr_reader :splay, :splay_limit
 
     def initialize(run_interval, splay_limit, &block)
-      @splay = calculate_splay(splay_limit)
+      @splay, @splay_limit = calculate_splay(splay_limit)
       super(run_interval, &block)
     end
 
@@ -25,10 +25,21 @@ module Puppet::Scheduler
       end
     end
 
+    # Recalculates splay.
+    #
+    # @param splay_limit [Integer] the maximum time (in seconds) to delay before an agent's first run.
+    # @return @splay [Integer] a random integer less than or equal to the splay limit that represents the seconds to
+    # delay before next agent run.
+    def splay_limit=(splay_limit)
+      if @splay_limit != splay_limit
+        @splay, @splay_limit = calculate_splay(splay_limit)
+      end
+    end
+
     private
 
     def calculate_splay(limit)
-      rand(limit + 1)
+      [rand(limit + 1), limit]
     end
   end
 end

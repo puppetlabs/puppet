@@ -60,6 +60,9 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   end
 
   describe "when starting" do
+    let(:reparse_run) { scheduler.jobs[0] }
+    let(:agent_run) { scheduler.jobs[1] }
+
     before do
       allow(daemon).to receive(:set_signal_traps)
     end
@@ -77,7 +80,85 @@ describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
     it "disables the reparse of configs if the filetimeout is 0" do
       Puppet[:filetimeout] = 0
       daemon.start
-      expect(scheduler.jobs[0]).not_to be_enabled
+      expect(reparse_run).not_to be_enabled
+    end
+
+    it "does not splay the agent run by default" do
+      daemon.start
+      expect(agent_run.splay).to eq(0)
+    end
+
+    describe "and calculating splay" do
+      before do
+        # Set file timeout so the daemon reparses
+        Puppet[:filetimeout] = 1
+        Puppet[:splay] = true
+      end
+
+      it "recalculates when splaylimit changes" do
+        daemon.start
+
+        Puppet[:splaylimit] = 60
+        init_splay = agent_run.splay
+        next_splay = init_splay + 1
+        allow(agent_run).to receive(:rand).and_return(next_splay)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(next_splay)
+      end
+
+      it "does not change splay if splaylimit is unmodified" do
+        daemon.start
+
+        init_splay = agent_run.splay
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(init_splay)
+      end
+
+      it "recalculates when splay is enabled later" do
+        Puppet[:splay] = false
+        daemon.start
+
+        Puppet[:splay] = true
+        allow(agent_run).to receive(:rand).and_return(999)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(999)
+      end
+
+      it "sets splay to 0 when splay is disabled" do
+        daemon.start
+
+        Puppet[:splay] = false
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(0)
+      end
+
+      it "recalculates splay when runinterval is decreased" do
+        Puppet[:runinterval] = 60
+        daemon.start
+
+        Puppet[:runinterval] = Puppet[:runinterval] - 30
+        new_splay = agent_run.splay + 1
+        allow(agent_run).to receive(:rand).and_return(new_splay)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(new_splay)
+      end
+
+      it "recalculates splay when runinterval is increased" do
+        Puppet[:runinterval] = 60
+        daemon.start
+
+        Puppet[:runinterval] = Puppet[:runinterval] + 30
+        new_splay = agent_run.splay - 1
+        allow(agent_run).to receive(:rand).and_return(new_splay)
+        reparse_run.run(Time.now)
+
+        expect(agent_run.splay).to eq(new_splay)
+      end
     end
   end
 

@@ -157,7 +157,15 @@ class Puppet::Daemon
 
   # Loop forever running events - or, at least, until we exit.
   def run_event_loop
-    agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], Puppet[:splay], Puppet[:splaylimit]) do
+    splaylimit = Puppet[:splay] ? Puppet[:splaylimit] : 0
+
+    agent_run = Puppet::Scheduler.create_job(Puppet[:runinterval], true, splaylimit) do |job|
+      if job.splay != 0
+        Puppet.info "Running agent every #{job.run_interval} seconds with splay #{job.splay} of #{job.splay_limit} seconds"
+      else
+        Puppet.info "Running agent every #{job.run_interval} seconds"
+      end
+
       # Splay for the daemon is handled in the scheduler
       agent.run(:splay => false)
     end
@@ -165,6 +173,9 @@ class Puppet::Daemon
     reparse_run = Puppet::Scheduler.create_job(Puppet[:filetimeout]) do
       Puppet.settings.reparse_config_files
       agent_run.run_interval = Puppet[:runinterval]
+      # Puppet[:splaylimit] defaults to Puppet[:runinterval] so if runinterval
+      # changes, but splaylimit doesn't, we'll still recalculate splay
+      agent_run.splay_limit = Puppet[:splay] ? Puppet[:splaylimit] : 0
       if Puppet[:filetimeout] == 0
         reparse_run.disable
       else
@@ -181,6 +192,7 @@ class Puppet::Daemon
 
     reparse_run.disable if Puppet[:filetimeout] == 0
 
+    # these are added in a different order than they are defined
     @scheduler.run_loop([reparse_run, agent_run, signal_loop])
   end
 end
