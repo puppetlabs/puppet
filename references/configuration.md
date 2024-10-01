@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: df5486ee3426db584f794642d38ec44faec570c1
+built_from_commit: d0ec909330b5a98b868eae9a4aae37bbfca96e7a
 title: Configuration Reference
 toc: columns
 canonical: "/puppet/latest/configuration.html"
@@ -8,7 +8,7 @@ canonical: "/puppet/latest/configuration.html"
 
 # Configuration Reference
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-28 11:00:06 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-09-30 11:26:05 -0700
 
 
 
@@ -1013,7 +1013,7 @@ This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours
 
 The HTTP User-Agent string to send when making network requests.
 
-- *Default*: `Puppet/8.9.0 Ruby/3.2.2-p53 (x86_64-linux)`
+- *Default*: `Puppet/<version> Ruby/<version> (<architecture>)`
 
 ### ignore_plugin_errors
 
@@ -1457,9 +1457,11 @@ agent with `noop = true` or `--noop`. (Conversely, a resource with
 
 ### number_of_facts_soft_limit
 
-The soft limit for the total number of facts.
+The soft limit for the total number of fact values. This counts the
+child elements of all facts (e.g. all items of an array or a hash), not just top
+level facts.
 
-- *Default*: `2048`
+- *Default*: `10240`
 
 ### onetime
 

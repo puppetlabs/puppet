@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: 942adce0b1b70f696b0f09d7109ded7559f0fa33
+built_from_commit: d0ec909330b5a98b868eae9a4aae37bbfca96e7a
 title: Resource Type Reference (Single-Page)
 canonical: "/puppet/latest/type.html"
 toc_levels: 2
@@ -9,7 +9,7 @@ toc: columns
 
 # Resource Type Reference (Single-Page)
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-28 16:45:59 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-09-30 11:26:40 -0700
 
 
 
@@ -3793,7 +3793,7 @@ may be omitted.  Other unit types (such as `.path`) may be managed by
 providing the proper suffix.
 
 * Required binaries: `systemctl`.
-* Default for `os.family` == `archlinux`. Default for `os.family` == `redhat`. Default for `os.family` == `redhat` and `os.name` == `fedora`. Default for `os.family` == `suse`. Default for `os.family` == `coreos`. Default for `os.family` == `gentoo`. Default for `os.name` == `amazon` and `os.release.major` == `2, 2023`. Default for `os.name` == `debian`. Default for `os.name` == `LinuxMint`. Default for `os.name` == `ubuntu`. Default for `os.name` == `cumuluslinux` and `os.release.major` == `3, 4`.
+* Default for `os.family` == `archlinux`. Default for `os.family` == `redhat`. Default for `os.family` == `redhat` and `os.name` == `fedora`. Default for `os.family` == `suse`. Default for `os.family` == `coreos`. Default for `os.family` == `gentoo`. Default for `os.name` == `amazon` and `os.release.major` == `2, 2023`. Default for `os.name` == `debian`. Default for `os.name` == `LinuxMint`. Default for `os.name` == `ubuntu`. Default for `os.name` == `cumuluslinux` and `os.release.major` == `3, 4`. Default for `os.name` == `raspbian` and `os.release.major` == `12`.
 * Supported features: `enableable`, `maskable`, `refreshable`.
 
 #### upstart {#service-provider-upstart}
