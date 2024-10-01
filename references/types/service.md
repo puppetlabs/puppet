@@ -1,13 +1,13 @@
 ---
 layout: default
-built_from_commit: 942adce0b1b70f696b0f09d7109ded7559f0fa33
+built_from_commit: d0ec909330b5a98b868eae9a4aae37bbfca96e7a
 title: 'Resource Type: service'
 canonical: "/puppet/latest/types/service.html"
 ---
 
 # Resource Type: service
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-28 16:45:59 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-09-30 11:26:40 -0700
 
 
 
@@ -590,7 +590,7 @@ providing the proper suffix.
 
 * Required binaries: `systemctl`
 * Confined to: `true == Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')`
-* Default for: `["os.family", "[:archlinux]"] == `, `["os.family", "redhat"] == `, `["os.family", "redhat"] == ["os.name", "fedora"]`, `["os.family", "suse"] == `, `["os.family", "coreos"] == `, `["os.family", "gentoo"] == `, `["os.name", "amazon"] == ["os.release.major", "%w[2 2023]"]`, `["os.name", "debian"] == `, `["os.name", "LinuxMint"] == `, `["os.name", "ubuntu"] == `, `["os.name", "cumuluslinux"] == ["os.release.major", "%w[3 4]"]`
+* Default for: `["os.family", "[:archlinux]"] == `, `["os.family", "redhat"] == `, `["os.family", "redhat"] == ["os.name", "fedora"]`, `["os.family", "suse"] == `, `["os.family", "coreos"] == `, `["os.family", "gentoo"] == `, `["os.name", "amazon"] == ["os.release.major", "%w[2 2023]"]`, `["os.name", "debian"] == `, `["os.name", "LinuxMint"] == `, `["os.name", "ubuntu"] == `, `["os.name", "cumuluslinux"] == ["os.release.major", "%w[3 4]"]`, `["os.name", "raspbian"] == ["os.release.major", "%w[12]"]`
 
 #### upstart {#service-provider-upstart}
 
