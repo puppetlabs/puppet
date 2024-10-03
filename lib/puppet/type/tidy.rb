@@ -32,7 +32,9 @@ Puppet::Type.newtype(:tidy) do
 
   newparam(:recurse) do
     desc "If target is a directory, recursively descend
-      into the directory looking for files to tidy."
+      into the directory looking for files to tidy. Numeric values
+      specify a limit for the recursion depth, `true` means
+      unrestricted recursion."
 
     newvalues(:true, :false, :inf, /^[0-9]+$/)
 
