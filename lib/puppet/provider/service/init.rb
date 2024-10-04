@@ -21,7 +21,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   # Debian and Ubuntu should use the Debian provider.
-  confine :false => %w[Debian Ubuntu].include?(Puppet.runtime[:facter].value('os.name'))
+  confine :false => %w[Debian Ubuntu Cumulus].include?(Puppet.runtime[:facter].value('os.name'))
   # RedHat systems should use the RedHat provider.
   confine :false => Puppet.runtime[:facter].value('os.family') == 'RedHat'
 
