@@ -21,19 +21,19 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
     when 'Darwin'
       :pkgdmg
     when 'RedHat'
-      if ['2.1', '3', '4'].include?(Puppet.runtime[:facter].value(:lsbdistrelease))
+      if ['2.1', '3', '4'].include?(Puppet.runtime[:facter].value('os.distro.release.full'))
         :up2date
       else
         :yum
       end
     when 'Fedora'
-      if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value(:operatingsystemmajrelease), '22') >= 0
+      if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('os.release.major'), '22') >= 0
         :dnf
       else
         :yum
       end
     when 'Suse'
-      if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value(:operatingsystemmajrelease), '10') >= 0
+      if Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('os.release.major'), '10') >= 0
         :zypper
       else
         :rug
@@ -54,8 +54,8 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
   end
 
   it "should choose the correct provider each platform" do
-    unless default_provider = provider_name(Puppet.runtime[:facter].value(:operatingsystem))
-      pending("No default provider specified in this test for #{Puppet.runtime[:facter].value(:operatingsystem)}")
+    unless default_provider = provider_name(Puppet.runtime[:facter].value('os.name'))
+      pending("No default provider specified in this test for #{Puppet.runtime[:facter].value('os.name')}")
     end
     expect(Puppet::Type.type(:package).defaultprovider.name).to eq(default_provider)
   end

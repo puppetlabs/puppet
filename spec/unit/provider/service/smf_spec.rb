@@ -24,9 +24,9 @@ describe 'Puppet::Type::Service::Provider::Smf',
     allow(FileTest).to receive(:executable?).with('/usr/sbin/svcadm').and_return(true)
     allow(FileTest).to receive(:file?).with('/usr/bin/svcs').and_return(true)
     allow(FileTest).to receive(:executable?).with('/usr/bin/svcs').and_return(true)
-    allow(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
-    allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
-    allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return('11.2')
+    allow(Facter).to receive(:value).with('os.name').and_return('Solaris')
+    allow(Facter).to receive(:value).with('os.family').and_return('Solaris')
+    allow(Facter).to receive(:value).with('os.release.full').and_return('11.2')
   end
   context ".instances" do
     it "should have an instances method" do
@@ -173,19 +173,19 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
 
     it 'returns the right command for restarting the service for Solaris versions newer than 11.2' do
-      expect(Facter).to receive(:value).with(:operatingsystemrelease).and_return('11.3')
+      expect(Facter).to receive(:value).with('os.release.full').and_return('11.3')
 
       expect(@provider.restartcmd).to eql([@provider.command(:adm), :restart, '-s', fmri])
     end
 
     it 'returns the right command for restarting the service on Solaris 11.2' do
-      expect(Facter).to receive(:value).with(:operatingsystemrelease).and_return('11.2')
+      expect(Facter).to receive(:value).with('os.release.full').and_return('11.2')
 
       expect(@provider.restartcmd).to eql([@provider.command(:adm), :restart, '-s', fmri])
     end
 
     it 'returns the right command for restarting the service for Solaris versions older than Solaris 11.2' do
-      expect(Facter).to receive(:value).with(:operatingsystemrelease).and_return('10.3')
+      expect(Facter).to receive(:value).with('os.release.full').and_return('10.3')
 
       expect(@provider.restartcmd).to eql([@provider.command(:adm), :restart, fmri])
     end
@@ -281,7 +281,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     before(:each) do
       allow(@provider).to receive(:service_states).and_return(states)
 
-      allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return('10.3')
+      allow(Facter).to receive(:value).with('os.release.full').and_return('10.3')
     end
 
     it "should run the status command if it's passed in" do
@@ -336,7 +336,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
 
     it "should return stopped for an incomplete service on Solaris 11" do
-      allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return('11.3')
+      allow(Facter).to receive(:value).with('os.release.full').and_return('11.3')
       allow(@provider).to receive(:complete_service?).and_return(false)
       allow(@provider).to receive(:svcs).with('-l', @provider.resource[:name]).and_return(File.read(my_fixture('svcs_fmri.out')))
       expect(@provider.status).to eq(:stopped)

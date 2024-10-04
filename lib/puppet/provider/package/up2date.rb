@@ -4,9 +4,9 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
 
   commands :up2date => "/usr/sbin/up2date-nox"
 
-  defaultfor :osfamily => :redhat, :lsbdistrelease => ["2.1", "3", "4"]
+  defaultfor 'os.family' => :redhat, 'os.distro.release.full' => ["2.1", "3", "4"]
 
-  confine    :osfamily => :redhat
+  confine    'os.family' => :redhat
 
   # Install a package using 'up2date'.
   def install

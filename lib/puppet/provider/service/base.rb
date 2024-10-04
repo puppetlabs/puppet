@@ -15,7 +15,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # ported from the facter 2.x implementation, since facter 3.x
   # is dropping the fact (for which this was the only use)
   def getps
-    case Puppet.runtime[:facter].value(:operatingsystem)
+    case Puppet.runtime[:facter].value('os.name')
     when 'OpenWrt'
       'ps www'
     when 'FreeBSD', 'NetBSD', 'OpenBSD', 'Darwin', 'DragonFly'

@@ -118,9 +118,9 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     end
 
     context 'when is defaultfor' do
-      let(:os) { Puppet.runtime[:facter].value(:operatingsystem) }
+      let(:os) { Puppet.runtime[:facter].value('os.name') }
       subject do
-        described_class.defaultfor(operatingsystem: os)
+        described_class.defaultfor('os.name': os)
         described_class.specificity
       end
       it { is_expected.to be > 100 }
