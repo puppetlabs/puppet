@@ -52,7 +52,6 @@ shared_context 'types_setup' do
   def self.abstract_types
     [ Puppet::Pops::Types::PAnyType,
       Puppet::Pops::Types::PCallableType,
-      Puppet::Pops::Types::PEnumType,
       Puppet::Pops::Types::PClassType,
       Puppet::Pops::Types::PDefaultType,
       Puppet::Pops::Types::PCollectionType,
