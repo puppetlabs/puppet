@@ -47,7 +47,7 @@ Puppet.features.add(:sqlite, :libs => ["sqlite3"])
 # We have Hiera
 Puppet.features.add(:hiera, :libs => ["hiera"])
 
-Puppet.features.add(:minitar, :libs => ["archive/tar/minitar"])
+Puppet.features.add(:minitar, :libs => ["minitar"])
 
 # We can manage symlinks
 Puppet.features.add(:manages_symlinks) do
