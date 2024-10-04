@@ -1374,12 +1374,6 @@ describe Puppet::Type.type(:file) do
       @target = File.join(path, "target")
       @link   = File.join(path, "link")
 
-      target = described_class.new(
-        :ensure => :file, :path => @target,
-        :catalog => catalog, :content => 'yayness',
-        :mode => '0644')
-      catalog.add_resource target
-
       @link_resource = described_class.new(
         :ensure => :link, :path => @link,
         :target => @target, :catalog => catalog,
@@ -1390,22 +1384,61 @@ describe Puppet::Type.type(:file) do
       allow(Puppet::Util::Storage).to receive(:store)
     end
 
-    it "should preserve the original file mode and ignore the one set by the link" do
-      @link_resource[:links] = :manage # default
-      catalog.apply
+    context "and when target exists" do
+      before :each do
+        target = described_class.new(
+          :ensure => :file, :path => @target,
+          :catalog => catalog, :content => 'yayness',
+          :mode => '0644')
+        catalog.add_resource target
+      end
 
-      # I convert them to strings so they display correctly if there's an error.
-      expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('644')
-    end
 
-    it "should manage the mode of the followed link" do
-      if Puppet::Util::Platform.windows?
-        skip "Windows cannot presently manage the mode when following symlinks"
-      else
-        @link_resource[:links] = :follow
+      it "should preserve the original file mode and ignore the one set by the link" do
+        @link_resource[:links] = :manage # default
         catalog.apply
 
-        expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('755')
+        # I convert them to strings so they display correctly if there's an error.
+        expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('644')
+      end
+
+      it "should manage the mode of the followed link" do
+        if Puppet::Util::Platform.windows?
+          skip "Windows cannot presently manage the mode when following symlinks"
+        else
+          @link_resource[:links] = :follow
+          catalog.apply
+
+          expect((Puppet::FileSystem.stat(@target).mode & 007777).to_s(8)).to eq('755')
+        end
+      end
+    end
+
+    context "and when target does not exist" do
+      it "should create only the link" do
+        @link_resource[:links] = :manage
+        catalog.apply
+        expect(Puppet::FileSystem.readlink(@link)).to eq(@target)
+        expect(Puppet::FileSystem.exist_nofollow?(@target)).to eq(false)
+      end
+
+      context "and when a link with different target already exists" do
+        let(:not_existing) { 'nosuchtarget' }
+        before :each do
+          Puppet::FileSystem.symlink(not_existing, @link)
+        end
+
+        it "should change the link if replace is true" do
+          @link_resource[:replace] = true
+          catalog.apply
+          expect(Puppet::FileSystem.readlink(@link)).to eq(@target)
+        end
+
+        it "should not change the link if replace is false" do
+          @link_resource[:replace] = false
+          catalog.apply
+          expect(Puppet::FileSystem.readlink(@link)).to eq(not_existing)
+        end
       end
     end
   end

@@ -168,6 +168,22 @@ module Puppet::FileSystem
     @impl.exist?(assert_path(path))
   end
 
+  # Determines if a file exists by verifying that the file can be lstat'd.
+  # Will NOT follow symlinks.
+  #
+  # @return [Boolean] true if the named file exists.
+  #
+  # @api public
+  #
+  def self.exist_nofollow?(path)
+    begin
+      @impl.lstat(assert_path(path))
+      return true
+    rescue Errno::ENOENT
+      return false
+    end
+  end
+
   # Determines if a file is a directory.
   #
   # @return [Boolean] true if the given file is a directory.
