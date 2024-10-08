@@ -34,7 +34,7 @@ see the [Quick Start to Developing on Puppet](docs/quickstart.md) guide.
 We'd love to get contributions from you! For a quick guide to getting your
 system setup for developing, take a look at our [Quickstart
 Guide](https://github.com/puppetlabs/puppet/blob/main/docs/quickstart.md). Once you are up and running, take a look at the
-[Contribution Documents](https://github.com/puppetlabs/puppet/blob/main/CONTRIBUTING.md) to see how to get your changes merged
+[Contribution Documents](https://github.com/puppetlabs/.github/blob/main/CONTRIBUTING.md) to see how to get your changes merged
 in.
 
 For more complete docs on developing with Puppet, take a look at the
