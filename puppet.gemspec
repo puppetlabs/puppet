@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name = "puppet"
-  spec.version = "7.34.0"
+  spec.version = "7.35.0"
   spec.license = 'Apache-2.0'
 
   spec.required_rubygems_version = Gem::Requirement.new("> 1.3.1")
