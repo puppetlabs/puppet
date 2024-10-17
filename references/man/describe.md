@@ -1,25 +1,33 @@
 ---
 layout: default
-built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: 'Man Page: puppet describe'
 canonical: "/puppet/latest/man/describe.html"
 ---
 
 # Man Page: puppet describe
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
 
-## NAME
+NAME
+====
+
 **puppet-describe** - Display help about resource types
 
-## SYNOPSIS
+SYNOPSIS
+========
+
 Prints help about Puppet resource types, providers, and metaparameters.
 
-## USAGE
+USAGE
+=====
+
 puppet describe \[-h\|\--help\] \[-s\|\--short\] \[-p\|\--providers\]
 \[-l\|\--list\] \[-m\|\--meta\]
 
-## OPTIONS
+OPTIONS
+=======
+
 \--help
 
 :   Print this help text
@@ -40,15 +48,21 @@ puppet describe \[-h\|\--help\] \[-s\|\--short\] \[-p\|\--providers\]
 
 :   List only parameters without detail
 
-## EXAMPLE
+EXAMPLE
+=======
+
 
     $ puppet describe --list
     $ puppet describe file --providers
     $ puppet describe user -s -m
 
-## AUTHOR
+AUTHOR
+======
+
 David Lutterkort
 
-## COPYRIGHT
+COPYRIGHT
+=========
+
 Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0
 License

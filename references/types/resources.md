@@ -1,13 +1,13 @@
 ---
 layout: default
-built_from_commit: 942adce0b1b70f696b0f09d7109ded7559f0fa33
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: 'Resource Type: resources'
 canonical: "/puppet/latest/types/resources.html"
 ---
 
 # Resource Type: resources
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-28 16:45:59 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:37:51 +0000
 
 
 

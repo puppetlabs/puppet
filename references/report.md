@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: 41ffe0f49158b8f34714b7e18429afa0ce8ded09
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: Report Reference
 toc: columns
 canonical: "/puppet/latest/report.html"
@@ -8,7 +8,7 @@ canonical: "/puppet/latest/report.html"
 
 # Report Reference
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 09:52:52 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:45 +0000
 
 
 

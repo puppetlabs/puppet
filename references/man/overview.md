@@ -1,13 +1,13 @@
 ---
 layout: default
-built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: Puppet Man Pages
 canonical: "/puppet/latest/man/overview.html"
 ---
 
 # Puppet Man Pages
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
 
 
 

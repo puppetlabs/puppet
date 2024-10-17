@@ -1,13 +1,13 @@
 ---
 layout: default
-built_from_commit: 942adce0b1b70f696b0f09d7109ded7559f0fa33
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: 'Resource Type: tidy'
 canonical: "/puppet/latest/types/tidy.html"
 ---
 
 # Resource Type: tidy
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-28 16:45:59 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:37:51 +0000
 
 
 
@@ -132,7 +132,9 @@ Allowed values:
 #### recurse {#tidy-attribute-recurse}
 
 If target is a directory, recursively descend
-into the directory looking for files to tidy.
+into the directory looking for files to tidy. Numeric values
+specify a limit for the recursion depth, `true` means
+unrestricted recursion.
 
 Allowed values:
 

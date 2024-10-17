@@ -1,26 +1,34 @@
 ---
 layout: default
-built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: 'Man Page: puppet ssl'
 canonical: "/puppet/latest/man/ssl.html"
 ---
 
 # Man Page: puppet ssl
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
 
-## NAME
+NAME
+====
+
 **puppet-ssl** - Manage SSL keys and certificates for puppet SSL clients
 
-## SYNOPSIS
+SYNOPSIS
+========
+
 Manage SSL keys and certificates for SSL clients needing to communicate
 with a puppet infrastructure.
 
-## USAGE
+USAGE
+=====
+
 puppet ssl *action* \[-h\|\--help\] \[-v\|\--verbose\] \[-d\|\--debug\]
 \[\--localca\] \[\--target CERTNAME\]
 
-## OPTIONS
+OPTIONS
+=======
+
 -   \--help: Print this help message.
 
 -   \--verbose: Print extra information.
@@ -32,7 +40,11 @@ puppet ssl *action* \[-h\|\--help\] \[-v\|\--verbose\] \[-d\|\--debug\]
 -   \--target CERTNAME Clean the specified device certificate instead of
     this host\'s certificate.
 
-## ACTIONS
+-   
+
+ACTIONS
+=======
+
 bootstrap
 
 :   Perform all of the steps necessary to request and download a client
@@ -42,7 +54,7 @@ bootstrap
     **waitforcert** is a Puppet setting, it can be specified as a time
     interval, such as 30s, 5m, 1h.
 
-submit_request
+submit\_request
 
 :   Generate a certificate signing request (CSR) and submit it to the
     CA. If a private and public key pair already exist, they will be
@@ -50,13 +62,13 @@ submit_request
     generated. If a CSR has already been submitted with the given
     **certname**, then the operation will fail.
 
-generate_request
+generate\_request
 
 :   Generate a certificate signing request (CSR). If a private and
     public key pair exist, they will be used to generate the CSR.
     Otherwise a new key pair will be generated.
 
-download_cert
+download\_cert
 
 :   Download a certificate for this host. If the current private key
     matches the downloaded certificate, then the certificate will be

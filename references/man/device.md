@@ -1,25 +1,31 @@
 ---
 layout: default
-built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
+built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
 title: 'Man Page: puppet device'
 canonical: "/puppet/latest/man/device.html"
 ---
 
 # Man Page: puppet device
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
 
-## NAME
+NAME
+====
+
 **puppet-device** - Manage remote network devices
 
-## SYNOPSIS
+SYNOPSIS
+========
+
 Retrieves catalogs from the Puppet master and applies them to remote
 devices.
 
 This subcommand can be run manually; or periodically using cron, a
 scheduled task, or a similar tool.
 
-## USAGE
+USAGE
+=====
+
 puppet device \[-h\|\--help\] \[-v\|\--verbose\] \[-d\|\--debug\]
 \[-l\|\--logdest syslog\|*file*\|console\] \[\--detailed-exitcodes\]
 \[\--deviceconfig *file*\] \[-w\|\--waitforcert *seconds*\] \[\--libdir
@@ -27,18 +33,22 @@ puppet device \[-h\|\--help\] \[-v\|\--verbose\] \[-d\|\--debug\]
 *type* \[name\]\] \[-t\|\--target *device*\] \[\--user=*user*\]
 \[-V\|\--version\]
 
-## DESCRIPTION
+DESCRIPTION
+===========
+
 Devices require a proxy Puppet agent to request certificates, collect
 facts, retrieve and apply catalogs, and store reports.
 
-## USAGE NOTES
+USAGE NOTES
+===========
+
 Devices managed by the puppet-device subcommand on a Puppet agent are
 configured in device.conf, which is located at \$confdir/device.conf by
 default, and is configurable with the \$deviceconfig setting.
 
 The device.conf file is an INI-like file, with one section per device:
 
-\[*DEVICE_CERTNAME*\] type *TYPE* url *URL* debug
+\[*DEVICE\_CERTNAME*\] type *TYPE* url *URL* debug
 
 The section name specifies the certname of the device.
 
@@ -48,10 +58,12 @@ device.
 The optional debug property specifies transport-level debugging, and is
 limited to telnet and ssh transports.
 
-See https://puppet.com/docs/puppet/latest/config_file_device.html for
+See https://puppet.com/docs/puppet/latest/config\_file\_device.html for
 details.
 
-## OPTIONS
+OPTIONS
+=======
+
 Note that any setting that\'s valid in the configuration file is also a
 valid long argument. For example, \'server\' is a valid configuration
 parameter, so you can specify \'\--server *servername*\' as an argument.
@@ -133,22 +145,28 @@ parameter, so you can specify \'\--server *servername*\' as an argument.
 :   Target a specific device/certificate in the device.conf. Doing so
     will perform a device run against only that device/certificate.
 
-\--to_yaml
+\--to\_yaml
 
 :   Output found resources in yaml format, suitable to use with Hiera
-    and create_resources.
+    and create\_resources.
 
 \--user
 
 :   The user to run as.
 
-## EXAMPLE
+EXAMPLE
+=======
+
 
       $ puppet device --target remotehost --verbose
 
-## AUTHOR
+AUTHOR
+======
+
 Brice Figureau
 
-## COPYRIGHT
+COPYRIGHT
+=========
+
 Copyright (c) 2011-2018 Puppet Inc., LLC Licensed under the Apache 2.0
 License
