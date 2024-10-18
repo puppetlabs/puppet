@@ -1,13 +1,13 @@
 ---
 layout: default
-built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
+built_from_commit: 812d7420ea5d7e19e8003b26486a7c8847afdb25
 title: 'Man Page: puppet device'
 canonical: "/puppet/latest/man/device.html"
 ---
 
 # Man Page: puppet device
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-18 17:22:50 +0000
 
 ## NAME
 **puppet-device** - Manage remote network devices

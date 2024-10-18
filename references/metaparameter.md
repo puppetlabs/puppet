@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: c0f933882f92b7998fe94e2a57bbdf69f77ac61e
+built_from_commit: 812d7420ea5d7e19e8003b26486a7c8847afdb25
 title: Metaparameter Reference
 toc: columns
 canonical: "/puppet/latest/metaparameter.html"
@@ -8,7 +8,7 @@ canonical: "/puppet/latest/metaparameter.html"
 
 # Metaparameter Reference
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 09:52:11 -0700
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-18 17:22:50 +0000
 
 
 
