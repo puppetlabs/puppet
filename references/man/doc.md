@@ -1,34 +1,26 @@
 ---
 layout: default
-built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
+built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
 title: 'Man Page: puppet doc'
 canonical: "/puppet/latest/man/doc.html"
 ---
 
 # Man Page: puppet doc
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
 
-NAME
-====
-
+## NAME
 **puppet-doc** - Generate Puppet references
 
-SYNOPSIS
-========
-
+## SYNOPSIS
 Generates a reference for all Puppet types. Largely meant for internal
 Puppet Inc. use. (Deprecated)
 
-USAGE
-=====
-
+## USAGE
 puppet doc \[-h\|\--help\] \[-l\|\--list\] \[-r\|\--reference
 *reference-name*\]
 
-DESCRIPTION
-===========
-
+## DESCRIPTION
 This deprecated command generates a Markdown document to stdout
 describing all installed Puppet types or all allowable arguments to
 puppet executables. It is largely meant for internal use and is used to
@@ -41,9 +33,7 @@ https://github.com/puppetlabs/puppetlabs-strings for more information.
 This command (puppet-doc) will be removed once the puppetlabs internal
 documentation processing pipeline is completely based on puppet-strings.
 
-OPTIONS
-=======
-
+## OPTIONS
 \--help
 
 :   Print this help message
@@ -53,19 +43,13 @@ OPTIONS
 :   Build a particular reference. Get a list of references by running
     \'puppet doc \--list\'.
 
-EXAMPLE
-=======
-
+## EXAMPLE
 
     $ puppet doc -r type > /tmp/type_reference.markdown
 
-AUTHOR
-======
-
+## AUTHOR
 Luke Kanies
 
-COPYRIGHT
-=========
-
+## COPYRIGHT
 Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0
 License

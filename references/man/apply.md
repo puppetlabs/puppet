@@ -1,36 +1,28 @@
 ---
 layout: default
-built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
+built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
 title: 'Man Page: puppet apply'
 canonical: "/puppet/latest/man/apply.html"
 ---
 
 # Man Page: puppet apply
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
 
-NAME
-====
-
+## NAME
 **puppet-apply** - Apply Puppet manifests locally
 
-SYNOPSIS
-========
-
+## SYNOPSIS
 Applies a standalone Puppet manifest to the local system.
 
-USAGE
-=====
-
+## USAGE
 puppet apply \[-h\|\--help\] \[-V\|\--version\] \[-d\|\--debug\]
 \[-v\|\--verbose\] \[-e\|\--execute\] \[\--detailed-exitcodes\]
 \[-L\|\--loadclasses\] \[-l\|\--logdest syslog\|eventlog\|*ABS
 FILEPATH*\|console\] \[\--noop\] \[\--catalog *catalog*\]
 \[\--write-catalog-summary\] *file*
 
-DESCRIPTION
-===========
-
+## DESCRIPTION
 This is the standalone puppet execution tool; use it to apply individual
 manifests.
 
@@ -44,9 +36,7 @@ site.
 Most users should use \'puppet agent\' and \'puppet master\' for
 site-wide manifests.
 
-OPTIONS
-=======
-
+## OPTIONS
 Any setting that\'s valid in the configuration file is a valid long
 argument for puppet apply. For example, \'tags\' is a valid setting, so
 you can specify \'\--tags *class*,*tag*\' as an argument.
@@ -101,7 +91,7 @@ configuration options by running puppet with \'\--genconfig\'.
 -   \--execute: Execute a specific piece of Puppet code
 
 -   \--test: Enable the most common options used for testing. These are
-    \'verbose\', \'detailed-exitcodes\' and \'show\_diff\'.
+    \'verbose\', \'detailed-exitcodes\' and \'show_diff\'.
 
 -   \--verbose: Print extra information.
 
@@ -113,24 +103,16 @@ configuration options by running puppet with \'\--genconfig\'.
     resource list and classes list to the node in the state directory
     named classes.txt and resources.txt
 
--   
-
-EXAMPLE
-=======
-
+## EXAMPLE
 
     $ puppet apply -e 'notify { "hello world": }'
     $ puppet apply -l /tmp/manifest.log manifest.pp
     $ puppet apply --modulepath=/root/dev/modules -e "include ntpd::server"
     $ puppet apply --catalog catalog.json
 
-AUTHOR
-======
-
+## AUTHOR
 Luke Kanies
 
-COPYRIGHT
-=========
-
+## COPYRIGHT
 Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0
 License
