@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
+built_from_commit: d0ec909330b5a98b868eae9a4aae37bbfca96e7a
 title: Resource Type Reference (Single-Page)
 canonical: "/puppet/latest/type.html"
 toc_levels: 2
@@ -9,7 +9,7 @@ toc: columns
 
 # Resource Type Reference (Single-Page)
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:37:51 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-09-30 11:26:40 -0700
 
 
 
@@ -4029,9 +4029,7 @@ Values can match `/^[0-9]+$/`.
 #### recurse {#tidy-attribute-recurse}
 
 If target is a directory, recursively descend
-into the directory looking for files to tidy. Numeric values
-specify a limit for the recursion depth, `true` means
-unrestricted recursion.
+into the directory looking for files to tidy.
 
 Valid values are `true`, `false`, `inf`. Values can match `/^[0-9]+$/`.
 

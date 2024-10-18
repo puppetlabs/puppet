@@ -1,22 +1,18 @@
 ---
 layout: default
-built_from_commit: 6893bdd69ab1291e6e6fcd6b152dda2b48e3cdb2
+built_from_commit: 70303b65ae864066c583e1436011ff135847f6ad
 title: 'Man Page: puppet lookup'
 canonical: "/puppet/latest/man/lookup.html"
 ---
 
 # Man Page: puppet lookup
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-17 02:36:47 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-08-29 17:41:46 -0700
 
-NAME
-====
-
+## NAME
 **puppet-lookup** - Interactive Hiera lookup
 
-SYNOPSIS
-========
-
+## SYNOPSIS
 Does Hiera lookups from the command line.
 
 Since this command needs access to your Hiera data, make sure to run it
@@ -27,9 +23,7 @@ The most common version of this command is:
 
 \'puppet lookup *KEY* \--node *NAME* \--environment *ENV* \--explain\'
 
-USAGE
-=====
-
+## USAGE
 puppet lookup \[\--help\] \[\--type *TYPESTRING*\] \[\--merge
 first\|unique\|hash\|deep\] \[\--knock-out-prefix *PREFIX-STRING*\]
 \[\--sort-merged-arrays\] \[\--merge-hash-arrays\] \[\--explain\]
@@ -37,9 +31,7 @@ first\|unique\|hash\|deep\] \[\--knock-out-prefix *PREFIX-STRING*\]
 \[\--facts *FILE*\] \[\--compile\] \[\--render-as
 s\|json\|yaml\|binary\|msgpack\] *keys*
 
-DESCRIPTION
-===========
-
+## DESCRIPTION
 The lookup command is a CLI for Puppet\'s \'lookup()\' function. It
 searches your Hiera data and returns a value for the requested lookup
 key, so you can test and explore your data. It is a modern replacement
@@ -66,11 +58,9 @@ You can provide multiple lookup keys to this command, but it only
 returns a value for the first found key, omitting the rest.
 
 For more details about how Hiera works, see the Hiera documentation:
-https://puppet.com/docs/puppet/latest/hiera\_intro.html
+https://puppet.com/docs/puppet/latest/hiera_intro.html
 
-OPTIONS
-=======
-
+## OPTIONS
 -   \--help: Print this help message.
 
 -   \--explain Explain the details of how the lookup was performed and
@@ -96,7 +86,7 @@ OPTIONS
     factors.
 
 -   \--merge first\|unique\|hash\|deep: Specify the merge behavior,
-    overriding any merge behavior from the data\'s lookup\_options.
+    overriding any merge behavior from the data\'s lookup_options.
     \'first\' returns the first value found. \'unique\' appends
     everything to a merged, deduplicated array. \'hash\' performs a
     simple hash merge by overwriting keys of lower lookup priority.
@@ -114,9 +104,9 @@ OPTIONS
     When this flag is used, hashes WITHIN arrays are deep-merged with
     their counterparts by position.
 
--   \--explain-options Explain whether a lookup\_options hash affects
-    this lookup, and how that hash was assembled. (lookup\_options is
-    how Hiera configures merge behavior in data.)
+-   \--explain-options Explain whether a lookup_options hash affects
+    this lookup, and how that hash was assembled. (lookup_options is how
+    Hiera configures merge behavior in data.)
 
 -   \--default *VALUE* A value to return if Hiera can\'t find a value in
     data. For emulating calls to the \'lookup()\' function that include
@@ -128,7 +118,7 @@ OPTIONS
 
 -   \--compile Perform a full catalog compilation prior to the lookup.
     If your hierarchy and data only use the \$facts, \$trusted, and
-    \$server\_facts variables, you don\'t need this option; however, if
+    \$server_facts variables, you don\'t need this option; however, if
     your Hiera configuration uses arbitrary variables set by a Puppet
     manifest, you might need this option to get accurate data. No
     catalog compilation takes place unless this flag is given.
@@ -138,41 +128,34 @@ OPTIONS
     producing a value is yaml and the default when producing an
     explanation is s.
 
--   
+## EXAMPLE
+To look up \'key_name\' using the Puppet Server node\'s facts: \$ puppet
+lookup key_name
 
-EXAMPLE
-=======
-
-To look up \'key\_name\' using the Puppet Server node\'s facts: \$
-puppet lookup key\_name
-
-To look up \'key\_name\' using the Puppet Server node\'s arbitrary
+To look up \'key_name\' using the Puppet Server node\'s arbitrary
 variables from a manifest, and classify the node if applicable: \$
-puppet lookup key\_name \--compile
+puppet lookup key_name \--compile
 
-To look up \'key\_name\' using the Puppet Server node\'s facts,
-overridden by facts given in a file: \$ puppet lookup key\_name \--facts
-fact\_file.yaml
+To look up \'key_name\' using the Puppet Server node\'s facts,
+overridden by facts given in a file: \$ puppet lookup key_name \--facts
+fact_file.yaml
 
-To look up \'key\_name\' with agent.local\'s facts: \$ puppet lookup
-\--node agent.local key\_name
+To look up \'key_name\' with agent.local\'s facts: \$ puppet lookup
+\--node agent.local key_name
 
-To get the first value found for \'key\_name\_one\' and
-\'key\_name\_two\' with agent.local\'s facts while merging values and
-knocking out the prefix \'foo\' while merging: \$ puppet lookup \--node
-agent.local \--merge deep \--knock-out-prefix foo key\_name\_one
-key\_name\_two
+To get the first value found for \'key_name_one\' and \'key_name_two\'
+with agent.local\'s facts while merging values and knocking out the
+prefix \'foo\' while merging: \$ puppet lookup \--node agent.local
+\--merge deep \--knock-out-prefix foo key_name_one key_name_two
 
-To lookup \'key\_name\' with agent.local\'s facts, and return a default
+To lookup \'key_name\' with agent.local\'s facts, and return a default
 value of \'bar\' if nothing was found: \$ puppet lookup \--node
-agent.local \--default bar key\_name
+agent.local \--default bar key_name
 
-To see an explanation of how the value for \'key\_name\' would be found,
+To see an explanation of how the value for \'key_name\' would be found,
 using agent.local\'s facts: \$ puppet lookup \--node agent.local
-\--explain key\_name
+\--explain key_name
 
-COPYRIGHT
-=========
-
+## COPYRIGHT
 Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0
 License
