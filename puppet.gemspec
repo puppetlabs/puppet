@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency('puppet-resource_api', '~> 1.5')
   spec.add_runtime_dependency('scanf', '~> 1.0')
   spec.add_runtime_dependency('semantic_puppet', '~> 1.0')
+  spec.add_runtime_dependency('ostruct', '~> 0.6.0')
 
   platform = spec.platform.to_s
   if platform == 'universal-darwin'
