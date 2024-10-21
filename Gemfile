@@ -35,7 +35,6 @@ group(:features) do
   # requires native ldap headers/libs
   # gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
   gem 'puppetserver-ca', '~> 2.0', require: false
-  gem 'syslog', '~> 0.1.1', require: false, platforms: [:ruby]
   gem 'CFPropertyList', ['>= 3.0.6', '< 4'], require: false
 end
 

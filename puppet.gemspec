@@ -37,9 +37,12 @@ Gem::Specification.new do |spec|
     spec.add_runtime_dependency('CFPropertyList', ['>= 3.0.6', '< 4'])
   end
 
-  if platform == 'x64-mingw32' || platform == 'x86-mingw32'
+  if (platform == 'x64-mingw32' || platform == 'x86-mingw32') || Gem.win_platform?
     # ffi 1.16.0 - 1.16.2 are broken on Windows
     spec.add_runtime_dependency('ffi', '>= 1.15.5', '< 1.17.0', '!= 1.16.0', '!= 1.16.1', '!= 1.16.2')
     spec.add_runtime_dependency('minitar', '~> 0.9')
+  elsif !Gem.java_platform?
+    # don't depend on syslog on jruby, it requires extensions
+    spec.add_runtime_dependency('syslog', '~> 0.1.2')
   end
 end
