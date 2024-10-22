@@ -1477,7 +1477,7 @@ EOT
       :mode => "0750",
       :desc => "The directory in which serialized data is stored, usually in a subdirectory."},
     :reports => {
-      :default    => "store",
+      :default    => "none",
       :desc       => "The list of report handlers to use. When using multiple report handlers,
         their names should be comma-separated, with whitespace allowed. (For example,
         `reports = http, store`.)
