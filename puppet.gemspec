@@ -32,17 +32,24 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency('semantic_puppet', '~> 1.0')
   spec.add_runtime_dependency('ostruct', '~> 0.6.0')
 
+  # If we're building a platform-specific gem, as indicated by spec.platform,
+  # include the corresponding runtime dependencies no matter which platform we're
+  # currently running on.
+  #
+  # If we're running in bundler, include runtime dependencies for the platform
+  # we're currently running on.
   platform = spec.platform.to_s
-  if platform == 'universal-darwin'
+  if platform =~ /darwin/ || (defined?(Bundler) && RUBY_PLATFORM =~ /darwin/)
     spec.add_runtime_dependency('CFPropertyList', ['>= 3.0.6', '< 4'])
   end
 
-  if (platform == 'x64-mingw32' || platform == 'x86-mingw32') || Gem.win_platform?
+  if platform =~ /mingw/ || (defined?(Bundler) && Gem.win_platform?)
     # ffi 1.16.0 - 1.16.2 are broken on Windows
     spec.add_runtime_dependency('ffi', '>= 1.15.5', '< 1.17.0', '!= 1.16.0', '!= 1.16.1', '!= 1.16.2')
     spec.add_runtime_dependency('minitar', '~> 0.9')
-  elsif !Gem.java_platform?
+  elsif platform =~ /java/ || (defined?(Bundler) && Gem.java_platform?)
     # don't depend on syslog on jruby, it requires extensions
+  else
     spec.add_runtime_dependency('syslog', '~> 0.1.2')
   end
 end
