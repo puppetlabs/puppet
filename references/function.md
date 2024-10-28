@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: 812d7420ea5d7e19e8003b26486a7c8847afdb25
+built_from_commit: 8fcce5cb0d88b7330540e59817a7e6eae7adcdea
 title: Built-in function reference
 canonical: "/puppet/latest/function.html"
 toc_levels: 2
@@ -9,7 +9,7 @@ toc: columns
 
 # Built-in function reference
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-18 17:22:47 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-28 17:40:35 +0000
 
 
 
@@ -4191,7 +4191,7 @@ Performs regexp replacement on a string or array of strings.
 
 Signature 1
 
-`regsubst(Variant[Array[String],String] $target, String $pattern, Variant[String,Hash[String,String]] $replacement, Optional[Optional[Pattern[/^[GEIM]*$/]]] $flags, Optional[Enum['N','E','S','U']] $encoding)`
+`regsubst(Variant[Array[Variant[String,Sensitive[String]]],Sensitive[Array[Variant[String,Sensitive[String]]]],Variant[String,Sensitive[String]]] $target, String $pattern, Variant[String,Hash[String,String]] $replacement, Optional[Optional[Pattern[/^[GEIM]*$/]]] $flags, Optional[Enum['N','E','S','U']] $encoding)`
 
 ### Parameters
 
@@ -4229,7 +4229,7 @@ $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
 
 Signature 2
 
-`regsubst(Variant[Array[String],String] $target, Variant[Regexp,Type[Regexp]] $pattern, Variant[String,Hash[String,String]] $replacement, Optional[Pattern[/^G?$/]] $flags)`
+`regsubst(Variant[Array[Variant[String,Sensitive[String]]],Sensitive[Array[Variant[String,Sensitive[String]]]],Variant[String,Sensitive[String]]] $target, Variant[Regexp,Type[Regexp]] $pattern, Variant[String,Hash[String,String]] $replacement, Optional[Pattern[/^G?$/]] $flags)`
 
 ### Parameters
 

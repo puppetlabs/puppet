@@ -1,13 +1,13 @@
 ---
 layout: default
-built_from_commit: 812d7420ea5d7e19e8003b26486a7c8847afdb25
+built_from_commit: 8fcce5cb0d88b7330540e59817a7e6eae7adcdea
 title: 'Man Page: puppet ssl'
 canonical: "/puppet/latest/man/ssl.html"
 ---
 
 # Man Page: puppet ssl
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-18 17:22:50 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-10-28 17:40:38 +0000
 
 ## NAME
 **puppet-ssl** - Manage SSL keys and certificates for puppet SSL clients
