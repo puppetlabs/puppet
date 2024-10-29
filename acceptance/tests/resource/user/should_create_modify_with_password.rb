@@ -44,7 +44,7 @@ test_name 'should create a user with password and modify the password' do
       # There is a known issue with SSSD and Red Hat 8, this is a temporary workaround until a permanent fix is
       # implemented in our images. See ITHELP-100250
       # https://access.redhat.com/solutions/7031304
-      if agent['platform'] = 'el-8-ppc64le'
+      if agent['platform'] == 'el-8-ppc64le'
         on(agent, 'systemctl stop sssd; rm -f /var/lib/sss/db/*; systemctl start sssd', acceptable_exit_codes: 0)
       end
 
