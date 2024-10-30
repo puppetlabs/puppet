@@ -66,7 +66,7 @@ describe Puppet::Face[:generate, :current] do
                } }
             },
           },
-          'm2' => { 
+          'm2' => {
             'lib' => { 'puppet' => { 'type' => {
               'test2.rb' => <<-EOF
               module Puppet
@@ -218,6 +218,20 @@ describe Puppet::Face[:generate, :current] do
         expect(Puppet::FileSystem.exist?(File.join(outputdir, 'test1.pp'))).to be(false)
         stats_after = Puppet::FileSystem.stat(File.join(outputdir, 'test2.pp'))
         expect(stat_before <=> stats_after).to be(0)
+      end
+
+      it 'overwrites all files if ruby files in lib/puppet_x/ are updated' do
+        # create them (first run)
+        puppet_x_lib = File.join(m1, 'lib', 'puppet_x', 'foo', 'library.rb')
+        Puppet::FileSystem.mkpath(puppet_x_lib)
+        genface.types
+        stats_before = [Puppet::FileSystem.stat(File.join(outputdir, 'test1.pp')), Puppet::FileSystem.stat(File.join(outputdir, 'test2.pp'))]
+        # Sorry. The sleep is needed because Puppet::FileSystem.touch(<path>, :mtime => Time.now + 1000) doesn't work on Windows.
+        sleep(1)
+        Puppet::FileSystem.touch(puppet_x_lib)
+        genface.types
+        stats_after = [Puppet::FileSystem.stat(File.join(outputdir, 'test1.pp')), Puppet::FileSystem.stat(File.join(outputdir, 'test2.pp'))]
+        expect(stats_before <=> stats_after).to eq(-1)
       end
 
     end
