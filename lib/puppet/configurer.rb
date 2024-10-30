@@ -135,36 +135,37 @@ class Puppet::Configurer
     Puppet.warning _("The current total number of fact values: %{size} exceeds the fact values limit: %{max_size}") % { size: size, max_size: max_number }
   end
 
-  def warn_fact_name_length(name, max_length)
-    Puppet.warning _("Fact %{name} with length: '%{length}' exceeds the length limit: %{limit}") % { name: name, length: name.to_s.bytesize, limit: max_length }
+  def warn_fact_name_length(name, max_length, fact_name_length)
+    Puppet.warning _("Fact %{name} with length: %{length} exceeds the fact name length limit: %{limit}") % { name: name, length: fact_name_length, limit: max_length }
   end
 
   def warn_number_of_top_level_facts(size, max_number)
     Puppet.warning _("The current number of top level facts: %{size} exceeds the top facts limit: %{max_size}") % { size: size, max_size: max_number }
   end
 
-  def warn_fact_value_length(value, max_length)
-    Puppet.warning _("Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}") % { value: value, length: value.to_s.bytesize, max_length: max_length }
+  def warn_fact_value_length(name, value, max_length)
+    Puppet.warning _("Fact %{name} with value %{value} with the value length: %{length} exceeds the value length limit: %{max_length}") % { name: name, value: value, length: value.to_s.bytesize, max_length: max_length }
   end
 
   def warn_fact_payload_size(payload, max_size)
-    Puppet.warning _("Payload with the current size of: '%{payload}' exceeds the payload size limit: %{max_size}") % { payload: payload, max_size: max_size }
+    Puppet.warning _("Payload with the current size of: %{payload} exceeds the payload size limit: %{max_size}") % { payload: payload, max_size: max_size }
   end
 
-  def check_fact_name_length(name, number_of_dots)
+  def check_fact_name_length(fact_path, number_of_dots)
     max_length = Puppet[:fact_name_length_soft_limit]
     return if max_length.zero?
 
+    name_without_dots = fact_path.join()
     # rough byte size estimations of fact path as a postgresql btree index
-    size_as_btree_index = 8 + (number_of_dots * 2) + name.to_s.bytesize
-    warn_fact_name_length(name, max_length) if size_as_btree_index > max_length
+    size_as_btree_index = 8 + (number_of_dots * 2) + name_without_dots.to_s.bytesize
+    warn_fact_name_length(fact_path.join('.'), max_length, size_as_btree_index) if size_as_btree_index > max_length
   end
 
-  def check_fact_values_length(values)
+  def check_fact_values_length(name, values)
     max_length = Puppet[:fact_value_length_soft_limit]
     return if max_length.zero?
 
-    warn_fact_value_length(values, max_length) if values.to_s.bytesize > max_length
+    warn_fact_value_length(name, values, max_length) if values.to_s.bytesize > max_length
   end
 
   def check_top_level_number_limit(size)
@@ -204,8 +205,8 @@ class Puppet::Configurer
         path.pop
       end
     else
-      check_fact_name_length(path.join(), path.size)
-      check_fact_values_length(object)
+      check_fact_name_length(path, path.size)
+      check_fact_values_length(path.join('.'), object)
       @number_of_facts += 1
     end
   end
