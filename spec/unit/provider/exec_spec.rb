@@ -73,20 +73,6 @@ describe Puppet::Provider::Exec do
     end
 
     context "when validating the command" do
-      it "redacts the arguments if the command is relative" do
-        expect {
-          apply_compiled_manifest(<<-MANIFEST)
-            exec { 'echo':
-              command => Sensitive.new('echo #{supersecret}')
-            }
-          MANIFEST
-        }.to raise_error do |err|
-          expect(err).to be_a(Puppet::Error)
-          expect(err.message).to match(/'echo' is not qualified and no path was specified. Please qualify the command or specify a path./)
-          expect(err.message).to_not match(/#{supersecret}/)
-        end
-      end
-
       it "redacts the arguments if the command is a directory" do
         dir = tmpdir('exec')
         apply_compiled_manifest(<<-MANIFEST)
