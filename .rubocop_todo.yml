@@ -294,6 +294,8 @@ Performance/UnfreezeString:
 Style/AccessModifierDeclarations:
   Exclude:
     - 'lib/puppet/util/suidmanager.rb'
+    - 'lib/puppet/util/command_line/trollop.rb'
+    - 'lib/puppet/util/windows/monkey_patches/process.rb'
 
 # This cop supports safe auto-correction (--auto-correct).
 # Configuration parameters: EnforcedStyle.
