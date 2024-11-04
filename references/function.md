@@ -1,6 +1,6 @@
 ---
 layout: default
-built_from_commit: 8fcce5cb0d88b7330540e59817a7e6eae7adcdea
+built_from_commit: a0909f4eae7490d52cb1e7dc81010592ba607679
 title: Built-in function reference
 canonical: "/puppet/latest/function.html"
 toc_levels: 2
@@ -9,7 +9,7 @@ toc: columns
 
 # Built-in function reference
 
-> **NOTE:** This page was generated from the Puppet source code on 2024-10-28 17:40:35 +0000
+> **NOTE:** This page was generated from the Puppet source code on 2024-11-04 23:37:36 +0000
 
 
 
