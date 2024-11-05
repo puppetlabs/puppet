@@ -203,17 +203,11 @@ describe Puppet::Configurer do
       Puppet[:payload_soft_limit] = 0
 
       facts.values = { 'processors' => {
-        'cores' => 1,
-        'count' => 2,
-        'isa' => "i386",
-        'models' => [
-          "CPU1 @ 2.80GHz"
-        ],
-        'physicalcount' => 4 }
+        'isa' => "i386" }
       }
       Puppet::Node::Facts.indirection.save(facts)
 
-      expect(Puppet).to receive(:warning).with(/Fact value '.+' with the value length: '[1-9]*' exceeds the value length limit: [1-9]*/).twice
+      expect(Puppet).to receive(:warning).with(/Fact processors.isa with value i386 with the value length: 4 exceeds the value length limit: 1/)
       configurer.run
     end
 
@@ -235,7 +229,7 @@ describe Puppet::Configurer do
       }
       Puppet::Node::Facts.indirection.save(facts)
 
-      expect(Puppet).to receive(:warning).with(/Payload with the current size of: '\d*' exceeds the payload size limit: \d*/)
+      expect(Puppet).to receive(:warning).with(/Payload with the current size of: \d* exceeds the payload size limit: \d*/)
       configurer.run
     end
 
@@ -294,10 +288,12 @@ describe Puppet::Configurer do
       Puppet[:number_of_facts_soft_limit] = 0
       Puppet[:payload_soft_limit] = 0
 
-      facts.values = {'my_new_fact_name' => 'my_new_fact_value'}
+      facts.values = { 'processors' => {
+        'isa' => "i386" }
+      }
       Puppet::Node::Facts.indirection.save(facts)
 
-      expect(Puppet).to receive(:warning).with(/Fact .+ with length: '[1-9]*' exceeds the length limit: [1-9]*/)
+      expect(Puppet).to receive(:warning).with(/Fact processors.isa with length: 25 exceeds the fact name length limit: 1/)
       configurer.run
     end
 
