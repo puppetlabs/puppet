@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 8.8.0-75-g7e19ae9bed\n"
+"Project-Id-Version: Puppet automation framework 8.10.0-24-g7685918b19\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2024-09-05 16:06+0000\n"
-"PO-Revision-Date: 2024-09-05 16:06+0000\n"
+"POT-Creation-Date: 2024-11-05 23:06+0000\n"
+"PO-Revision-Date: 2024-11-05 23:06+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -272,11 +272,11 @@ msgstr ""
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:390 ../lib/puppet/application/resource.rb:208
+#: ../lib/puppet/application/device.rb:390 ../lib/puppet/application/resource.rb:212
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:391 ../lib/puppet/application/resource.rb:209
+#: ../lib/puppet/application/device.rb:391 ../lib/puppet/application/resource.rb:213
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -414,15 +414,15 @@ msgstr ""
 msgid "The resource abstraction layer shell"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:152
+#: ../lib/puppet/application/resource.rb:156
 msgid "Editing with Yaml output is not supported"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:216
+#: ../lib/puppet/application/resource.rb:220
 msgid "Invalid parameter setting %{setting}"
 msgstr ""
 
-#: ../lib/puppet/application/resource.rb:251
+#: ../lib/puppet/application/resource.rb:255
 msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
@@ -530,7 +530,7 @@ msgstr ""
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:102 ../lib/puppet/configurer.rb:277
+#: ../lib/puppet/configurer.rb:102 ../lib/puppet/configurer.rb:278
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
@@ -539,7 +539,7 @@ msgid "The current total number of fact values: %{size} exceeds the fact values 
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:139
-msgid "Fact %{name} with length: '%{length}' exceeds the length limit: %{limit}"
+msgid "Fact %{name} with length: %{length} exceeds the fact name length limit: %{limit}"
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:143
@@ -547,136 +547,136 @@ msgid "The current number of top level facts: %{size} exceeds the top facts limi
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:147
-msgid "Fact value '%{value}' with the value length: '%{length}' exceeds the value length limit: %{max_length}"
+msgid "Fact %{name} with value %{value} with the value length: %{length} exceeds the value length limit: %{max_length}"
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:151
-msgid "Payload with the current size of: '%{payload}' exceeds the payload size limit: %{max_size}"
+msgid "Payload with the current size of: %{payload} exceeds the payload size limit: %{max_size}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:189
+#: ../lib/puppet/configurer.rb:190
 msgid "The size of the payload is %{payload}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:219
+#: ../lib/puppet/configurer.rb:220
 msgid "The total number of facts registered is %{number_of_facts}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:270
+#: ../lib/puppet/configurer.rb:271
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:286
+#: ../lib/puppet/configurer.rb:287
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:320
+#: ../lib/puppet/configurer.rb:321
 msgid "Could not select a functional puppet server from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:334
+#: ../lib/puppet/configurer.rb:335
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:371
+#: ../lib/puppet/configurer.rb:372
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:394
+#: ../lib/puppet/configurer.rb:395
 msgid "Environment not passed via CLI and no catalog was given, attempting to find out the last server-specified environment"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:398
+#: ../lib/puppet/configurer.rb:399
 msgid "Requesting environment from the server"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:408
+#: ../lib/puppet/configurer.rb:409
 msgid "Could not find a usable environment in the lastrunfile. Either the file does not exist, does not have the required keys, or the values of 'initial_environment' and 'converged_environment' are identical."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:412
+#: ../lib/puppet/configurer.rb:413
 msgid "Using environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:436
+#: ../lib/puppet/configurer.rb:437
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:447
+#: ../lib/puppet/configurer.rb:448
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:450
+#: ../lib/puppet/configurer.rb:451
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:507
+#: ../lib/puppet/configurer.rb:508
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:539
+#: ../lib/puppet/configurer.rb:540
 msgid "Environment '%{environment}' not found on server, aborting run."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:541
+#: ../lib/puppet/configurer.rb:542
 msgid "Environment '%{environment}' not found on server, skipping initial pluginsync."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:559 ../lib/puppet/http/resolver/server_list.rb:65 ../lib/puppet/http/resolver/server_list.rb:69
+#: ../lib/puppet/configurer.rb:560 ../lib/puppet/http/resolver/server_list.rb:65 ../lib/puppet/http/resolver/server_list.rb:69
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:563 ../lib/puppet/http/resolver/server_list.rb:74 ../lib/puppet/http/resolver/server_list.rb:77
+#: ../lib/puppet/configurer.rb:564 ../lib/puppet/http/resolver/server_list.rb:74 ../lib/puppet/http/resolver/server_list.rb:77
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:589
+#: ../lib/puppet/configurer.rb:590
 msgid "Successfully loaded last environment from the lastrunfile"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:593
+#: ../lib/puppet/configurer.rb:594
 msgid "Found last server-specified environment: %{environment}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:596
+#: ../lib/puppet/configurer.rb:597
 msgid "Could not find last server-specified environment: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:616
+#: ../lib/puppet/configurer.rb:617
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:624
+#: ../lib/puppet/configurer.rb:625
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:643 ../lib/puppet/face/report.rb:48
+#: ../lib/puppet/configurer.rb:644 ../lib/puppet/face/report.rb:48
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:652
+#: ../lib/puppet/configurer.rb:653
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:671
+#: ../lib/puppet/configurer.rb:672
 msgid "Uploading facts for %{node} to %{server}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:680
+#: ../lib/puppet/configurer.rb:681
 msgid "Failed to submit facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:695
+#: ../lib/puppet/configurer.rb:696
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:724
+#: ../lib/puppet/configurer.rb:725
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:746
+#: ../lib/puppet/configurer.rb:747
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -8099,7 +8099,7 @@ msgstr ""
 msgid "Invalid backup type %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:185 ../lib/puppet/type/tidy.rb:50
+#: ../lib/puppet/type/file.rb:185 ../lib/puppet/type/tidy.rb:52
 msgid "Invalid recurse value %{value}"
 msgstr ""
 
@@ -8157,7 +8157,7 @@ msgid "Copying owner/mode/group from the source file on Windows is not supported
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:912 ../lib/puppet/type/tidy.rb:377
+#: ../lib/puppet/type/file.rb:912 ../lib/puppet/type/tidy.rb:379
 msgid "Could not stat; permission denied"
 msgstr ""
 
@@ -8336,34 +8336,34 @@ msgstr ""
 msgid "The 'logonaccount' parameter is mandatory when setting 'logonpassword'."
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:103
+#: ../lib/puppet/type/tidy.rb:105
 msgid "Tidy can't use matches with recurse 0, false, or undef"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:144
+#: ../lib/puppet/type/tidy.rb:146
 msgid "Invalid age unit '%{unit}'"
 msgstr ""
 
 #. TRANSLATORS tidy is the name of a program and should not be translated
-#: ../lib/puppet/type/tidy.rb:164
+#: ../lib/puppet/type/tidy.rb:166
 msgid "Invalid tidy age %{age}"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:186
+#: ../lib/puppet/type/tidy.rb:188
 msgid "Invalid size unit '%{unit}'"
 msgstr ""
 
 #. TRANSLATORS tidy is the name of a program and should not be translated
-#: ../lib/puppet/type/tidy.rb:204
+#: ../lib/puppet/type/tidy.rb:206
 msgid "Invalid tidy size %{age}"
 msgstr ""
 
 #. TRANSLATORS "Tidy" is a program name and should not be translated
-#: ../lib/puppet/type/tidy.rb:298
+#: ../lib/puppet/type/tidy.rb:300
 msgid "Tidying %{count} files"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:373
+#: ../lib/puppet/type/tidy.rb:375
 msgid "File does not exist"
 msgstr ""
 
