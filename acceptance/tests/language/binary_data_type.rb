@@ -61,7 +61,7 @@ test_name 'C98346: Binary data type' do
         :assertions => { :assert_match => 'Notice: A:\\xF0\\x9F\\x91\\x92' } },
       { :type       => 'notify', :parameters => { :namevar => "B:${type($bin_file)}" }, :pre_code => '$bin_file=binary_file("empty/blah.txt")',
         :assertions => { :assert_match => 'Notice: B:Binary' } },
-      { :type       => 'file', :parameters => { :namevar => "$pup_tmp_filename", :content => "$relaxed" }, :pre_code => "$pup_tmp_filename = if $osfamily == 'windows' { '#{tmp_filename_win}' } else { '#{tmp_filename_else}' }",
+      { :type       => 'file', :parameters => { :namevar => "$pup_tmp_filename", :content => "$relaxed" }, :pre_code => "$pup_tmp_filename = if $facts['os']['family'] == 'windows' { '#{tmp_filename_win}' } else { '#{tmp_filename_else}' }",
         :assertions => { :assert_match => /#{base64_relaxed}/ } },
   ]
 

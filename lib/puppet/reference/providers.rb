@@ -13,11 +13,10 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
   ret = "Details about this host:\n\n"
 
   # Throw some facts in there, so we know where the report is from.
-  ["Ruby Version", "Puppet Version", "Operating System", "Operating System Release"].each do |label|
-    name = label.gsub(/\s+/, '')
-    value = Puppet.runtime[:facter].value(name)
-    ret << option(label, value)
-  end
+  ret << option('Ruby Version', Facter.value('ruby.version'))
+  ret << option('Puppet Version', Facter.value('puppetversion'))
+  ret << option('Operating System', Facter.value('os.name'))
+  ret << option('Operating System Release', Facter.value('os.release.full'))
   ret << "\n"
 
   count = 1

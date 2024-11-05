@@ -4,8 +4,8 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   commands :rcctl => '/usr/sbin/rcctl'
 
-  confine :operatingsystem => :openbsd
-  defaultfor :operatingsystem => :openbsd
+  confine 'os.name' => :openbsd
+  defaultfor 'os.name' => :openbsd
   has_feature :flaggable
 
   def startcmd
