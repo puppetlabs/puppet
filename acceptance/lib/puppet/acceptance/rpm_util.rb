@@ -20,6 +20,9 @@ module Puppet
         required_packages = ['createrepo', 'curl', 'rpm-build']
         required_packages.each do |pkg|
           pkg_installed = (on agent, "#{cmd} list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0
+          # We need a newer OpenSSH for the newer OpenSSL that curl installs
+          # RE-16677
+          on(agent, 'dnf upgrade -y openssh') if (agent.platform.start_with?('el-9') && pkg == 'curl')
           # package not present, so perform a new install
           if !pkg_installed
             on agent, "#{cmd} install -y #{pkg}"
