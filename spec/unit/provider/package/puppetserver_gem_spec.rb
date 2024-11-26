@@ -77,7 +77,13 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
 
       it "raises if given an invalid URI" do
         resource[:source] = 'h;ttp://rubygems.com'
-        expect { provider.install }.to raise_error(Puppet::Error, /Invalid source '': bad URI\(is not URI\?\)/)
+        # Older versions of URI don't have a space before the opening
+        # parenthesis in the error message, newer versions do
+        if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('3.0.0')
+          expect { provider.install }.to raise_error(Puppet::Error, /Invalid source '': bad URI\(is not URI\?\)/)
+        else
+          expect { provider.install }.to raise_error(Puppet::Error, /Invalid source '': bad URI \(is not URI\?\)/)
+        end
       end
     end
   end
