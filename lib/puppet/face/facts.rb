@@ -167,7 +167,15 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
       case result
       when Array, Hash
-        Puppet::Util::Json.dump(result, :pretty => true)
+        # JSON < 2.8.0 would pretty print empty arrays and hashes with newlines
+        # Maintain that behavior for our users for now
+        if result.is_a?(Array) && result.empty?
+          "[\n\n]"
+        elsif result.is_a?(Hash) && result.empty?
+          "{\n}"
+        else
+          Puppet::Util::Json.dump(result, :pretty => true)
+        end
       else # one of VALID_TYPES above
         result
       end

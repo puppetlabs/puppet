@@ -77,7 +77,7 @@ describe Puppet::Type.type(:package).provider(:puppetserver_gem) do
 
       it "raises if given an invalid URI" do
         resource[:source] = 'h;ttp://rubygems.com'
-        expect { provider.install }.to raise_error(Puppet::Error, /Invalid source '': bad URI\(is not URI\?\)/)
+        expect { provider.install }.to raise_error(Puppet::Error, /Invalid source '': bad URI \(is not URI\?\)/)
       end
     end
   end
