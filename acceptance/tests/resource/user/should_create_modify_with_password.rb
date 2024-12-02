@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# sssd on el-8-ppc has a bug where it causes `useradd` binary to fail
+# For now lets skip until `useradd testuser` works.
+skip_test 'el-8-ppc issue with `useradd`' if agents.any? {|agent| agent['platform'] =~ /el-8-ppc64le/ }
 test_name 'should create a user with password and modify the password' do
 
   tag 'audit:high',
