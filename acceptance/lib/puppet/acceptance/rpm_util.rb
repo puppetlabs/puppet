@@ -7,18 +7,19 @@ module Puppet
 
       def rpm_provider(agent)
         has_dnf = on(agent, 'which dnf', :acceptable_exit_codes => [0,1]).exit_code
-        has_dnf == 0 ? 'dnf' : 'yum'
+        if has_dnf == 0
+          'dnf'
+        else
+          'yum'
+        end
       end
 
       def setup(agent)
         @@setup_packages[agent] ||= {}
         cmd = rpm_provider(agent)
-        required_packages = %w[createrepo curl rpm-build]
+        required_packages = ['createrepo', 'curl', 'rpm-build']
         required_packages.each do |pkg|
           pkg_installed = (on agent, "#{cmd} list installed #{pkg}", :acceptable_exit_codes => (0..255)).exit_code == 0
-          # We need a newer OpenSSH for the newer OpenSSL that curl installs
-          # RE-16677
-          on(agent, 'dnf upgrade -y openssh') if (agent.platform.start_with?('el-9') && pkg == 'curl')
           # package not present, so perform a new install
           if !pkg_installed
             on agent, "#{cmd} install -y #{pkg}"
