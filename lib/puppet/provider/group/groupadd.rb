@@ -22,7 +22,9 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   has_feature :manages_local_users_and_groups if Puppet.features.libuser?
   has_feature :manages_members if Puppet.features.libuser? ||
                                   (Puppet.runtime[:facter].value('os.name') == "Fedora" &&
-                                  Puppet.runtime[:facter].value('os.release.major').to_i >= 40)
+                                  Puppet.runtime[:facter].value('os.release.major').to_i >= 40) ||
+                                  (Puppet.runtime[:facter].value('os.name') == "Ubuntu" &&
+                                  Puppet.runtime[:facter].value('os.release.major').to_f >= 24.04)
 
   # Libuser's modify command 'lgroupmod' requires '-M' flag for member additions.
   # 'groupmod' command requires the '-aU' flags for it.
