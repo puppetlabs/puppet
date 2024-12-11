@@ -8,7 +8,7 @@
 # Raketasks and such to set the version based on the output of `git describe`
 
 module Puppet
-  PUPPETVERSION = '99.99.99'
+  PUPPETVERSION = '8.11.0'
 
   ##
   # version is a public API method intended to always provide a fast and
