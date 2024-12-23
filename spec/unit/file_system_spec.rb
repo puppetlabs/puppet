@@ -403,16 +403,50 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.exist?(missing_file)).to be_falsey
     end
 
+    it "should return false for exist? on a non-existent file" do
+      expect(Puppet::FileSystem.exist?(missing_file)).to be_falsey
+    end
+
     it "should return true for exist? on a present directory" do
       expect(Puppet::FileSystem.exist?(dir)).to be_truthy
     end
 
-    it "should return false for exist? on a dangling symlink" do
-      symlink = tmpfile("somefile_link")
-      Puppet::FileSystem.symlink(missing_file, symlink)
+    it "should return true for exist_nofollow? on a present file" do
+      expect(Puppet::FileSystem.exist_nofollow?(file)).to be_truthy
+    end
 
-      expect(Puppet::FileSystem.exist?(missing_file)).to be_falsey
-      expect(Puppet::FileSystem.exist?(symlink)).to be_falsey
+    it "should return true for file? on a present file" do
+      expect(Puppet::FileSystem.file?(file)).to be_truthy
+    end
+
+    it "should return false for exist_nofollow? on a non-exist_nofollowent file" do
+      expect(Puppet::FileSystem.exist_nofollow?(missing_file)).to be_falsey
+    end
+
+    it "should return false for exist_nofollow? on a non-exist_nofollowent file" do
+      expect(Puppet::FileSystem.exist_nofollow?(missing_file)).to be_falsey
+    end
+
+    it "should return true for exist_nofollow? on a present directory" do
+      expect(Puppet::FileSystem.exist_nofollow?(dir)).to be_truthy
+    end
+
+    context "when symlink is dangling" do
+      let(:symlink) { tmpfile("somefile_link") }
+
+      before :each do
+        Puppet::FileSystem.symlink(missing_file, symlink)
+      end
+
+      it "should return false for exist?" do
+        expect(Puppet::FileSystem.exist?(missing_file)).to be_falsey
+        expect(Puppet::FileSystem.exist?(symlink)).to be_falsey
+      end
+
+      it "should return true for exist_nofollow?" do
+        expect(Puppet::FileSystem.exist?(missing_file)).to be_falsey
+        expect(Puppet::FileSystem.exist_nofollow?(symlink)).to be_truthy
+      end
     end
 
     it "should return true for exist? on valid symlinks" do
