@@ -396,6 +396,13 @@ Puppet::Type.newtype(:file) do
     end
     # if the resource is a link, make sure the target is created first
     req << self[:target] if self[:target]
+    # if the resource has a source set, make sure it is created first
+    self[:source]&.each do |src|
+      req << src.delete_prefix('file://') if src.start_with?('file://')
+      # the source gets translated to file:///D:/source instead of file://D:/source
+      # see https://github.com/puppetlabs/puppet/commit/5fea1dc64829e9c8178937764faccd51131b2a77
+      req << src.delete_prefix('file:///') if src.start_with?('file:///') && Puppet::Util::Platform.windows?
+    end
     req
   end
 
