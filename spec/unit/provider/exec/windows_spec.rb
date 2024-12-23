@@ -88,8 +88,8 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet::Util::Platf
   end
 
   describe "#validatecmd" do
-    it "should fail if the command isn't absolute and there is no path" do
-      expect { provider.validatecmd('foo') }.to raise_error(Puppet::Error, /'foo' is not qualified and no path was specified/)
+    it "should not fail if the command isn't absolute and there is no path" do
+      expect(provider.validatecmd('foo')).to eq(nil)
     end
 
     it "should not fail if the command is absolute and there is no path" do
