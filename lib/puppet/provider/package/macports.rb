@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
     Revisions are only used internally for ensuring the latest version/revision of a port.
   "
 
-  confine :operatingsystem => :darwin
+  confine 'os.name' => :darwin
 
   has_command(:port, "/opt/local/bin/port") do
     environment :HOME => "/opt/local"

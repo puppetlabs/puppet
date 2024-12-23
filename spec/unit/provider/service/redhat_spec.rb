@@ -15,23 +15,23 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     allow(@provider).to receive(:get).with(:hasstatus).and_return(false)
     allow(FileTest).to receive(:file?).with('/sbin/service').and_return(true)
     allow(FileTest).to receive(:executable?).with('/sbin/service').and_return(true)
-    allow(Facter).to receive(:value).with(:operatingsystem).and_return('CentOS')
-    allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+    allow(Facter).to receive(:value).with('os.name').and_return('CentOS')
+    allow(Facter).to receive(:value).with('os.family').and_return('RedHat')
   end
 
   osfamilies = [ 'RedHat' ]
 
   osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
-      expect(Facter).to receive(:value).with(:osfamily).and_return(osfamily)
+      expect(Facter).to receive(:value).with('os.family').and_return(osfamily)
       expect(provider_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on sles11" do
-    allow(Facter).to receive(:value).with(:osfamily).and_return(:suse)
-    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:suse)
-    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("11")
+    allow(Facter).to receive(:value).with('os.family').and_return(:suse)
+    allow(Facter).to receive(:value).with('os.name').and_return(:suse)
+    allow(Facter).to receive(:value).with('os.release.major').and_return("11")
     expect(provider_class.default?).to be_truthy
   end
 
@@ -81,7 +81,7 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
   context "when checking enabled? on Suse" do
     before :each do
-      expect(Facter).to receive(:value).with(:osfamily).and_return('Suse')
+      expect(Facter).to receive(:value).with('os.family').and_return('Suse')
     end
 
     it "should check for on" do

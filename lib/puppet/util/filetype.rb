@@ -215,7 +215,7 @@ class Puppet::Util::FileType
     # Remove a specific @path's cron tab.
     def remove
       cmd = "#{cmdbase} -r"
-      if %w{Darwin FreeBSD DragonFly}.include?(Puppet.runtime[:facter].value("operatingsystem"))
+      if %w{Darwin FreeBSD DragonFly}.include?(Puppet.runtime[:facter].value('os.name'))
         cmd = "/bin/echo yes | #{cmd}"
       end
 
@@ -244,7 +244,7 @@ class Puppet::Util::FileType
     # Only add the -u flag when the @path is different.  Fedora apparently
     # does not think I should be allowed to set the @path to my own user name
     def cmdbase
-      if @uid == Puppet::Util::SUIDManager.uid || Puppet.runtime[:facter].value(:operatingsystem) == "HP-UX"
+      if @uid == Puppet::Util::SUIDManager.uid || Puppet.runtime[:facter].value('os.name') == "HP-UX"
         return "crontab"
       else
         return "crontab -u #{@path}"

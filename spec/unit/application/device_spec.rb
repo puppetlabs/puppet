@@ -482,10 +482,10 @@ describe Puppet::Application::Device do
         end
 
         it "retrieves facts" do
-          indirection_fact_values = {"operatingsystem"=>"cisco_ios","clientcert"=>"3750"}
+          indirection_fact_values = {"os"=> {"name" => "cisco_ios"},"clientcert"=>"3750"}
           indirection_facts = Puppet::Node::Facts.new("nil", indirection_fact_values)
           expect(Puppet::Node::Facts.indirection).to receive(:find).with(nil, anything()).and_return(indirection_facts)
-          expect(device).to receive(:puts).with(/name.*3750.*\n.*values.*\n.*operatingsystem.*cisco_ios/)
+          expect(device).to receive(:puts).with(/name.*3750.*\n.*values.*\n.*os.*\n.*name.*cisco_ios/)
           expect { device.main }.to exit_with 0
         end
       end

@@ -8,7 +8,7 @@ confine :to, :platform => "aix" do |aix|
   version = on(aix, 'puppet --version').stdout
   version &&
     Gem::Version.new(version) > Gem::Version.new('6.4.0') &&
-    on(aix, 'facter operatingsystemrelease').stdout == '7.2'
+    on(aix, 'facter os.release.full').stdout == '7.2'
 end
 
 teardown do

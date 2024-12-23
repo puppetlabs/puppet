@@ -22,7 +22,7 @@ package_name = {'el'     => 'httpd',
 agents.each do |agent|
   platform = agent.platform.variant
   osname = on(agent, facter('os.name')).stdout.chomp
-  majrelease = on(agent, facter('operatingsystemmajrelease')).stdout.chomp.to_i
+  majrelease = on(agent, facter('os.release.major')).stdout.chomp.to_i
 
   init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
   symlink_systemd     = "/etc/systemd/system/multi-user.target.wants/#{package_name[platform]}.service"

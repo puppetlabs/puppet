@@ -17,8 +17,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # Yaourt is a common AUR helper which, if installed, we can use to query the AUR
   commands :yaourt => "/usr/bin/yaourt" if yaourt?
 
-  confine     :operatingsystem => [:archlinux, :manjarolinux]
-  defaultfor  :operatingsystem => [:archlinux, :manjarolinux]
+  confine     'os.name' => [:archlinux, :manjarolinux]
+  defaultfor  'os.name' => [:archlinux, :manjarolinux]
   has_feature :install_options
   has_feature :uninstall_options
   has_feature :upgradeable

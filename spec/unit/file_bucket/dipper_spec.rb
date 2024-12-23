@@ -104,8 +104,8 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
           # Diff without the context
           # Lines we need to see match 'Content' instead of trimming diff output filter out
           # surrounding noise...or hard code the check values
-          if Puppet.runtime[:facter].value(:osfamily) == 'Solaris' &&
-            Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value(:operatingsystemrelease), '11.0') >= 0
+          if Puppet.runtime[:facter].value('os.family') == 'Solaris' &&
+            Puppet::Util::Package.versioncmp(Puppet.runtime[:facter].value('os.release.full'), '11.0') >= 0
             # Use gdiff on Solaris
             diff12 = Puppet::Util::Execution.execute("gdiff -uN #{file1} #{file2}| grep Content")
             diff21 = Puppet::Util::Execution.execute("gdiff -uN #{file2} #{file1}| grep Content")

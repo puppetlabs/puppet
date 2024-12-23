@@ -370,9 +370,9 @@ describe Puppet::Type.type(:package) do
   it "should select dnf over yum for dnf supported fedora versions" do
     dnf = Puppet::Type.type(:package).provider(:dnf)
     yum = Puppet::Type.type(:package).provider(:yum)
-    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
-    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
-    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("22")
+    allow(Facter).to receive(:value).with('os.family').and_return(:redhat)
+    allow(Facter).to receive(:value).with('os.name').and_return(:fedora)
+    allow(Facter).to receive(:value).with('os.release.major').and_return("22")
 
     expect(dnf.specificity).to be > yum.specificity
   end
