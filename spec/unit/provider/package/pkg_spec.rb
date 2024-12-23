@@ -286,13 +286,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
 
           it "should install specific version(2)" do
             resource[:ensure] = '0.0.8'
-            expect(provider).to receive(:properties).and_return({:mark => :hold})
-            expect(Puppet::Util::Execution).to receive(:execute)
-              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
-              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
-            expect(Puppet::Util::Execution).to receive(:execute)
-              .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
-              .and_return(Puppet::Util::Execution::ProcessOutput.new('pkg://foo/dummy@0.0.7,5.11-0.151006:20131230T130000Z  installed -----', 0))
+	    expect(Puppet::Util::Execution).to receive(:execute)
+	      .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
+	      .and_return(Puppet::Util::Execution::ProcessOutput.new('pkg://foo/dummy@0.0.7,5.11-0.151006:20131230T13000  installed -----', 0)).exactly(2).times
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'update', *hash[:flags], 'dummy@0.0.8'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
@@ -301,11 +297,9 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
 
           it "should downgrade to specific version" do
             resource[:ensure] = '0.0.7'
-            expect(provider).to receive(:properties).and_return({:mark => :hold})
-            expect(provider).to receive(:query).with(no_args).and_return({:ensure => '0.0.8,5.11-0.151106:20131230T130000Z'})
-            expect(Puppet::Util::Execution).to receive(:execute)
-              .with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
-              .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
+	    expect(Puppet::Util::Execution).to receive(:execute)
+	      .with(['/bin/pkg', 'list', '-Hv', 'dummy'], {:failonfail => false, :combine => true})
+	      .and_return(Puppet::Util::Execution::ProcessOutput.new('pkg://foo/dummy@0.0.8,5.11-0.151106:20131230T130000Z  installed -----', 0)).exactly(2).times
             expect(Puppet::Util::Execution).to receive(:execute)
               .with(['/bin/pkg', 'update', *hash[:flags], 'dummy@0.0.7'], {:failonfail => false, :combine => true})
               .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
