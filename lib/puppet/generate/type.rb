@@ -46,7 +46,23 @@ module Puppet
         # @return [Boolean] Returns true if the output is up-to-date or false if not.
         def up_to_date?(outputdir)
           f = effective_output_path(outputdir)
-          Puppet::FileSystem::exist?(f) && (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(f)) <= 0
+          # Check the fast-path scenarios first.
+          unless Puppet::FileSystem::exist?(f)
+            Puppet.debug{"#{f} does not exist."}
+            return false
+          end
+          unless (Puppet::FileSystem::stat(@path) <=> Puppet::FileSystem::stat(f)) <= 0
+            Puppet.debug{"#{@path} is newer than #{f}"}
+            return false
+          end
+          # Check for updates to any module lib files.
+          Dir.glob(File.join(@base, "lib", "**", "*.rb")) do |lib|
+            unless (Puppet::FileSystem::stat(lib) <=> Puppet::FileSystem::stat(f)) <= 0
+              Puppet.debug{"#{lib} is newer than #{f}"}
+              return false
+            end
+          end
+          return true
         end
 
         # Gets the filename of the output file.
