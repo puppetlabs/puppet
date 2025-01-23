@@ -406,11 +406,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Always ignoreimport for agent. It really shouldn't even try to import,
     # but this is just a temporary band-aid.
     Puppet[:ignoreimport] = true
-
+begin
     Puppet::Transaction::Report.indirection.terminus_class = :rest
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
-
+rescue => e
+    puts "Error: #{e}"
     if Puppet[:catalog_cache_terminus]
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end

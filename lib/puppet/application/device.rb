@@ -228,9 +228,11 @@ Licensed under the Apache 2.0 License
     # indirected classes to work; in fingerprint mode we just need
     # access to the local files and we don't need a ca.
     Puppet::SSL::Host.ca_location = :remote
-
+begin
     Puppet::Transaction::Report.indirection.terminus_class = :rest
-
+rescue => e
+    puts "Error: #{e}"
+    
     if Puppet[:catalog_cache_terminus]
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus].intern
     end

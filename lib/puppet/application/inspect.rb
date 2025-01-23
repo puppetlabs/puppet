@@ -77,9 +77,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     raise "Inspect requires reporting to be enabled. Set report=true in puppet.conf to enable reporting." unless Puppet[:report]
-
+begin
     @report = Puppet::Transaction::Report.new("inspect")
-
+rescue => e
+    puts "Error: #{e}"
     Puppet::Util::Log.newdestination(@report)
     Puppet::Util::Log.newdestination(:console) unless options[:setdest]
 
@@ -89,8 +90,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     set_log_level
-
+begin
     Puppet::Transaction::Report.indirection.terminus_class = :rest
+    rescue => e
+    puts "Error: #{e}"
+
     Puppet::Resource::Catalog.indirection.terminus_class = :yaml
   end
 

@@ -90,7 +90,10 @@ Puppet::Face.define(:node, '0.0.1') do
 
   # clean node reports for +host+
   def clean_reports(node)
+    begin
     Puppet::Transaction::Report.indirection.destroy(node)
+    rescue => e
+    puts "Error: #{e}"
     Puppet.info "#{node}'s reports removed"
   end
 
