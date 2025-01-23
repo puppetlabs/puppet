@@ -1,9 +1,9 @@
 source ENV['GEM_SOURCE'] || "https://rubygems.org"
 
 def location_for(place, fake_version = nil)
-  if place =~ /^(git[:@][^#]*)#(.*)/
+  if place.is_a?(String) && place =~ /^(git[:@][^#]*)#(.*)/
     [fake_version, { :git => $1, :branch => $2, :require => false }].compact
-  elsif place =~ /^file:\/\/(.*)/
+  elsif place.is_a?(String) && place =~ /^file:\/\/(.*)/
     ['>= 0', { :path => File.expand_path($1), :require => false }]
   else
     [place, { :require => false }]
@@ -15,7 +15,7 @@ platforms :ruby do
   gem 'pry', :group => :development
   gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
-  gem "racc", "1.4.9", :group => :development
+  gem "racc", "1.8.1", :group => :development
 
   # To enable the augeas feature, use this gem.
   # Note that it is a native gem, so the augeas headers/libs
@@ -59,7 +59,7 @@ end
 
 group(:extra) do
   gem "rack", "~> 1.4", :require => false
-  gem "activerecord", '~> 3.2', :require => false
+  gem "activerecord", '~> 6.0', :require => false
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
@@ -95,7 +95,7 @@ data['gem_platform_dependencies'].each_pair do |gem_platform, info|
   end
 end
 
-if File.exists? "#{__FILE__}.local"
+if File.exist? "#{__FILE__}.local"
   eval(File.read("#{__FILE__}.local"), binding)
 end
 
