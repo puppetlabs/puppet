@@ -37,6 +37,7 @@ class Puppet::Transaction
     @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
     rescue => e
     puts "Error: #{e}"
+    end
     @prioritizer = prioritizer
 
     @report.add_times(:config_retrieval, @catalog.retrieval_duration || 0)
@@ -46,7 +47,6 @@ class Puppet::Transaction
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
 
     @prefetched_providers = Hash.new { |h,k| h[k] = {} }
-    end
   end
 
   # Invoke the pre_run_check hook in every resource in the catalog.
