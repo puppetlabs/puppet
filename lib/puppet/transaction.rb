@@ -33,9 +33,9 @@ class Puppet::Transaction
 
   def initialize(catalog, report, prioritizer)
     @catalog = catalog
-begin
+    begin
     @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
-rescue => e
+    rescue => e
     puts "Error: #{e}"
     @prioritizer = prioritizer
 
@@ -46,6 +46,7 @@ rescue => e
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
 
     @prefetched_providers = Hash.new { |h,k| h[k] = {} }
+    end
   end
 
   # Invoke the pre_run_check hook in every resource in the catalog.
