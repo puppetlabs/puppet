@@ -3,6 +3,7 @@ require 'puppet/version'
 # Also see the new Vendor support - towards the end
 #
 require 'facter'
+require 'puppet/FileTest'
 require 'puppet/error'
 require 'puppet/util'
 require 'puppet/util/autoload'
@@ -270,3 +271,4 @@ require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
+require 'file_test_custom'
