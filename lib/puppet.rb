@@ -3,7 +3,8 @@ require 'puppet/version'
 # Also see the new Vendor support - towards the end
 #
 require 'facter'
-require 'puppet/FileTest'
+require 'file_test'
+require 'file'
 require 'puppet/error'
 require 'puppet/util'
 require 'puppet/util/autoload'

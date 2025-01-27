@@ -1,4 +1,4 @@
-module Puppet::FileTest
+module FileTest
   class << self
     alias_method :exists?, :exist?
   end
