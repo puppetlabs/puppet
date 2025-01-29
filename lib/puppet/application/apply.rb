@@ -268,11 +268,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       $stderr.puts "Exiting"
       exit(1)
     end
-begin
+
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
-rescue => e
-    puts "Error: #{e}"
+
     set_log_level
 
     if Puppet[:profile]

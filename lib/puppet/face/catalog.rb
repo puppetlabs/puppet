@@ -63,14 +63,13 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     when_invoked do |options|
       catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname]) or raise "Could not find catalog for #{Puppet[:certname]}"
       catalog = catalog.to_ral
-begin
+
       report = Puppet::Transaction::Report.new("apply")
       report.configuration_version = catalog.version
       report.environment = Puppet[:environment]
 
       Puppet::Util::Log.newdestination(report)
-rescue => e
-    puts "Error: #{e}"
+
       begin
         benchmark(:notice, "Finished catalog run") do
           catalog.apply(:report => report)

@@ -141,15 +141,12 @@ class Puppet::Configurer
     # environment and transaction_uuid very early, this is to ensure
     # they are sent regardless of any catalog compilation failures or
     # exceptions.
-    begin
     options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid)
     report = options[:report]
     init_storage
 
     Puppet::Util::Log.newdestination(report)
-  rescue => e
-    puts "Error: #{e}"
-    
+
     begin
       unless Puppet[:node_name_fact].empty?
         query_options = get_facts(options)
