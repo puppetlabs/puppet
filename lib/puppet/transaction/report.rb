@@ -97,6 +97,11 @@ class Puppet::Transaction::Report
   #
   attr_reader :report_format
 
+  #monkey patch for fix =~ error with ruby 3.3.4
+  def =~(other)
+    false  # Avoids NoMethodError
+  end
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)

@@ -33,11 +33,9 @@ class Puppet::Transaction
 
   def initialize(catalog, report, prioritizer)
     @catalog = catalog
-    begin
+
     @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
-    rescue => e
-    puts "Error: #{e}"
-    end
+
     @prioritizer = prioritizer
 
     @report.add_times(:config_retrieval, @catalog.retrieval_duration || 0)

@@ -1,100 +1,116 @@
-# frozen_string_literal: true
+# Copyright (C) 2009 Thomas Bellman
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THOMAS BELLMAN BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+# Except as contained in this notice, the name of Thomas Bellman shall
+# not be used in advertising or otherwise to promote the sale, use or
+# other dealings in this Software without prior written authorization
+# from Thomas Bellman.
 
-# Performs regexp replacement on a string or array of strings.
-Puppet::Functions.create_function(:regsubst) do
-  # @param target [String]
-  #      The string or array of strings to operate on.  If an array, the replacement will be
-  #      performed on each of the elements in the array, and the return value will be an array.
-  # @param pattern [String, Regexp, Type[Regexp]]
-  #      The regular expression matching the target string.  If you want it anchored at the start
-  #      and or end of the string, you must do that with ^ and $ yourself.
-  # @param replacement [String, Hash[String, String]]
-  #      Replacement string. Can contain backreferences to what was matched using \\0 (whole match),
-  #      \\1 (first set of parentheses), and so on.
-  #      If the second argument is a Hash, and the matched text is one of its keys, the corresponding value is the replacement string.
-  # @param flags [Optional[Pattern[/^[GEIM]*$/]], Pattern[/^G?$/]]
-  #      Optional. String of single letter flags for how the regexp is interpreted (E, I, and M cannot be used
-  #      if pattern is a precompiled regexp):
-  #        - *E*         Extended regexps
-  #        - *I*         Ignore case in regexps
-  #        - *M*         Multiline regexps
-  #        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
-  # @param encoding [Enum['N','E','S','U']]
-  #      Deprecated and ignored parameter, included only for compatibility.
-  # @return [Array[String], String] The result of the substitution. Result type is the same as for the target parameter.
-  # @deprecated
-  #   This method has the optional encoding parameter, which is ignored.
-  # @example Get the third octet from the node's IP address:
-  #   ```puppet
-  #   $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
-  #   ```
-  dispatch :regsubst_string do
-    param          'Variant[Array[String],String]',       :target
-    param          'String',                              :pattern
-    param          'Variant[String,Hash[String,String]]', :replacement
-    optional_param 'Optional[Pattern[/^[GEIM]*$/]]',      :flags
-    optional_param "Enum['N','E','S','U']",               :encoding
+Puppet::Parser::Functions::newfunction(
+  :regsubst, :type => :rvalue,
+  :arity => -4,
+
+  :doc => "
+Perform regexp replacement on a string or array of strings.
+
+* *Parameters* (in order):
+    * _target_  The string or array of strings to operate on.  If an array, the replacement will be performed on each of the elements in the array, and the return value will be an array.
+    * _regexp_  The regular expression matching the target string.  If you want it anchored at the start and or end of the string, you must do that with ^ and $ yourself.
+    * _replacement_  Replacement string. Can contain backreferences to what was matched using \\0 (whole match), \\1 (first set of parentheses), and so on.
+    * _flags_  Optional. String of single letter flags for how the regexp is interpreted:
+        - *E*         Extended regexps
+        - *I*         Ignore case in regexps
+        - *M*         Multiline regexps
+        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
+    * _encoding_  Optional.  How to handle multibyte characters.  A single-character string with the following values:
+        - *N*         None
+        - *E*         EUC
+        - *S*         SJIS
+        - *U*         UTF-8
+
+* *Examples*
+
+Get the third octet from the node's IP address:
+
+    $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
+
+Put angle brackets around each octet in the node's IP address:
+
+    $x = regsubst($ipaddress, '([0-9]+)', '<\\1>', 'G')
+") do |args|
+  unless args.length.between?(3, 5)
+
+    raise(
+      ArgumentError,
+
+        "regsubst(): got #{args.length} arguments, expected 3 to 5")
   end
+  target, regexp, replacement, flags, lang = args
+  reflags = 0
+  operation = :sub
+  if flags == nil
+    flags = []
+  elsif flags.respond_to?(:split)
+    flags = flags.split('')
+  else
 
-  # @param target [String, Array[String]]
-  #      The string or array of strings to operate on.  If an array, the replacement will be
-  #      performed on each of the elements in the array, and the return value will be an array.
-  # @param pattern [Regexp, Type[Regexp]]
-  #      The regular expression matching the target string.  If you want it anchored at the start
-  #      and or end of the string, you must do that with ^ and $ yourself.
-  # @param replacement [String, Hash[String, String]]
-  #      Replacement string. Can contain backreferences to what was matched using \\0 (whole match),
-  #      \\1 (first set of parentheses), and so on.
-  #      If the second argument is a Hash, and the matched text is one of its keys, the corresponding value is the replacement string.
-  # @param flags [Optional[Pattern[/^[GEIM]*$/]], Pattern[/^G?$/]]
-  #      Optional. String of single letter flags for how the regexp is interpreted (E, I, and M cannot be used
-  #      if pattern is a precompiled regexp):
-  #        - *E*         Extended regexps
-  #        - *I*         Ignore case in regexps
-  #        - *M*         Multiline regexps
-  #        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
-  # @return [Array[String], String] The result of the substitution. Result type is the same as for the target parameter.
-  # @example Put angle brackets around each octet in the node's IP address:
-  #   ```puppet
-  #   $x = regsubst($ipaddress, /([0-9]+)/, '<\\1>', 'G')
-  #   ```
-  dispatch :regsubst_regexp do
-    param          'Variant[Array[String],String]',       :target
-    param          'Variant[Regexp,Type[Regexp]]',        :pattern
-    param          'Variant[String,Hash[String,String]]', :replacement
-    optional_param 'Pattern[/^G?$/]',                     :flags
+    raise(
+      Puppet::ParseError,
+
+        "regsubst(): bad flags parameter #{flags.class}:`#{flags}'")
   end
-
-  def regsubst_string(target, pattern, replacement, flags = nil, encoding = nil)
-    if encoding
-      Puppet.warn_once(
-        'deprecations', 'regsubst_function_encoding',
-        _("The regsubst() function's encoding argument has been ignored since Ruby 1.9 and will be removed in a future release")
-      )
+  flags.each do |f|
+    case f
+    when 'G' then operation = :gsub
+    when 'E' then reflags |= Regexp::EXTENDED
+    when 'I' then reflags |= Regexp::IGNORECASE
+    when 'M' then reflags |= Regexp::MULTILINE
+    else raise(Puppet::ParseError, "regsubst(): bad flag `#{f}'")
     end
-
-    re_flags = 0
-    operation = :sub
-    unless flags.nil?
-      flags.split(//).each do |f|
-        case f
-        when 'G' then operation = :gsub
-        when 'E' then re_flags |= Regexp::EXTENDED
-        when 'I' then re_flags |= Regexp::IGNORECASE
-        when 'M' then re_flags |= Regexp::MULTILINE
-        end
-      end
-    end
-    inner_regsubst(target, Regexp.compile(pattern, re_flags), replacement, operation)
   end
+  begin
+    re = Regexp.compile(regexp, reflags, lang)
+  rescue RegexpError, TypeError
 
-  def regsubst_regexp(target, pattern, replacement, flags = nil)
-    pattern = pattern.pattern || '' if pattern.is_a?(Puppet::Pops::Types::PRegexpType)
-    inner_regsubst(target, pattern, replacement, flags == 'G' ? :gsub : :sub)
-  end
+    raise(
+      Puppet::ParseError,
 
-  def inner_regsubst(target, re, replacement, op)
-    target.respond_to?(op) ? target.send(op, re, replacement) : target.collect { |e| e.send(op, re, replacement) }
+        "regsubst(): Bad regular expression `#{regexp}'")
   end
-  private :inner_regsubst
+  if target.respond_to?(operation)
+    # String parameter -> string result
+    result = target.send(operation, re, replacement)
+  elsif target.respond_to?(:collect) and
+    target.respond_to?(:all?) and
+    target.all? { |e| e.respond_to?(operation) }
+    # Array parameter -> array result
+    result = target.collect { |e|
+      e.send(operation, re, replacement)
+    }
+  else
+
+    raise(
+      Puppet::ParseError,
+
+        "regsubst(): bad target #{target.class}:`#{target}'")
+  end
+  return result
 end
