@@ -16,6 +16,9 @@ require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
 
+Fixnum = Integer unless defined?(Fixnum)
+Bignum = Integer unless defined?(Bignum)
+
 #------------------------------------------------------------
 # the top-level module
 #
