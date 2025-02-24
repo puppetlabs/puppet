@@ -59,13 +59,13 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
       Puppet.debug "Reading the contents of the rc conf files"
 
-      if File.exists?(rcconf_local())
+      if File.exist?(rcconf_local())
         rcconf_local_contents = File.readlines(rcconf_local())
       else
         rcconf_local_contents = []
       end
 
-      if File.exists?(rcconf())
+      if File.exist?(rcconf())
         rcconf_contents = File.readlines(rcconf())
       else
         rcconf_contents = []
@@ -137,7 +137,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   # @api private
   def read_rcconf_local_text()
-    if File.exists?(self.class.rcconf_local())
+    if File.exist?(self.class.rcconf_local())
       File.read(self.class.rcconf_local())
     else
       []
@@ -146,7 +146,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   # @api private
   def load_rcconf_local_array
-    if File.exists?(self.class.rcconf_local())
+    if File.exist?(self.class.rcconf_local())
       File.readlines(self.class.rcconf_local()).map {|l|
         l.chomp!
       }

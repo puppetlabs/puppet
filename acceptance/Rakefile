@@ -39,7 +39,7 @@ module HarnessOptions
 
     def get_options(file_path)
       puts file_path
-      if File.exists? file_path
+      if File.exist? file_path
         options = eval(File.read(file_path), binding)
       else
         puts "No options file found at #{File.expand_path(file_path)}"
@@ -178,7 +178,7 @@ def list_preserved_configurations(secs_ago = ONE_DAY_IN_SECS)
   Dir.glob('log/*_*').each do |dir|
     preserved_config_path = "#{dir}/preserved_config.yaml"
     yesterday = Time.now - secs_ago.to_i
-    if preserved_config = File.exists?(preserved_config_path)
+    if preserved_config = File.exist?(preserved_config_path)
       directory = File.new(dir)
       if directory.ctime > yesterday
         hosts = []

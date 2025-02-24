@@ -28,7 +28,7 @@ module Parallel
     #
     class Runner
       def initialize(specs_file)
-        abort "error: spec list file '#{specs_file}' does not exist." unless File.exists? specs_file
+        abort "error: spec list file '#{specs_file}' does not exist." unless File.exist? specs_file
         @options = ['-fParallel::RSpec::Formatter']
         File.readlines(specs_file).each { |line| @options << line.chomp }
       end

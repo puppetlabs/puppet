@@ -61,7 +61,7 @@ class TemplateContainerTest < Test::Unit::TestCase
   def test_with_model
     tc = RGen::TemplateLanguage::DirectoryTemplateContainer.new([MyMM, CCodeMM], OUTPUT_DIR)
     tc.load(TEMPLATES_DIR)
-    File.delete(OUTPUT_DIR+"/testout.txt") if File.exists? OUTPUT_DIR+"/testout.txt"
+    File.delete(OUTPUT_DIR+"/testout.txt") if File.exist? OUTPUT_DIR+"/testout.txt"
     tc.expand('root::Root', :for => TEST_MODEL, :indent => 1)
     result = expected = ""
     File.open(OUTPUT_DIR+"/testout.txt") {|f| result = f.read}
