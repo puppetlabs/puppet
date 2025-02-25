@@ -16,7 +16,7 @@ module Puppet::FileServing::TerminusSelector
     when "file"
       :file
     when "puppet"
-      if request.server
+      if request.server && request.server != ""
         :rest
       else
         Puppet[:default_file_terminus]
