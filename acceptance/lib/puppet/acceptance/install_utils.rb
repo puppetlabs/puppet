@@ -57,7 +57,7 @@ module Puppet
         FileUtils.makedirs(dst_dir)
         src = "#{base_url}/#{file_name}"
         dst = File.join(dst_dir, file_name)
-        if File.exist?(dst)
+        if File.exists?(dst)
           logger.notify "Already fetched #{dst}"
         else
           logger.notify "Fetching: #{src}"

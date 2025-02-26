@@ -16,7 +16,11 @@ module Puppet::FileServing::TerminusSelector
     when "file"
       :file
     when "puppet"
+<<<<<<< Updated upstream
       if request.server && request.server != ""
+=======
+      if request.server && !request.server.empty?
+>>>>>>> Stashed changes
         :rest
       else
         Puppet[:default_file_terminus]

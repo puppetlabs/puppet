@@ -43,7 +43,7 @@ class WindowsDaemon < Win32::Daemon
     #
     # Example code to register an event source;
     # eventlogdll =  File.expand_path(File.join(basedir, 'puppet', 'ext', 'windows', 'eventlog', 'puppetres.dll'))
-    # if (File.exist?(eventlogdll))
+    # if (File.exists?(eventlogdll))
     #   Win32::EventLog.add_event_source(
     #      'source' => "Application",
     #      'key_name' => "Puppet Agent",
@@ -54,7 +54,7 @@ class WindowsDaemon < Win32::Daemon
     # end
 
     puppet = File.join(basedir, 'bin', 'puppet.bat')
-    unless File.exist?(puppet)
+    unless File.exists?(puppet)
       log_err("File not found: '#{puppet}'")
       return
     end
