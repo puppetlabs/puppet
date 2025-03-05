@@ -481,12 +481,12 @@ module Util
         d = Dir.new('/proc/self/fd')
         ignore_fds = ['.', '..', d.fileno.to_s]
         d.each_child do |f|
-          if !ignore_fds.include?(f) && f.to_i >= 3
-            begin
-              IO.new(f.to_i).close
-            rescue
-              nil
-            end
+          next if ignore_fds.include?(f) || f.to_i < 3
+
+          begin
+            IO.new(f.to_i).close
+          rescue
+            nil
           end
         end
       rescue Errno::ENOENT, Errno::ENOTDIR # /proc/self/fd not found, /proc/self not a dir
