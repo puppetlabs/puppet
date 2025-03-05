@@ -73,7 +73,7 @@ Puppet::Type.newtype(:cron) do
     # in string form to actual integers, and returns the value if it's
     # an integer or false if it's just a normal string.
     def numfix(num)
-      if num =~ /^\d+$/
+      if num.to_s =~ /^\d+$/
         return num.to_i
       elsif num.is_a?(Integer)
         return num
@@ -162,17 +162,17 @@ Puppet::Type.newtype(:cron) do
       end
 
       # Allow the */2 syntax
-      if value =~ /^\*\/[0-9]+$/
+      if value.to_s =~ /^\*\/[0-9]+$/
         return value
       end
 
       # Allow ranges
-      if value =~ /^[0-9]+-[0-9]+$/
+      if value.to_s =~ /^[0-9]+-[0-9]+$/
         return value
       end
 
       # Allow ranges + */2
-      if value =~ /^[0-9]+-[0-9]+\/[0-9]+$/
+      if value.to_s =~ /^[0-9]+-[0-9]+\/[0-9]+$/
         return value
       end
 
