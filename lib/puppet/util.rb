@@ -478,8 +478,10 @@ module Util
       $stderr = STDERR
 
       begin
-        Dir.foreach('/proc/self/fd') do |f|
-          if f != '.' && f != '..' && f.to_i >= 3
+        d = Dir.new('/proc/self/fd')
+        ignore_fds = ['.', '..', d.fileno.to_s]
+        d.each_child do |f|
+          if !ignore_fds.include?(f) && f.to_i >= 3
             begin
               IO.new(f.to_i).close
             rescue
