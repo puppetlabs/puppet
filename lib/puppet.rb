@@ -3,6 +3,8 @@ require 'puppet/version'
 # Also see the new Vendor support - towards the end
 #
 require 'facter'
+require 'file_test'
+require 'file'
 require 'puppet/error'
 require 'puppet/util'
 require 'puppet/util/autoload'
@@ -13,6 +15,9 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
+
+Fixnum = Integer unless defined?(Fixnum)
+Bignum = Integer unless defined?(Bignum)
 
 #------------------------------------------------------------
 # the top-level module
