@@ -479,9 +479,9 @@ module Util
 
       begin
         Dir.foreach('/proc/self/fd') do |f|
-          if f != '.' && f != '..' && f.to_i >= 3
+          if %{^\d+$}.match?(f) && f.to_i >= 3
             begin
-              IO.new(f).close
+              IO.new(f.to_i).close
             rescue
               nil
             end
