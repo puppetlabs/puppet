@@ -127,7 +127,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     @normalized_logon_account ||= normalize_logonaccount
     @resource[:logonaccount] = @normalized_logon_account
 
-    insync = @resource[:logonaccount] == current
+    insync = @resource[:logonaccount].casecmp(current) == 0
     self.logonpassword = @resource[:logonpassword] if insync
     insync
   end
