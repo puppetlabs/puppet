@@ -26,7 +26,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     basedir = File.dirname(file)
 
     # This is quite likely a bad idea, since we're not managing ownership or modes.
-    Dir.mkdir(basedir) unless Puppet::FileSystem.exist?(basedir)
+    touch_dir(basedir) unless Puppet::FileSystem.exist?(basedir)
 
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
@@ -58,6 +58,15 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
   end
 
   protected
+
+  def touch_dir(dir)
+    Dir.mkdir(dir)
+
+    user = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : nil
+    group = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : nil
+    Puppet.debug("Fixing perms for #{user}:#{group} on #{dir}")
+    FileUtils.chown(user, group, dir) if user || group
+  end
 
   def load_file(file)
     Puppet::Util::Yaml.safe_load_file(file, [model, Symbol])

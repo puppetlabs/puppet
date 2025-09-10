@@ -161,8 +161,8 @@ class Puppet::FileSystem::FileImpl
   def replace_file(path, mode = nil)
     begin
       stat = lstat(path)
-      gid = stat.gid
-      uid = stat.uid
+      gid = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : stat.gid
+      uid = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : stat.uid
       mode ||= stat.mode & 0o7777
     rescue Errno::ENOENT
       mode ||= 0o640
