@@ -6,6 +6,7 @@ require_relative '../../puppet/file_system'
 module Puppet::GettextConfig
   LOCAL_PATH = File.absolute_path('../../../locales', File.dirname(__FILE__))
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
+  RUBY_CONFIG_PATH = RbConfig::CONFIG["localedir"]
   WINDOWS_PATH = File.absolute_path('../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
   # This is the only domain name that won't be a symbol, making it unique from environments.
@@ -194,8 +195,8 @@ module Puppet::GettextConfig
       LOCAL_PATH
     elsif Puppet::Util::Platform.windows? && Puppet::FileSystem.exist?(WINDOWS_PATH)
       WINDOWS_PATH
-    elsif !Puppet::Util::Platform.windows? && Puppet::FileSystem.exist?(POSIX_PATH)
-      POSIX_PATH
+    elsif !Puppet::Util::Platform.windows?
+      [POSIX_PATH, RUBY_CONFIG_PATH].find {|path| Puppet::FileSystem.exist?(path) }
     else
       nil
     end
@@ -206,7 +207,7 @@ module Puppet::GettextConfig
   # @param [String] conf_path the path to the gettext config file
   # @return [Symbol] :mo if in a package structure, :po otherwise
   def self.translation_mode(conf_path)
-    if WINDOWS_PATH == conf_path || POSIX_PATH == conf_path
+    if WINDOWS_PATH == conf_path || POSIX_PATH == conf_path || RUBY_CONFIG_PATH == conf_path
       :mo
     else
       :po
