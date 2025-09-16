@@ -91,7 +91,7 @@ module Puppet
       end
 
       def retrieve
-        if provider.exists?
+        if provider&.exists?
           if provider.respond_to?(:is_role?) and provider.is_role?
             :role
           else
@@ -511,7 +511,7 @@ module Puppet
     # @return [Boolean] if the user exists on the system
     # @api private
     def exists?
-      provider.exists?
+      provider&.exists?
     end
 
     newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_roles) do
