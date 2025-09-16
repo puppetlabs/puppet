@@ -14,6 +14,8 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
       else
         :sun
       end
+    when 'ALT'
+      :aptrpm
     when 'Ubuntu'
       :apt
     when 'Debian'
