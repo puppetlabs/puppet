@@ -12,6 +12,7 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppetlabs/puppet when run as root" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/etc/puppetlabs/puppet')
         as_root { expect(@run_mode.conf_dir).to eq(File.expand_path('/etc/puppetlabs/puppet')) }
       end
 
@@ -32,6 +33,7 @@ describe Puppet::Util::RunMode do
 
     describe "#code_dir" do
       it "has codedir /etc/puppetlabs/code when run as root" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/etc/puppetlabs/code')
         as_root { expect(@run_mode.code_dir).to eq(File.expand_path('/etc/puppetlabs/code')) }
       end
 
@@ -52,6 +54,7 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir /opt/puppetlabs/puppet/cache when run as root" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/cache')
         as_root { expect(@run_mode.var_dir).to eq(File.expand_path('/opt/puppetlabs/puppet/cache')) }
       end
 
@@ -62,6 +65,7 @@ describe Puppet::Util::RunMode do
 
     describe "#public_dir" do
       it "has publicdir /opt/puppetlabs/puppet/public when run as root" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/public')
         as_root { expect(@run_mode.public_dir).to eq(File.expand_path('/opt/puppetlabs/puppet/public')) }
       end
 
@@ -73,6 +77,7 @@ describe Puppet::Util::RunMode do
     describe "#log_dir" do
       describe "when run as root" do
         it "has logdir /var/log/puppetlabs/puppet" do
+          allow(@run_mode).to receive(:find_or_first).and_return('/var/log/puppetlabs/puppet')
           as_root { expect(@run_mode.log_dir).to eq(File.expand_path('/var/log/puppetlabs/puppet')) }
         end
       end
@@ -87,6 +92,7 @@ describe Puppet::Util::RunMode do
     describe "#run_dir" do
       describe "when run as root" do
         it "has rundir /var/run/puppetlabs" do
+          allow(@run_mode).to receive(:find_or_first).and_return('/var/run/puppetlabs')
           as_root { expect(@run_mode.run_dir).to eq(File.expand_path('/var/run/puppetlabs')) }
         end
       end
@@ -99,19 +105,31 @@ describe Puppet::Util::RunMode do
     end
 
     describe "#pkg_config_path" do
-      it { expect(@run_mode.pkg_config_path).to eq('/opt/puppetlabs/puppet/lib/pkgconfig') }
+      it "has pkg config path /opt/puppetlabs/puppet/lib/pkgconfig" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/lib/pkgconfig')
+        expect(@run_mode.pkg_config_path).to eq('/opt/puppetlabs/puppet/lib/pkgconfig')
+      end
     end
 
     describe "#gem_cmd" do
-      it { expect(@run_mode.gem_cmd).to eq('/opt/puppetlabs/puppet/bin/gem') }
+      it "has gem cmd /opt/puppetlabs/puppet/bin/gem" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/bin/gem')
+        expect(@run_mode.gem_cmd).to eq('/opt/puppetlabs/puppet/bin/gem')
+      end
     end
 
     describe "#common_module_dir" do
-      it { expect(@run_mode.common_module_dir).to eq('/opt/puppetlabs/puppet/modules') }
+      it "has common module dir /opt/puppetlabs/puppet/modules" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/modules')
+        expect(@run_mode.common_module_dir).to eq('/opt/puppetlabs/puppet/modules')
+      end
     end
 
     describe "#vendor_module_dir" do
-      it { expect(@run_mode.vendor_module_dir).to eq('/opt/puppetlabs/puppet/vendor_modules') }
+      it "has vendor module dir /opt/puppetlabs/puppet/vendor_modules" do
+        allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/vendor_modules')
+        expect(@run_mode.vendor_module_dir).to eq('/opt/puppetlabs/puppet/vendor_modules')
+      end
     end
   end
 

@@ -46,6 +46,9 @@ module Puppet
 
       private
 
+      def find_or_first(*dirs)
+        dirs.find {|d| File.directory?(d) } || dirs.first
+      end
       ##
       # select the system or the user directory depending on the context of
       # this process.  The most common use is determining filesystem path
@@ -65,43 +68,43 @@ module Puppet
 
     class UnixRunMode < RunMode
       def conf_dir
-        which_dir("/etc/puppetlabs/puppet", "~/.puppetlabs/etc/puppet")
+        which_dir(find_or_first("/etc/puppetlabs/puppet", "/etc/puppet"), "~/.puppetlabs/etc/puppet")
       end
 
       def code_dir
-        which_dir("/etc/puppetlabs/code", "~/.puppetlabs/etc/code")
+        which_dir(find_or_first("/etc/puppetlabs/code", "/etc/puppet/code"), "~/.puppetlabs/etc/code")
       end
 
       def var_dir
-        which_dir("/opt/puppetlabs/puppet/cache", "~/.puppetlabs/opt/puppet/cache")
+        which_dir(find_or_first("/opt/puppetlabs/puppet/cache", "/var/cache/puppet"), "~/.puppetlabs/opt/puppet/cache")
       end
 
       def public_dir
-        which_dir("/opt/puppetlabs/puppet/public", "~/.puppetlabs/opt/puppet/public")
+        which_dir(find_or_first("/opt/puppetlabs/puppet/public", "/usr/share/puppet/public"), "~/.puppetlabs/opt/puppet/public")
       end
 
       def run_dir
-        which_dir("/var/run/puppetlabs", "~/.puppetlabs/var/run")
+        which_dir(find_or_first("/var/run/puppetlabs", "/run/puppet"), "~/.puppetlabs/var/run")
       end
 
       def log_dir
-        which_dir("/var/log/puppetlabs/puppet", "~/.puppetlabs/var/log")
+        which_dir(find_or_first("/var/log/puppetlabs/puppet", "/var/log/puppet"), "~/.puppetlabs/var/log")
       end
 
       def pkg_config_path
-        '/opt/puppetlabs/puppet/lib/pkgconfig'
+        find_or_first('/opt/puppetlabs/puppet/lib/pkgconfig', "/usr/share/pkgconfig", "/usr/lib64/pkgconfig", "/usr/lib/pkgconfig")
       end
 
       def gem_cmd
-        '/opt/puppetlabs/puppet/bin/gem'
+        find_or_first('/opt/puppetlabs/puppet/bin/gem', "/usr/bin/gem")
       end
 
       def common_module_dir
-        '/opt/puppetlabs/puppet/modules'
+        find_or_first('/opt/puppetlabs/puppet/modules', "/usr/local/lib/puppet-modules")
       end
 
       def vendor_module_dir
-        '/opt/puppetlabs/puppet/vendor_modules'
+        find_or_first('/opt/puppetlabs/puppet/vendor_modules', "/usr/lib/puppet-modules")
       end
     end
 

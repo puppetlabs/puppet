@@ -120,8 +120,12 @@ describe "Defaults" do
 
   describe 'vendormoduledir' do
     it 'includes the default vendormoduledir', :unless => Puppet::Util::Platform.windows? do
+      @run_mode = Puppet::Util::UnixRunMode.new('fake')
+      allow(Puppet).to receive(:run_mode) { @run_mode }
+      allow(@run_mode).to receive(:find_or_first).and_return('/opt/puppetlabs/puppet/vendor_modules')
+
       expect(
-        Puppet[:vendormoduledir]
+        Puppet.default_vendormoduledir
       ).to eq('/opt/puppetlabs/puppet/vendor_modules')
     end
 
