@@ -12,6 +12,8 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
   commands :aptcache => "apt-cache"
   commands :rpm => "rpm"
 
+  defaultfor :osfamily => "Altlinux"
+
   # Mixing confine statements, control expressions, and exception handling
   # confuses Rubocop's Layout cops, so we disable them entirely.
   # rubocop:disable Layout
