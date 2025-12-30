@@ -58,7 +58,7 @@ group(:development) do
 end
 
 group(:extra) do
-  gem "rack", "~> 1.4", :require => false
+  gem "rack", "~> 3.2", :require => false
   gem "activerecord", '~> 6.0', :require => false
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
@@ -95,7 +95,7 @@ data['gem_platform_dependencies'].each_pair do |gem_platform, info|
   end
 end
 
-if File.exists? "#{__FILE__}.local"
+if File.exist? "#{__FILE__}.local"
   eval(File.read("#{__FILE__}.local"), binding)
 end
 

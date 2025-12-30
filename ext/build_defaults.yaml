@@ -1,5 +1,5 @@
 ---
-packaging_url: 'git://github.com/puppetlabs/packaging.git --branch=master'
+packaging_url: 'https://github.com/puppetlabs/packaging.git --branch=legacy'
 packaging_repo: 'packaging'
 default_cow: 'base-squeeze-i386.cow'
 cows: 'base-lucid-i386.cow base-precise-i386.cow base-squeeze-i386.cow base-stable-i386.cow base-testing-i386.cow base-trusty-i386.cow base-wheezy-i386.cow'
