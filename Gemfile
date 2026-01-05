@@ -14,7 +14,7 @@ end
 platforms :ruby do
   gem 'pry', :group => :development
   gem 'yard', :group => :development
-  gem 'redcarpet', '~> 2.0', :group => :development
+  gem 'redcarpet', '~> 3.5.1', :group => :development
   gem "racc", "1.8.1", :group => :development
 
   # To enable the augeas feature, use this gem.
@@ -28,7 +28,7 @@ if !ENV['PUPPET_LOADED']
 end
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 1.6', '< 3'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
-gem "rake", "10.1.1", :require => false
+gem "rake", "~> 12.3.3", :require => false
 
 group(:development, :test) do
   gem "rspec", "~> 2.14.0", :require => false
@@ -65,7 +65,7 @@ group(:extra) do
   gem "puppetlabs_spec_helper", :require => false
   # rest-client is used only by couchrest, so when
   # that dependency goes away, this one can also
-  gem "rest-client", '1.6.7', :require => false
+  gem "rest-client", '~> 1.8.0', :require => false
   gem "stomp", :require => false
   gem "tzinfo", :require => false
   case RUBY_PLATFORM
