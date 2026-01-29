@@ -59,7 +59,7 @@ end
 
 group(:extra) do
   gem "rack", "~> 3.2", :require => false
-  gem "activerecord", '~> 6.0', :require => false
+  gem "activerecord", '~> 8.0', :require => false
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
