@@ -10,10 +10,10 @@
 puppet plugin \fIaction\fR
 .
 .SH "DESCRIPTION"
-This subcommand provides network access to the puppet master\'s store of plugins\.
+This subcommand provides network access to the Puppet server\'s store of plugins\.
 .
 .P
-The puppet master serves Ruby code collected from the \fBlib\fR directories of its modules\. These plugins can be used on agent nodes to extend Facter and implement custom types and providers\. Plugins are normally downloaded by puppet agent during the course of a run\.
+The Puppet server serves Ruby code collected from the \fBlib\fR directories of its modules\. These plugins can be used on agent nodes to extend Facter and implement custom types and providers\. Plugins are normally downloaded by puppet agent during the course of a run\.
 .
 .SH "OPTIONS"
 Note that any setting that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR and \fBrun_mode\fR are valid settings, so you can specify \fB\-\-server <servername>\fR, or \fB\-\-run_mode <runmode>\fR as an argument\.
@@ -36,7 +36,7 @@ Whether to log debug information\.
 .SH "ACTIONS"
 .
 .TP
-\fBdownload\fR \- Download plugins from the puppet master\.
+\fBdownload\fR \- Download plugins from the Puppet server\.
 \fBSYNOPSIS\fR
 .
 .IP
@@ -46,7 +46,7 @@ puppet plugin download
 \fBDESCRIPTION\fR
 .
 .IP
-Downloads plugins from the configured puppet master\. Any plugins downloaded in this way will be used in all subsequent Puppet activity\. This action modifies files on disk\.
+Downloads plugins from the configured Puppet server\. Any plugins downloaded in this way will be used in all subsequent Puppet activity\. This action modifies files on disk\.
 .
 .IP
 \fBRETURNS\fR
@@ -58,13 +58,13 @@ A list of the files downloaded, or a confirmation that no files were downloaded\
 \fBdownload\fR
 .
 .P
-Retrieve plugins from the puppet master:
+Retrieve plugins from the Puppet server:
 .
 .P
 $ puppet plugin download
 .
 .P
-Retrieve plugins from the puppet master (API example):
+Retrieve plugins from the Puppet server (API example):
 .
 .P
 $ Puppet::Face[:plugin, \'0\.0\.1\']\.download

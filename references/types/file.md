@@ -714,7 +714,7 @@ The normal form of a `puppet:` URI is:
 
 `puppet:///modules/<MODULE NAME>/<FILE PATH>`
 
-This will fetch a file from a module on the Puppet master (or from a
+This will fetch a file from a module on the Puppet server (or from a
 local module when using Puppet apply). Given a `modulepath` of
 `/etc/puppetlabs/code/modules`, the example above would resolve to
 `/etc/puppetlabs/code/modules/<MODULE NAME>/files/<FILE PATH>`.

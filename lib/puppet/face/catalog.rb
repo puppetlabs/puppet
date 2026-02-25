@@ -62,7 +62,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
       $ puppet catalog apply --terminus yaml
 
-      Retrieve a catalog from the master and apply it, in one step:
+      Retrieve a catalog from the server and apply it, in one step:
 
       $ puppet catalog apply --terminus rest
 
@@ -119,10 +119,10 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   end
 
   action(:download) do
-    summary "Download this node's catalog from the puppet master server."
+    summary "Download this node's catalog from the Puppet server."
     description <<-'EOT'
-      Retrieves a catalog from the puppet master and saves it to the local yaml
-      cache. This action always contacts the puppet master and will ignore
+      Retrieves a catalog from the Puppet server and saves it to the local yaml
+      cache. This action always contacts the Puppet server and will ignore
       alternate termini.
 
       The saved catalog can be used in any subsequent catalog action by specifying

@@ -27,7 +27,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
   action(:submit) do
     summary _("API only: submit a report with error handling.")
     description <<-'EOT'
-      API only: Submits a report to the puppet master. This action is
+      API only: Submits a report to the Puppet server. This action is
       essentially a shortcut and wrapper for the `save` action with the `rest`
       terminus, and provides additional details in the event of a failure.
     EOT

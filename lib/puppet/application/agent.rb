@@ -92,7 +92,7 @@ class Puppet::Application::Agent < Puppet::Application
 
       SYNOPSIS
       --------
-      Retrieves the client configuration from the Puppet master and applies it to
+      Retrieves the client configuration from the Puppet server and applies it to
       the local host.
 
       This service may be run as a daemon, run periodically using cron (or something
@@ -355,7 +355,7 @@ class Puppet::Application::Agent < Puppet::Application
       * SIGINT and SIGTERM:
         Shut down the puppet agent daemon.
       * SIGUSR1:
-        Immediately retrieve and apply configurations from the puppet master.
+        Immediately retrieve and apply configurations from the Puppet server.
       * SIGUSR2:
         Close file descriptors for log files and reopen them. Used with logrotate.
 

@@ -64,13 +64,13 @@ class Puppet::Application::Apply < Puppet::Application
       individual manifests.
 
       When provided with a modulepath, via command line or config file, puppet
-      apply can effectively mimic the catalog that would be served by puppet
-      master with access to the same modules, although there are some subtle
+      apply can effectively mimic the catalog that would be served by Puppet
+      Server with access to the same modules, although there are some subtle
       differences. When combined with scheduling and an automated system for
       pushing manifests, this can be used to implement a serverless Puppet
       site.
 
-      Most users should use 'puppet agent' and 'puppet master' for site-wide
+      Most users should use 'puppet agent' and 'puppet server' for site-wide
       manifests.
 
 
@@ -144,7 +144,7 @@ class Puppet::Application::Apply < Puppet::Application
         Print extra information.
 
       * --catalog:
-        Apply a JSON catalog (such as one generated with 'puppet master --compile'). You can
+        Apply a JSON catalog (such as one generated with 'puppet catalog compile'). You can
         either specify a JSON file or pipe in JSON from standard input.
 
       * --write-catalog-summary

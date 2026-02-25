@@ -5,7 +5,7 @@ The `certificate` endpoint returns the certificate for the specified name,
 which might be either a standard certname or `ca`.
 
 Under Puppet Server's CA service, the `environment` parameter is ignored and can
-be omitted. Under a Rack or WEBrick Puppet master, `environment` is required and
+be omitted. Under a Rack or WEBrick Puppet server, `environment` is required and
 must be a valid environment, but it has no effect on the response.
 
 Find
@@ -91,14 +91,14 @@ None
 
     No request key specified in /puppet-ca/v1/certificate
 
-#### Master is not a CA
+#### Server is not a CA
 
     GET /puppet/v1/certificate/valid_certificate?environment=env
 
     HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
-    this master is not a CA
+    this server is not a CA
 
 
 Schema

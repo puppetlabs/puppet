@@ -10,11 +10,11 @@ spots. This can only work with code that is explicitly instrumented, which, at
 the time of this writing, is primarily the compiler. To enable profiling there
 are several options:
 
-* To profile every request on the master add `--profile` to your master's
+* To profile every request on the server add `--profile` to your server's
   startup.
 * To profile a single run for an agent add `--profile` to your agent's options
   for that run.
-* To profile a masterless run add `--profile` to your `puppet apply` options.
+* To profile a serverless run add `--profile` to your `puppet apply` options.
 
 The timing information will be output to the logs and tagged with the word
 "PROFILE".
@@ -28,8 +28,8 @@ will be output to the logs.
 For much finer grained profiling, you'll want to use
 [ruby-prof](https://rubygems.org/gems/ruby-prof). Once you have the gem
 installed you can either modify the code to profile a certain section (using
-RubyProf.profile) or run the master with ruby-prof by adding `use
-Rack::RubyProf, :path => '/temp/profile'` to the config.ru for your master.
+RubyProf.profile) or run the server with ruby-prof by adding `use
+Rack::RubyProf, :path => '/temp/profile'` to the config.ru for your server.
 
 ## Running the Benchmarks
 

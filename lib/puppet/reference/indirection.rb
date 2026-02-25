@@ -39,7 +39,7 @@ reference.header = <<~HEADER
   Puppet's indirector support pluggable backends (termini) for a variety of key-value stores (indirections).
   Each indirection type corresponds to a particular Ruby class (the "Indirected Class" below) and values are instances of that class.
   Each instance's key is available from its `name` method.
-  The termini can be local (e.g., on-disk files) or remote (e.g., using a REST interface to talk to a puppet master).
+  The termini can be local (e.g., on-disk files) or remote (e.g., using a REST interface to talk to a Puppet server).
 
   An indirector has five methods, which are mapped into HTTP verbs for the REST interface:
 

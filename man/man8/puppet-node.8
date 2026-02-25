@@ -35,7 +35,7 @@ Whether to log debug information\.
 Indirector faces expose indirected subsystems of Puppet\. These subsystems are each able to retrieve and alter a specific type of data (with the familiar actions of \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR) from an arbitrary number of pluggable backends\. In Puppet parlance, these backends are called terminuses\.
 .
 .IP
-Almost all indirected subsystems have a \fBrest\fR terminus that interacts with the puppet master\'s data\. Most of them have additional terminuses for various local data models, which are in turn used by the indirected subsystem on the puppet master whenever it receives a remote request\.
+Almost all indirected subsystems have a \fBrest\fR terminus that interacts with the Puppet server\'s data\. Most of them have additional terminuses for various local data models, which are in turn used by the indirected subsystem on the Puppet server whenever it receives a remote request\.
 .
 .IP
 The terminus for an action is often determined by context, but occasionally needs to be set explicitly\. See the "Notes" section of this face\'s manpage for more details\.
@@ -43,7 +43,7 @@ The terminus for an action is often determined by context, but occasionally need
 .SH "ACTIONS"
 .
 .TP
-\fBclean\fR \- Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster
+\fBclean\fR \- Clean up signed certs, cached facts, node objects, and reports for a node stored by the Puppet server
 \fBSYNOPSIS\fR
 .
 .IP
@@ -53,7 +53,7 @@ puppet node clean [\-\-terminus _TERMINUS] \fIhost1\fR [\fIhost2\fR \.\.\.]
 \fBDESCRIPTION\fR
 .
 .IP
-Cleans up the following information a puppet master knows about a node:
+Cleans up the following information a Puppet server knows about a node:
 .
 .IP
 \fISigned certificates\fR \- ($vardir/ssl/ca/signed/node\.domain\.pem)

@@ -15,7 +15,7 @@ Puppet Enterprise (PE) and open source Puppet share the configuration settings d
 When using boolean settings on the command line, use \fB\-\-setting\fR and \fB\-\-no\-setting\fR instead of \fB\-\-setting (true|false)\fR\. (Using \fB\-\-setting false\fR results in "Error: Could not parse application options: needless argument"\.)
 .
 .IP "\(bu" 4
-Settings can be interpolated as \fB$variables\fR in other settings; \fB$environment\fR is special, in that puppet master will interpolate each agent node\'s environment instead of its own\.
+Settings can be interpolated as \fB$variables\fR in other settings; \fB$environment\fR is special, in that Puppet Server will interpolate each agent node\'s environment instead of its own\.
 .
 .IP "\(bu" 4
 Multiple values should be specified as comma\-separated lists; multiple directories should be separated with the system path separator (usually a colon)\.

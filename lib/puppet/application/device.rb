@@ -92,7 +92,7 @@ class Puppet::Application::Device < Puppet::Application
 
       SYNOPSIS
       --------
-      Retrieves catalogs from the Puppet master and applies them to remote devices.
+      Retrieves catalogs from the Puppet server and applies them to remote devices.
 
       This subcommand can be run manually; or periodically using cron,
       a scheduled task, or a similar tool.

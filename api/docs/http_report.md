@@ -1,17 +1,17 @@
 Report
 ======
-This document describes the Puppet master's report endpoint and the schema for
+This document describes the Puppet server's report endpoint and the schema for
 Report Format 12 in technical terms. Also see the
 [documentation](https://puppet.com/docs/puppet/latest/format_report.html).
 
-The `report` endpoint allows clients to send reports to the master via `http`
-or `https`. Once received by the master they are processed by the *report
+The `report` endpoint allows clients to send reports to the server via `http`
+or `https`. Once received by the server they are processed by the *report
 processors* configured to be triggered when a report is received. As an
 example, storing reports in PuppetDB is handled by one such report processor.
 
 Save
 ----
-The http(s) endpoint for sending reports to the master is:
+The http(s) endpoint for sending reports to the server is:
 
     PUT /puppet/v3/report/:nodename?environment=:environment
 

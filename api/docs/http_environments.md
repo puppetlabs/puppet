@@ -1,7 +1,7 @@
 Environments
 ============
 
-The `environments` endpoint allows for enumeration of the environments known to the master. Each environment contains information
+The `environments` endpoint allows for enumeration of the environments known to the server. Each environment contains information
 about itself like its modulepath, manifest directory, environment timeout, and the config version.
 This endpoint is by default accessible to any client with a valid certificate, though this may be changed in Puppet Server's `auth.conf`.
 

@@ -1528,7 +1528,7 @@ node. (For example, `fqdn_rand(30)`, `fqdn_rand(30, 'expensive job 1')`, and
 
 ## `generate`
 
-Calls an external command on the Puppet master and returns
+Calls an external command on the Puppet server and returns
 the results of the command. Any arguments are passed to the external command as
 arguments. If the generator does not exit with return code of 0,
 the generator is considered to have failed and a parse error is

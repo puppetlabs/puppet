@@ -2,7 +2,7 @@
 
 > This document describes Puppet's indirector subsystem, but it has a number of limitations described below. As a result, don't introduce any new indirections or termini.
 
-Puppet's indirector supports pluggable backends (termini) for a variety of key-value stores (indirections). Each indirection type corresponds to a particular Ruby class (the "Indirected Class" below) and values are instances of that class. Each instance's key is available from its name method. The termini can be local (e.g., on-disk files) or remote (e.g., using a REST interface to talk to a puppet master).
+Puppet's indirector supports pluggable backends (termini) for a variety of key-value stores (indirections). Each indirection type corresponds to a particular Ruby class (the "Indirected Class" below) and values are instances of that class. Each instance's key is available from its name method. The termini can be local (e.g., on-disk files) or remote (e.g., using a REST interface to talk to a Puppet server).
 
 An indirector has five methods, which are mapped into HTTP verbs for the REST interface:
 
@@ -157,7 +157,7 @@ Always return an empty node object. Assumes you keep track of nodes in flat file
 Note that class is responsible for merging the node's facts into the node instance before it is returned.
 
 `rest` terminus
-Get a node via REST. Puppet agent uses this to allow the puppet master to override its environment.
+Get a node via REST. Puppet agent uses this to allow the Puppet server to override its environment.
 
 `store_configs` terminus
 Part of the "storeconfigs" feature. Should not be directly set by end users.
@@ -189,7 +189,7 @@ Manipulate resources with the resource abstraction layer. Only used internally.
 Part of the "storeconfigs" feature. Should not be directly set by end users.
 
 `rest` terminus
-Get puppet master's status via REST. Useful because it tests the health of both the web server and the indirector.
+Get Puppet server's status via REST. Useful because it tests the health of both the web server and the indirector.
 
 ## Limitations
 

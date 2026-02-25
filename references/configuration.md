@@ -27,7 +27,7 @@ canonical: "/puppet/latest/configuration.html"
   `--no-setting` instead of `--setting (true|false)`. (Using `--setting false`
   results in "Error: Could not parse application options: needless argument".)
 * Settings can be interpolated as `$variables` in other settings; `$environment`
-  is special, in that puppet master will interpolate each agent node's
+  is special, in that Puppet Server will interpolate each agent node's
   environment instead of its own.
 * Multiple values should be specified as comma-separated lists; multiple
   directories should be separated with the system path separator (usually

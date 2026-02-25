@@ -16,13 +16,13 @@ Puppet::Face.define(:catalog, '0.0.1') do
     notes <<-'NOTES'
       By default, this action will retrieve a catalog from Puppet's compiler
       subsystem; you must call the action with `--terminus rest` if you wish
-      to retrieve a catalog from the puppet master.
+      to retrieve a catalog from the Puppet server.
 
       FORMATTING ISSUES: This action cannot currently render useful yaml;
       instead, it returns an entire catalog. Use json instead.
     NOTES
     examples <<-'EOT'
-      Ask the puppet master for a list of managed file resources for a node:
+      Ask the Puppet server for a list of managed file resources for a node:
 
       $ puppet catalog select --terminus rest somenode.magpie.lan file
     EOT

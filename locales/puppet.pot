@@ -1058,7 +1058,7 @@ msgid "[<node_certname>]"
 msgstr ""
 
 #: ../lib/puppet/face/facts.rb:41
-msgid "Upload local facts to the puppet master."
+msgid "Upload local facts to the Puppet server."
 msgstr ""
 
 #: ../lib/puppet/face/facts.rb:79
@@ -1462,7 +1462,7 @@ msgid "Interact with the Puppet plugin system."
 msgstr ""
 
 #: ../lib/puppet/face/plugin.rb:22
-msgid "Download plugins from the puppet master."
+msgid "Download plugins from the Puppet server."
 msgstr ""
 
 #: ../lib/puppet/face/plugin.rb:56

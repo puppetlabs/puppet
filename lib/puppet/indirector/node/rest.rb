@@ -4,7 +4,7 @@ require_relative '../../../puppet/node'
 require_relative '../../../puppet/indirector/rest'
 
 class Puppet::Node::Rest < Puppet::Indirector::REST
-  desc "Get a node via REST. Puppet agent uses this to allow the puppet master
+  desc "Get a node via REST. Puppet agent uses this to allow the Puppet server
     to override its environment."
 
   def find(request)

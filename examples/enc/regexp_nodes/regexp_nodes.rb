@@ -13,7 +13,7 @@
 # finds.  Each file's contents are a regexp-per-line which, if they match the
 # hostname passed to the program as ARGV[0], sets a class, parameter value
 # or environment named the same thing as the file itself. At the end, the
-# resultant data structure is returned back to the puppet master process as
+# resultant data structure is returned back to the Puppet server process as
 # yaml.
 #
 # = Caveats

@@ -38,7 +38,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
   deactivate_action(:search)
 
   action(:upload) do
-    summary _("Upload local facts to the puppet master.")
+    summary _("Upload local facts to the Puppet server.")
     description <<-'EOT'
       Reads facts from the local system using the `facter` terminus, then
       saves the returned facts using the rest terminus.

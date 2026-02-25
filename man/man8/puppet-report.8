@@ -32,7 +32,7 @@ Whether to log debug information\.
 Indirector faces expose indirected subsystems of Puppet\. These subsystems are each able to retrieve and alter a specific type of data (with the familiar actions of \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR) from an arbitrary number of pluggable backends\. In Puppet parlance, these backends are called terminuses\.
 .
 .IP
-Almost all indirected subsystems have a \fBrest\fR terminus that interacts with the puppet master\'s data\. Most of them have additional terminuses for various local data models, which are in turn used by the indirected subsystem on the puppet master whenever it receives a remote request\.
+Almost all indirected subsystems have a \fBrest\fR terminus that interacts with the Puppet server\'s data\. Most of them have additional terminuses for various local data models, which are in turn used by the indirected subsystem on the Puppet server whenever it receives a remote request\.
 .
 .IP
 The terminus for an action is often determined by context, but occasionally needs to be set explicitly\. See the "Notes" section of this face\'s manpage for more details\.
@@ -82,7 +82,7 @@ puppet report submit [\-\-terminus _TERMINUS] \fIreport\fR
 \fBDESCRIPTION\fR
 .
 .IP
-API only: Submits a report to the puppet master\. This action is essentially a shortcut and wrapper for the \fBsave\fR action with the \fBrest\fR terminus, and provides additional details in the event of a failure\.
+API only: Submits a report to the Puppet server\. This action is essentially a shortcut and wrapper for the \fBsave\fR action with the \fBrest\fR terminus, and provides additional details in the event of a failure\.
 .
 .SH "EXAMPLES"
 \fBsave\fR

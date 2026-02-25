@@ -40,7 +40,7 @@ module Puppet::Util::Profiler
 
   # Profile a block of code and log the time it took to execute.
   #
-  # This outputs logs entries to the Puppet masters logging destination
+  # This outputs log entries to the Puppet server's logging destination
   # providing the time it took, a message describing the profiled code
   # and a leaf location marking where the profile method was called
   # in the profiled hierarchy.

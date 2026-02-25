@@ -2,10 +2,10 @@
 
 Puppet::Face.define(:node, '0.0.1') do
   action(:clean) do
-    summary _("Clean up signed certs, cached facts, node objects, and reports for a node stored by the puppetmaster")
+    summary _("Clean up signed certs, cached facts, node objects, and reports for a node stored by the Puppet server")
     arguments _("<host1> [<host2> ...]")
     description <<-'EOT'
-      Cleans up the following information a puppet master knows about a node:
+      Cleans up the following information a Puppet server knows about a node:
 
       <Signed certificates> - ($vardir/ssl/ca/signed/node.domain.pem)
 

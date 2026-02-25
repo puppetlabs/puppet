@@ -16,10 +16,10 @@ puppet apply [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\-v|\-\-verbose] 
 This is the standalone puppet execution tool; use it to apply individual manifests\.
 .
 .P
-When provided with a modulepath, via command line or config file, puppet apply can effectively mimic the catalog that would be served by puppet master with access to the same modules, although there are some subtle differences\. When combined with scheduling and an automated system for pushing manifests, this can be used to implement a serverless Puppet site\.
+When provided with a modulepath, via command line or config file, puppet apply can effectively mimic the catalog that would be served by Puppet Server with access to the same modules, although there are some subtle differences\. When combined with scheduling and an automated system for pushing manifests, this can be used to implement a serverless Puppet site\.
 .
 .P
-Most users should use \'puppet agent\' and \'puppet master\' for site\-wide manifests\.
+Most users should use \'puppet agent\' and \'puppet server\' for site\-wide manifests\.
 .
 .SH "OPTIONS"
 Any setting that\'s valid in the configuration file is a valid long argument for puppet apply\. For example, \'tags\' is a valid setting, so you can specify \'\-\-tags \fIclass\fR,\fItag\fR\' as an argument\.
@@ -76,7 +76,7 @@ A path ending with \'\.jsonl\' will receive structured output in JSON Lines form
 \-\-verbose: Print extra information\.
 .
 .IP "\(bu" 4
-\-\-catalog: Apply a JSON catalog (such as one generated with \'puppet master \-\-compile\')\. You can either specify a JSON file or pipe in JSON from standard input\.
+\-\-catalog: Apply a JSON catalog (such as one generated with \'puppet catalog compile\')\. You can either specify a JSON file or pipe in JSON from standard input\.
 .
 .IP "\(bu" 4
 \-\-write\-catalog\-summary After compiling the catalog saves the resource list and classes list to the node in the state directory named classes\.txt and resources\.txt
