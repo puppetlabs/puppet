@@ -239,7 +239,7 @@ describe Puppet::Agent do
       end
     end
 
-    describe "when should_fork is true", :if => Puppet.features.posix? && RUBY_PLATFORM != 'java' do
+    describe "when should_fork is true", :if => Puppet.features.posix? && RUBY_PLATFORM != 'java' && !(RUBY_PLATFORM.include?('darwin') && RUBY_VERSION.split('.').first.to_i >= 4) do
       before do
         @agent = Puppet::Agent.new(AgentTestClient, true)
 
@@ -312,6 +312,25 @@ describe Puppet::Agent do
             false
           }
         }.to exit_with(1)
+      end
+    end
+
+    describe 'when forking is unsupported on the current runtime' do
+      before do
+        allow_any_instance_of(Puppet::Agent).to receive(:ruby_platform).and_return('x86_64-darwin25')
+        allow_any_instance_of(Puppet::Agent).to receive(:ruby_major_version).and_return(4)
+      end
+
+      it 'should disable should_fork during initialization' do
+        agent = Puppet::Agent.new(AgentTestClient, true)
+        expect(agent.should_fork).to be_falsey
+      end
+
+      it 'should execute inline instead of calling Kernel.fork' do
+        agent = Puppet::Agent.new(AgentTestClient, true)
+
+        expect(Kernel).not_to receive(:fork)
+        expect(agent.run_in_fork(true) { 123 }).to eq(123)
       end
     end
 

@@ -30,7 +30,7 @@ class Puppet::Agent
   end
 
   def can_fork?
-    Puppet.features.posix? && RUBY_PLATFORM != 'java'
+    Puppet.features.posix? && ruby_platform != 'java' && !macos_26_ruby_4_or_newer?
   end
 
   def needing_restart?
@@ -126,7 +126,9 @@ class Puppet::Agent
   end
 
   def run_in_fork(forking = true)
-    return yield unless forking or Puppet.features.windows?
+    # can_fork? returns false on Windows (posix? is false) and on macOS Ruby 4+,
+    # so both platforms fall through to the in-process path even if forking is true.
+    return yield unless forking && can_fork?
 
     atForkHandler = Puppet::Util::AtFork.get_handler
 
@@ -151,6 +153,25 @@ class Puppet::Agent
   end
 
   private
+
+  def ruby_platform
+    RUBY_PLATFORM
+  end
+
+  def ruby_major_version
+    RUBY_VERSION.split('.').first.to_i
+  end
+
+  def darwin_major_version
+    match = ruby_platform.match(/darwin(\d+)/)
+    match ? match[1].to_i : nil
+  end
+
+  # Ruby 4+ on macOS 26 (darwin25) has been observed to segfault around the
+  # agent's per-run fork boundary, so force the existing in-process path there.
+  def macos_26_ruby_4_or_newer?
+    darwin_major_version == 25 && ruby_major_version >= 4
+  end
 
   # Create and yield a client instance, keeping a reference
   # to it during the yield.
