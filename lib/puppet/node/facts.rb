@@ -31,6 +31,7 @@ class Puppet::Node::Facts
     values["clientcert"] = Puppet.settings[:certname]
     values["clientversion"] = Puppet.version.to_s
     values["clientnoop"] = Puppet.settings[:noop]
+    values["ca_server"] = "#{Puppet.settings[:ca_server]}:#{Puppet.settings[:ca_port]}"
   end
 
   def initialize(name, values = {})

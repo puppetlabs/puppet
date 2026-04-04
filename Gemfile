@@ -84,3 +84,5 @@ if File.exist? "#{__FILE__}.local"
 end
 
 # vim:filetype=ruby
+
+gem "erb", "~> 6.0"

@@ -25,6 +25,13 @@ describe Puppet::Node::Facts, "when indirecting" do
       expect(@facts.values["clientnoop"]).to eq(Puppet.settings[:noop])
     end
 
+    it "adds the configured CA server and port as 'ca_server'" do
+      Puppet[:ca_server] = "ca.example.com"
+      Puppet[:ca_port] = 8141
+      @facts.add_local_facts
+      expect(@facts.values["ca_server"]).to eq("ca.example.com:8141")
+    end
+
     it "doesn't add the current environment" do
       @facts.add_local_facts
       expect(@facts.values).not_to include("environment")

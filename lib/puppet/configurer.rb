@@ -304,6 +304,7 @@ class Puppet::Configurer
     # exceptions.
     options[:report] ||= Puppet::Transaction::Report.new(nil, @environment, @transaction_uuid, @job_id, options[:start_time] || Time.now)
     report = options[:report]
+    report.ca_server = "#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
     init_storage
 
     Puppet::Util::Log.newdestination(report)
