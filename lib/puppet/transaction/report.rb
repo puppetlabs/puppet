@@ -70,6 +70,10 @@ class Puppet::Transaction::Report
   # @return [String] a string of the format 'servername:port'
   attr_accessor :server_used
 
+  # Contains the name and port of the configured Puppet CA server
+  # @return [String] a string of the format 'caname:caport'
+  attr_accessor :ca_server
+
   # The host name for which the report is generated
   # @return [String] the host name
   attr_accessor :host
@@ -240,6 +244,7 @@ class Puppet::Transaction::Report
     @catalog_uuid = nil
     @cached_catalog_status = nil
     @server_used = nil
+    @ca_server = nil
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
     @noop = Puppet[:noop]
@@ -267,6 +272,10 @@ class Puppet::Transaction::Report
       @server_used = data['server_used']
     elsif data['master_used']
       @server_used = data['master_used']
+    end
+
+    if data['ca_server']
+      @ca_server = data['ca_server']
     end
 
     if data['catalog_uuid']
@@ -352,6 +361,7 @@ class Puppet::Transaction::Report
 
     # The following is include only when set
     hash['server_used'] = @server_used unless @server_used.nil?
+    hash['ca_server'] = @ca_server unless @ca_server.nil?
     hash['catalog_uuid'] = @catalog_uuid unless @catalog_uuid.nil?
     hash['code_id'] = @code_id unless @code_id.nil?
     hash['job_id'] = @job_id unless @job_id.nil?

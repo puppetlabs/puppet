@@ -302,6 +302,31 @@ describe Puppet::Transaction::Report do
     end
   end
 
+   describe "ca_server" do
+    it "defaults to nil" do
+      report = Puppet::Transaction::Report.new
+      expect(report.ca_server).to be_nil
+    end
+
+    it "round-trips through to_data_hash and from_data_hash when set" do
+      report = Puppet::Transaction::Report.new
+      report.ca_server = "ca.example.com:8140"
+      parsed = Puppet::Transaction::Report.from_data_hash(report.to_data_hash)
+      expect(parsed.ca_server).to eq("ca.example.com:8140")
+    end
+
+    it "is omitted from to_data_hash when nil" do
+      report = Puppet::Transaction::Report.new
+      expect(report.to_data_hash).not_to have_key('ca_server')
+    end
+
+    it "is included in to_data_hash when set" do
+      report = Puppet::Transaction::Report.new
+      report.ca_server = "ca.example.com:8140"
+      expect(report.to_data_hash['ca_server']).to eq("ca.example.com:8140")
+    end
+  end
+
   describe "before finalizing the report" do
     it "should have a status of 'failed'" do
       report = Puppet::Transaction::Report.new

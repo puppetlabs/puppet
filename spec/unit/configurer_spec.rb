@@ -1177,6 +1177,17 @@ describe Puppet::Configurer do
     end
   end
 
+  describe "when populating ca_server on the report" do
+    it "sets report.ca_server from configured ca_server and ca_port" do
+      Puppet[:ca_server] = "ca.example.com"
+      Puppet[:ca_port] = 8141
+
+      options = {}
+      configurer.run(options)
+      expect(options[:report].ca_server).to eq("ca.example.com:8141")
+    end
+  end
+  
   describe "when attempting failover" do
     it "should not failover if server_list is not set" do
       Puppet.settings[:server_list] = []
