@@ -186,6 +186,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     '0'
   end
 
+  # Flags to suppress debug and error output from the package manager.
+  # @return [Array<String>] command-line flags
+  def self.quiet_flags
+    ['-d', '0', '-e', error_level]
+  end
+
   def self.update_command
     # In yum both `upgrade` and `update` can be used to update packages
     # `yum upgrade` == `yum --obsoletes update`
@@ -243,11 +249,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   def install
     wanted = @resource[:name]
-    error_level = self.class.error_level
+    quiet_flags = self.class.quiet_flags
     update_command = self.class.update_command
     # If not allowing virtual packages, do a query to ensure a real package exists
     unless @resource.allow_virtual?
-      execute([command(:cmd), '-d', '0', '-e', error_level, '-y', install_options, :list, wanted].compact)
+      execute([command(:cmd)] + quiet_flags + ['-y', install_options, :list, wanted].compact)
     end
 
     should = @resource.should(:ensure)
@@ -309,8 +315,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # Yum on el-4 and el-5 returns exit status 0 when trying to install a package it doesn't recognize;
     # ensure we capture output to check for errors.
-    no_debug = Puppet.runtime[:facter].value('os.release.major').to_i > 5 ? ["-d", "0"] : []
-    command = [command(:cmd)] + no_debug + ["-e", error_level, "-y", install_options, operation, wanted].compact
+    command = [command(:cmd)] + quiet_flags + ["-y", install_options, operation, wanted].compact
     output = execute(command)
 
     if output.to_s =~ /^No package #{wanted} available\.$/

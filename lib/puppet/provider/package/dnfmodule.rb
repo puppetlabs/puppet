@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
 
   def self.instances
     packages = []
-    cmd = "#{command(:dnf)} module list -y -d 0 -e #{error_level}"
+    cmd = ([command(:dnf), 'module', 'list', '-y'] + quiet_flags).join(' ')
     execute(cmd).each_line do |line|
       # select only lines with actual packages since DNF clutters the output
       next unless line =~ /\[[eix]\][, ]/
@@ -90,7 +90,7 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
       enable(args)
     else
       begin
-        execute([command(:dnf), 'module', 'install', '-d', '0', '-e', self.class.error_level, '-y', args])
+        execute([command(:dnf), 'module', 'install'] + self.class.quiet_flags + ['-y', args])
       rescue Puppet::ExecutionFailure => e
         # module has no default profile and no profile was requested, so just enable the stream
         # DNF versions prior to 4.2.8 do not need this workaround
@@ -117,20 +117,20 @@ Puppet::Type.type(:package).provide :dnfmodule, :parent => :dnf do
   end
 
   def enable(args = @resource[:name])
-    execute([command(:dnf), 'module', 'enable', '-d', '0', '-e', self.class.error_level, '-y', args])
+    execute([command(:dnf), 'module', 'enable'] + self.class.quiet_flags + ['-y', args])
   end
 
   def uninstall
-    execute([command(:dnf), 'module', 'remove', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
+    execute([command(:dnf), 'module', 'remove'] + self.class.quiet_flags + ['-y', @resource[:name]])
     reset # reset module to the default stream
   end
 
   def disable(args = @resource[:name])
-    execute([command(:dnf), 'module', 'disable', '-d', '0', '-e', self.class.error_level, '-y', args])
+    execute([command(:dnf), 'module', 'disable'] + self.class.quiet_flags + ['-y', args])
   end
 
   def reset
-    execute([command(:dnf), 'module', 'reset', '-d', '0', '-e', self.class.error_level, '-y', @resource[:name]])
+    execute([command(:dnf), 'module', 'reset'] + self.class.quiet_flags + ['-y', @resource[:name]])
   end
 
   def flavor
