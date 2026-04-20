@@ -61,7 +61,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # If the requested environment name doesn't match the server specified environment
       # name, as determined by the node terminus, and the request wants us to check for an
       # environment mismatch, then return an empty catalog with the server-specified
-      # enviroment.
+      # environment.
       if request.remote? && request.options[:check_environment]
         # The "environment" may be same while environment objects differ. This
         # is most likely because the environment cache was flushed between the request
