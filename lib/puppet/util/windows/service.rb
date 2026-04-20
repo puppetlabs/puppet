@@ -219,7 +219,7 @@ module Puppet::Util::Windows
             FFI::MemoryPointer.new(:dword) do |resume_ptr|
               resume_ptr.write_dword(0)
               # Fetch the bytes of memory required to be allocated
-              # for QueryServiceConfigW to return succesfully. This
+              # for QueryServiceConfigW to return successfully. This
               # is done by sending NULL and 0 for the pointer and size
               # respectively, letting the command fail, then reading the
               # value of pcbBytesNeeded
@@ -414,7 +414,7 @@ module Puppet::Util::Windows
         size_required = nil
         status = nil
         # Fetch the bytes of memory required to be allocated
-        # for QueryServiceConfigW to return succesfully. This
+        # for QueryServiceConfigW to return successfully. This
         # is done by sending NULL and 0 for the pointer and size
         # respectively, letting the command fail, then reading the
         # value of pcbBytesNeeded
@@ -458,7 +458,7 @@ module Puppet::Util::Windows
         config = nil
         size_required = nil
         # Fetch the bytes of memory required to be allocated
-        # for QueryServiceConfigW to return succesfully. This
+        # for QueryServiceConfigW to return successfully. This
         # is done by sending NULL and 0 for the pointer and size
         # respectively, letting the command fail, then reading the
         # value of pcbBytesNeeded
@@ -496,7 +496,7 @@ module Puppet::Util::Windows
         config = nil
         size_required = nil
         # Fetch the bytes of memory required to be allocated
-        # for QueryServiceConfig2W to return succesfully. This
+        # for QueryServiceConfig2W to return successfully. This
         # is done by sending NULL and 0 for the pointer and size
         # respectively, letting the command fail, then reading the
         # value of pcbBytesNeeded
