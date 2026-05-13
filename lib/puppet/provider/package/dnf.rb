@@ -46,6 +46,14 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
     'upgrade'
   end
 
+  # dnf5 removed the -d (debuglevel) and -e (errorlevel) flags.
+  # These were already deprecated in dnf4.
+  #
+  # @return [Array<String>] empty array
+  def self.quiet_flags
+    []
+  end
+
   # The value to pass to DNF as its error output level.
   # DNF differs from Yum slightly with regards to error outputting.
   #
