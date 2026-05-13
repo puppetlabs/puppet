@@ -659,7 +659,7 @@ Searching for "a"
 
           expect {
             lookup.run_command
-          }.to raise_error(/When overriding any of the hostname,domain,fqdn,clientcert facts with #{file_path} given via the --facts flag, they must all be overridden./)
+          }.to raise_error(/When overriding any of the hostname,domain,fqdn facts with #{file_path} given via the --facts flag, they must all be overridden./)
         end
 
         it 'does not fail when all trusted information facts are provided via --facts file' do
@@ -668,6 +668,18 @@ Searching for "a"
             fqdn: some.fqdn.com
             hostname: some.hostname
             domain: some.domain
+          CONTENT
+          lookup.options[:fact_file] = file_path
+
+          expect {
+            lookup.run_command
+          }.to exit_with(0)
+           .and output(/This is in facts hash/).to_stdout
+        end
+
+        it 'does not fail when clientcert is provided without other trusted facts' do
+          file_path = file_containing('facts.yaml', <<~CONTENT)
+            ---
             clientcert: some.clientcert
           CONTENT
           lookup.options[:fact_file] = file_path

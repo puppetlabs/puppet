@@ -58,5 +58,11 @@ describe Puppet::Type.type(:package).provider(:dnf) do
     it { is_expected.to be_install_only }
   end
 
+  describe '.quiet_flags' do
+    it 'returns an empty array to avoid using deprecated -d/-e flags removed in dnf5' do
+      expect(described_class.quiet_flags).to eq([])
+    end
+  end
+
   it_behaves_like 'RHEL package provider', described_class, 'dnf'
 end
