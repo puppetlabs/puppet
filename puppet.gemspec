@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.summary = "Puppet, an automated configuration management tool"
   spec.specification_version = 4
-  spec.add_runtime_dependency('concurrent-ruby', '~> 1.0')
+  spec.add_runtime_dependency('concurrent-ruby', ['>= 1.3.7', '< 2.0'])
   spec.add_runtime_dependency('deep_merge', '~> 1.0')
   spec.add_runtime_dependency('facter', ['>= 4.3.0', '< 5'])
   spec.add_runtime_dependency('fast_gettext', '>= 2.1', '< 4')
