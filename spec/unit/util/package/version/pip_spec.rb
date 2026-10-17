@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/util/package/version/pip'
+require 'puppet/util/package/version/range'
 
 describe Puppet::Util::Package::Version::Pip do
   describe "initialization" do
@@ -459,6 +460,35 @@ describe Puppet::Util::Package::Version::Pip do
       it "#{lower_version} should be lower than #{greater_version}" do
         expect(lower_version < greater_version).to eq(true)
       end
+    end
+  end
+
+  describe "release segment comparison" do
+    it "treats trailing zero components as equal in either order" do
+      versions = ["1", "1.0", "1.0.0.0"]
+
+      versions.combination(2) do |left, right|
+        expect(described_class.compare(left, right)).to eq(0)
+        expect(described_class.compare(right, left)).to eq(0)
+        expect(described_class.parse(left)).to eq(described_class.parse(right))
+      end
+    end
+
+    it "matches equivalent releases in an equality range" do
+      range = Puppet::Util::Package::Version::Range.parse("1.0", described_class)
+
+      expect(range.include?(described_class.parse("1"))).to eq(true)
+    end
+
+    it "does not change a parsed version during ordering comparisons" do
+      version = described_class.parse("1.0")
+
+      expect(version < described_class.parse("1.1.1")).to eq(true)
+      expect(version).to eq(described_class.parse("1.0"))
+
+      version = described_class.parse("1.0")
+      expect(described_class.parse("1.1.1") > version).to eq(true)
+      expect(version).to eq(described_class.parse("1.0"))
     end
   end
 end

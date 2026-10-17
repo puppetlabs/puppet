@@ -117,13 +117,8 @@ module Puppet::Util::Package::Version
     end
 
     def compose_key(epoch, release, pre, post, dev, local)
-      release_key = release.reverse
-      release_key.each_with_index do |element, index|
-        break unless element == 0
-
-        release_key.delete_at(index) unless release_key.at(index + 1) != 0
-      end
-      release_key.reverse!
+      release_key = release.dup
+      release_key.pop while release_key.length > 1 && release_key.last == 0
 
       if !pre && !post && dev
         pre_key = -Float::INFINITY
@@ -146,8 +141,8 @@ module Puppet::Util::Package::Version
 
     def compare(this, other)
       if (this.is_a? Array) && (other.is_a? Array)
-        this  << -Float::INFINITY if this.length < other.length
-        other << -Float::INFINITY if this.length > other.length
+        this  = this + [-Float::INFINITY] if this.length < other.length
+        other = other + [-Float::INFINITY] if this.length > other.length
 
         this.each_with_index do |element, index|
           return compare(element, other.at(index)) if element != other.at(index)

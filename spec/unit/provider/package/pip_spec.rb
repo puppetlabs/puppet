@@ -177,6 +177,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
     end
   end
 
+  context "insync?" do
+    it "accepts an installed version with equivalent release components" do
+      @resource[:ensure] = '1.0'
+
+      expect(@provider.insync?('1')).to eq(true)
+    end
+  end
+
   context "latest" do
     before do
       allow(described_class).to receive(:pip_version).with(pip_path).and_return(pip_version)
